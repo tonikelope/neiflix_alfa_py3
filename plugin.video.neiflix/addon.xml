@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.neiflix" name="Neiflix" version="0.0.10" provider-name="tonikelope">
+    <requires>
+        <import addon="plugin.video.alfa"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="addon.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="es">Navega por NOESTASINVITADO.COM con KODI</summary>
+        <description lang="es">Navega por NOESTASINVITADO.COM con KODI</description>
+        <disclaimer>[COLOR red]The owners and submitters to this addon do not host or distribute any of the content
+            displayed by these addons nor do they have any affiliation with the content providers.[/COLOR]
+        </disclaimer>
+        <language>es
+        </language> <!-- the language of the videos or other content the plugin provides, may be omitted in case the addon does not provide any content -->
+        <platform>all</platform>
+        <license>GNU GPL v3</license>
+        <forum>https://noestasinvitado.com</forum> <!-- may be omitted  -->
+        <website>https://noestasinvitado.com
+        </website> <!-- the url of the website that contains the videos (or the official website of your plugin). May be omitted.  -->
+        <email>tonikelope@gmail.com</email> <!-- may be left omitted  -->
+        <source>https://github.com/tonikelope/neiflix_alfa_py3/tree/master/plugin.video.neiflix</source>
+        <news></news>
+        <assets>
+            <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.jpg</fanart>
+        </assets>
+    </extension>
+    <extension point="xbmc.service" library="watchdog.py" start="login|startup"></extension>
+</addon>

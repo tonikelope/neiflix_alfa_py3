@@ -1,0 +1,10 @@
+<advancedsettings>
+    <cache>
+        <memorysize>52428800</memorysize>
+        <readfactor>8</readfactor>
+    </cache>
+    <network>
+        <curlclienttimeout>60</curlclienttimeout>  <!-- Timeout in seconds for libcurl (http/ftp) connections -->
+    </network>
+    <playlisttimeout>60</playlisttimeout>
+</advancedsettings>

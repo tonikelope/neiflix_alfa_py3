@@ -1,0 +1,104 @@
+{
+  "id": "neiflix",
+  "name": "NEIFLIX",
+  "active": true,
+  "adult": false,
+  "language": [
+    "cast"
+  ],
+  "thumbnail": "neiflix2_t.png",
+  "banner": "neiflix2_b.png",
+  "fanart": "neiflix2_f.png",
+  "categories": [
+    "movie",
+    "tvshow"
+  ],
+  "settings": [
+    {
+      "id": "neiflix_user",
+      "type": "text",
+      "label": "Usuario de NOESTASINVITADO.COM:",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_password",
+      "type": "text",
+      "hidden": true,
+      "label": "Password de NOESTASINVITADO.COM:",
+      "enabled": "!eq(-1,'')",
+      "visible": true
+    },
+    {
+      "id": "neiflix_blacklist_uploaders",
+      "type": "text",
+      "label": "UPLOADERS IGNORADOS (separar por comas):",
+      "default": "",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_blacklist_titles",
+      "type": "text",
+      "label": "IGNORAR TÍTULOS que contengan (separar por comas):",
+      "default": "",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mega_proxy_list",
+      "type": "text",
+      "label": "Lista de proxys para MEGA (URL):",
+      "default": "",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mega_premium",
+      "type": "bool",
+      "label": "Usar cuenta PREMIUM de MEGA",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mega_email",
+      "type": "text",
+      "label": "Usuario de MEGA:",
+      "enabled": "!eq(-1,false)",
+      "visible": "!eq(-1,false)"
+    },
+    {
+      "id": "neiflix_mega_password",
+      "type": "text",
+      "hidden": true,
+      "label": "Password de MEGA:",
+      "enabled": "!eq(-2,false)",
+      "visible": "!eq(-2,false)"
+    },
+    {
+      "id": "neiflix_use_mc_reverse",
+      "type": "bool",
+      "label": "Usar MEGACRYPTER REVERSE MODE (requiere abrir puerto)",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mc_reverse_port",
+      "type": "text",
+      "label": "Puerto para MEGACRYPTER REVERSE MODE:",
+      "default": "9998",
+      "enabled": "!eq(-1,false)",
+      "visible": "!eq(-1,false)"
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir NEIFLIX en la búsqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}

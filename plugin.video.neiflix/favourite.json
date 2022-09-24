@@ -1,0 +1,27 @@
+{
+  "action": "mainlist",
+  "category": "NEIFLIX",
+  "channel": "neiflix",
+  "context": [
+    {
+      "action": "channel_config",
+      "channel": "setting",
+      "config": "neiflix",
+      "from_action": "mainlist",
+      "from_channel": "neiflix",
+      "title": "Configurar canal"
+    }
+  ],
+  "fanart": "/resources/media/channels/fanart/neiflix2_f.png",
+  "frequency": 2,
+  "infoLabels": {
+    "mediatype": "list"
+  },
+  "language": [
+    "cast"
+  ],
+  "thumbnail": "/resources/media/channels/thumb/neiflix2_t.png",
+  "title": "NEIFLIX",
+  "totalItems": 0,
+  "viewmode": "list"
+}
