@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.27"
+NEIFLIX_VERSION = "1.28"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1336,7 +1336,7 @@ def check_mega_lib_integrity():
         else:
 
             with open(megaserver_lib_path + filename, 'rb') as f:
-                file_hash = hashlib.sha1(f.read().encode('utf-8')).hexdigest()
+                file_hash = hashlib.sha1(f.read()).hexdigest()
 
             if file_hash != checksum:
 
@@ -1391,7 +1391,7 @@ def check_nei_connector_integrity():
         else:
 
             with open(connectors_path + filename, 'rb') as f:
-                file_hash = hashlib.sha1(f.read().encode('utf-8')).hexdigest()
+                file_hash = hashlib.sha1(f.read()).hexdigest()
 
             if file_hash != checksum:
 

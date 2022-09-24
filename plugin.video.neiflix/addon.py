@@ -3,15 +3,17 @@ import base64
 import json
 import os
 import xml.etree.ElementTree as ET
+import sys
 
 if sys.version_info[0] >= 3:
     from urllib.parse import quote
+    from urllib.request import urlretrieve
 else:
     # Not Python 3 - today, it is most likely to be Python 2
     # But note that this might need an update when Python 4
     # might be around one day
     from urllib import quote
-
+    from urllib import urlretrieve
 
 import xbmc
 import xbmcaddon
@@ -71,7 +73,7 @@ def update_favourites():
         favourite['thumbnail'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
         neiflix = ET.Element('favourite', {'name': 'NEIFLIX', 'thumb': xbmc.translatePath(
             'special://home/addons/plugin.video.alfa/resources/media/channels/thumb/neiflix2_t.png')})
-        neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + quote(base64.b64encode(json.dumps(favourite)))  + '",return)'
+        neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)'
         favourites_xml.getroot().append(neiflix)
         favourites_xml.write(xbmc.translatePath('special://userdata/favourites.xml'))
 
@@ -90,7 +92,10 @@ if not os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.nei
 
     for f in FILES:
         if not os.path.exists(ALFA_PATH + f):
-            urlretrieve(ALFA_URL + f, ALFA_PATH + f)
+            try:
+                urlretrieve(ALFA_URL + f, ALFA_PATH + f)
+            except:
+                pass
 
     improve_streaming()
     update_favourites()

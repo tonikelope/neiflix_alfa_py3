@@ -21,7 +21,7 @@ CHECK_MEGA_STUFF_INTEGRITY = True
 
 MONITOR_TIME = 15
 
-ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa/master/plugin.video.alfa/"
+ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.alfa/"
 
 KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
@@ -77,7 +77,8 @@ elif CHECK_MEGA_STUFF_INTEGRITY and broken:
 
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX instalado/reparado!',
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
-else:
+    
+elif CHECK_MEGA_STUFF_INTEGRITY is False:
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX ALTERADO PERO NO REPARADO!',
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
 
