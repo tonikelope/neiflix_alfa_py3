@@ -77,7 +77,7 @@ def update_favourites():
         favourites_xml.getroot().append(neiflix)
         favourites_xml.write(xbmc.translatePath('special://userdata/favourites.xml'))
 
-ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa/master/plugin.video.alfa/"
+ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.alfa/"
 
 ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
 
