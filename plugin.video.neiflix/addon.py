@@ -26,7 +26,7 @@ def improve_streaming():
     else:
         settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
 
-    cache = settings_xml.find("cache")
+    cache = settings_xml.findall("cache")
 
     if not cache:
         cache = ET.Element('cache')
@@ -38,7 +38,7 @@ def improve_streaming():
         cache.append(readfactor)
         settings_xml.getroot().append(cache)
 
-    network = settings_xml.find("network")
+    network = settings_xml.findall("network")
 
     if not network:
         network = ET.Element('network')
@@ -47,7 +47,7 @@ def improve_streaming():
         network.append(curlclienttimeout)
         settings_xml.getroot().append(network)
 
-    playlisttimeout = settings_xml.find("playlisttimeout")
+    playlisttimeout = settings_xml.findall('playlisttimeout')
 
     if not playlisttimeout:
         playlisttimeout = ET.Element('playlisttimeout')
