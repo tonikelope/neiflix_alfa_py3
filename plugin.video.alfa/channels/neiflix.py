@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.28"
+NEIFLIX_VERSION = "1.29"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -46,7 +46,7 @@ KODI_USERDATA_PATH = xbmc.translatePath('special://userdata/')
 
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/"
 
-ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa/master/plugin.video.alfa/"
+ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.alfa/"
 
 ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
 
@@ -1418,4 +1418,4 @@ if CHECK_MEGA_STUFF_INTEGRITY and check_nei_connector_integrity():
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
                                                'thumb', 'neiflix2_t.png'), 5000)
 
-from megaserver import Mega, MegaProxyServer, RequestError, crypto
+from .megaserver import Mega, MegaProxyServer, RequestError, crypto
