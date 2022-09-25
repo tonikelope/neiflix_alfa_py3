@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.33"
+NEIFLIX_VERSION = "1.34"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1082,12 +1082,12 @@ def find_video_mega_links(item, data):
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
                                          url=url, parentContent=item, folder=False))
-
-    itemlist.append(
+        itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[B]REFRESCAR CONTENIDO[/B]",
                     action="clean_cache", folder=False))
+
     return itemlist
 
 
