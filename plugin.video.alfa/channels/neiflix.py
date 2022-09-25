@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.30"
+NEIFLIX_VERSION = "1.31"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1036,13 +1036,15 @@ def find_video_mega_links(item, data):
                                          folder=False))
 
             else:
-                patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+'
+                patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
 
                 matches = re.compile(patron_mega).findall(data)
 
                 if matches:
 
                     for url in matches:
+
+                        url = re.sub(r"(\.nz/file/)([^#]+)#", r".nz/#!\2!", url)
 
                         if url not in urls:
 
@@ -1052,6 +1054,7 @@ def find_video_mega_links(item, data):
                                 file_id = url.split("!")[1]
                                 file_key = url.split("!")[2]
                                 file = mega_api_req({'a': 'g', 'g': 1, 'p': file_id})
+                                logger.info("***************************NEI MEGA API RESPONSE -> "+json.dumps(file, indent = 4))
                                 key = crypto.base64_to_a32(file_key)
                                 k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
                                 attributes = crypto.base64_url_decode(file['at'])

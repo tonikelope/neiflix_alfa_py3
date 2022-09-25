@@ -11,14 +11,15 @@ try:
 except ImportError:
     from Cryptodome.Cipher import AES
 
+from platformcode import logger
 
 def aes_cbc_encrypt(data, key):
-    aes_cipher = AES.new(key, AES.MODE_CBC, '\0' * 16)
+    aes_cipher = AES.new(key, AES.MODE_CBC, b'\0' * 16)
     return aes_cipher.encrypt(data)
 
 
 def aes_cbc_decrypt(data, key):
-    aes_cipher = AES.new(key, AES.MODE_CBC, '\0' * 16)
+    aes_cipher = AES.new(key, AES.MODE_CBC, b'\0' * 16)
     return aes_cipher.decrypt(data)
 
 
@@ -65,12 +66,13 @@ def decrypt_key(a, key):
 def encrypt_attr(attr, key):
     attr = 'MEGA' + json.dumps(attr)
     if len(attr) % 16:
-        attr += '\0' * (16 - len(attr) % 16)
+        attr += b'\0' * (16 - len(attr) % 16)
     return aes_cbc_encrypt(attr, a32_to_str(key))
 
 
 def decrypt_attr(attr, key):
-    attr = aes_cbc_decrypt(attr, a32_to_str(key)).rstrip('\0')
+    attr = aes_cbc_decrypt(attr, a32_to_str(key)).rstrip(b'\0')
+    attr = attr.decode("utf-8")
     return json.loads(attr[4:]) if attr[:6] == 'MEGA{"' else False
 
 
@@ -81,7 +83,7 @@ def a32_to_str(a):
 def str_to_a32(b):
     if len(b) % 4:
         # pad to multiple of 4
-        b += '\0' * (4 - len(b) % 4)
+        b += b'\0' * (4 - len(b) % 4)
     return struct.unpack('>%dI' % (len(b) / 4), b)
 
 
