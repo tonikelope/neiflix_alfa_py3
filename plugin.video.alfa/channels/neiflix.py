@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.31"
+NEIFLIX_VERSION = "1.32"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -745,7 +745,7 @@ def get_video_mega_links_group(item):
 
             links_hash = hashlib.sha1(hasheable.encode('utf-8')).hexdigest()
 
-            with open(filename_hash, "w+") as file:
+            with open(filename_hash, "w+", encoding="utf-8") as file:
 
                 file.write((links_hash + "\n"))
 
@@ -981,7 +981,7 @@ def find_video_mega_links(item, data):
 
             if matches:
 
-                with open(filename_hash, "w+") as file:
+                with open(filename_hash, "w+", encoding="utf-8") as file:
 
                     links_hash = hashlib.sha1("".join(matches).encode('utf-8')).hexdigest()
 
