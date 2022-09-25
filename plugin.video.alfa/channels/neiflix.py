@@ -10,10 +10,7 @@ import pickle
 import random
 import re
 import socket
-import urllib.request, urllib.parse, urllib.error
-
 import urllib.request, urllib.error, urllib.parse
-import urllib.parse
 import xbmc
 import xbmcaddon
 import xbmcgui
@@ -26,7 +23,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.34"
+NEIFLIX_VERSION = "1.35"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
