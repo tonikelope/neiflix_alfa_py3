@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.32"
+NEIFLIX_VERSION = "1.33"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -344,6 +344,7 @@ def clean_cache(item):
                                   "¡Caché borrada! (" + str(conta_files) + " archivos eliminados)",
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
                                                'thumb', 'neiflix2_t.png'), 5000)
+    platformtools.itemlist_refresh()
 
 
 def clean_history(item):
@@ -838,6 +839,11 @@ def get_video_mega_links_group(item):
                                 Item(channel=item.channel, action="play", server='nei', title=title, url=url,
                                      parentContent=item, folder=False))
 
+    itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="[B]REFRESCAR CONTENIDO[/B]",
+                    action="clean_cache", folder=False))
     return itemlist
 
 
@@ -1077,6 +1083,11 @@ def find_video_mega_links(item, data):
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
                                          url=url, parentContent=item, folder=False))
 
+    itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="[B]REFRESCAR CONTENIDO[/B]",
+                    action="clean_cache", folder=False))
     return itemlist
 
 
