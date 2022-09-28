@@ -23,7 +23,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.35"
+NEIFLIX_VERSION = "1.37"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -122,14 +122,17 @@ def mega_login(verbose):
 
                 with open(filename_hash, "rb") as file:
 
-                    mega = pickle.load(file)
+                    #mega = pickle.load(file)
 
                     mega.get_user()
 
                     login_ok = True
 
-            except RequestError:
-                pass
+            except Exception as ex:
+                logger.info("NEIFLIX MEGA LOGIN EXCEPTION")
+                logger.info(ex)
+                if os.path.isfile(filename_hash):
+                    os.remove(filename_hash)
 
         if not login_ok:
 
@@ -141,43 +144,36 @@ def mega_login(verbose):
 
                     mega.login(MEGA_EMAIL, MEGA_PASSWORD)
 
-                    pickle.dump(mega, file)
+                    storage = mega.get_storage_space()
+
+                    #pickle.dump(mega, file)
 
                     login_ok = True
 
-            except RequestError:
-                pass
+            except Exception as ex:
+                logger.info("NEIFLIX MEGA LOGIN EXCEPTION")
+                logger.info(ex)
+                if os.path.isfile(filename_hash):
+                    os.remove(filename_hash)
 
         if login_ok:
-
-            storage = mega.get_storage_space()
-
-            premium = storage['total'] >= 214748364800
 
             mega_sid = mega.sid
 
             logger.info("channels.neiflix LOGIN EN MEGA OK")
 
             if verbose:
-                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "LOGIN EN MEGA OK",
+                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "LOGIN EN MEGA OK!",
                                               os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
                                                            'channels', 'thumb', 'neiflix2_t.png'), 5000)
-
-            if not premium:
-                logger.info("channels.neiflix AVISO: CUENTA DE MEGA NO PREMIUM")
-                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "AVISO: CUENTA DE MEGA NO PREMIUM",
-                                              os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
-                                                           'channels', 'thumb', 'neiflix2_t.png'), 5000)
-
         else:
 
-            logger.info("channels.neiflix ERROR AL HACER LOGIN EN MEGA")
+            logger.info("channels.neiflix ERROR AL HACER LOGIN EN MEGA: " + MEGA_EMAIL)
 
             if verbose:
                 xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "ERROR AL HACER LOGIN EN MEGA",
                                               os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
                                                            'channels', 'thumb', 'neiflix2_t.png'), 5000)
-
     return mega_sid
 
 

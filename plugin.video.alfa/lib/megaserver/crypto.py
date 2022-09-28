@@ -103,10 +103,7 @@ def base64_to_a32(s):
 
 
 def base64_url_encode(data):
-    data = base64.b64encode(data)
-    for search, replace in (('+', '-'), ('/', '_'), ('=', '')):
-        data = data.replace(search, replace)
-    return data
+    return base64.b64encode(data).decode("utf-8").replace('+', '-').replace('/', '_').replace('=', '')
 
 
 def a32_to_base64(a):

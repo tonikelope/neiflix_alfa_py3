@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
-# Extraído de la librería de MEGA de richardasaurus por tonikelope para NEIFLIX
+# Extraído de la librería de MEGA de richardasaurus y ampliado por tonikelope para NEIFLIX (Python3)
 
 import re
 from .crypto import *
 import json
 import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
 import hashlib
+import base64
 try:
     from Crypto.PublicKey import RSA
 except ImportError:
     from Cryptodome.PublicKey import RSA
 
+from platformcode import logger
 
 def rsa_mega_decrypt(self, ciphertext):
-    from Crypto.Math.Numbers import Integer
+    from Cryptodome.Math.Numbers import Integer
     
     if not 0 < ciphertext < self._n:
         raise ValueError("Ciphertext too large")
@@ -65,11 +66,18 @@ class Mega(object):
             password_aes = prepare_key(str_to_a32(self.password))
             uh = stringhash(self.email, password_aes)
         else:
-            pbkdf2_key = hashlib.pbkdf2_hmac('sha512', self.password, base64_url_decode(self.salt), 100000, 32)
+      
+            
+            pbkdf2_key = hashlib.pbkdf2_hmac('sha512', self.password.encode("utf-8"), base64_url_decode(self.salt), 100000, 32)
+            
             password_aes = str_to_a32(pbkdf2_key[:16])
+          
             uh = base64_url_encode(pbkdf2_key[-16:])
+          
 
         resp = self._api_request({'a': 'us', 'user': self.email, 'uh': uh})
+
+        
 
         if isinstance(resp, int):
             raise RequestError(resp)
@@ -97,6 +105,7 @@ class Mega(object):
     def _login_process(self, resp, password):
         encrypted_master_key = base64_to_a32(resp['k'])
         self.master_key = decrypt_key(encrypted_master_key, password)
+        
         if 'tsid' in resp:
             tsid = base64_url_decode(resp['tsid'])
             key_encrypted = a32_to_str(
@@ -109,15 +118,18 @@ class Mega(object):
                                           self.master_key)
 
             private_key = a32_to_str(rsa_private_key)
+
             self.rsa_private_key = [0, 0, 0, 0]
 
             for i in range(4):
-                offset = ((ord(private_key[0]) * 256 + ord(private_key[1]) + 7) / 8) + 2
+                offset = int((ord(private_key.decode('latin-1')[0]) * 256 + ord(private_key.decode('latin-1')[1]) + 7) / 8) + 2
+                
                 self.rsa_private_key[i] = mpi_to_int(private_key[:offset])
+                
                 private_key = private_key[offset:]
 
-            encrypted_sid = mpi_to_int(base64_url_decode(resp['csid']))
-            
+            encrypted_sid = mpi_to_int( base64.urlsafe_b64decode(resp['csid']))
+
             try:
                 #Pycrypto
                 rsa_decrypter = RSA.construct(
@@ -134,11 +146,15 @@ class Mega(object):
                      self.rsa_private_key[1]), consistency_check=False)
 
                 rsa_decrypter.rsa_mega_decrypt = rsa_mega_decrypt.__get__(rsa_decrypter)
+
+                #sid = '%x' % pow(encrypted_sid, self.rsa_private_key[2], self.rsa_private_key[0] * self.rsa_private_key[1]) #SE PODRÍA HACER DIRECTAMENTE ASÍ en Python3
+
                 sid = '%x' % rsa_decrypter.rsa_mega_decrypt(encrypted_sid)
 
+            
             sid = binascii.unhexlify('0' + sid if len(sid) % 2 else sid)
             self.sid = base64_url_encode(sid[:43])
-
+            
 
     def _getAccountVersionAndSalt(self):
 
@@ -177,20 +193,7 @@ class Mega(object):
 
     def _post(self, url, data):
 
-        import ssl
-        from functools import wraps
-
-        def sslwrap(func):
-            @wraps(func)
-            def bar(*args, **kw):
-                kw['ssl_version'] = ssl.PROTOCOL_TLSv1
-                return func(*args, **kw)
-
-            return bar
-
-        ssl.wrap_socket = sslwrap(ssl.wrap_socket)
-
-        request = urllib.request.Request(url, data=data, headers={
+        request = urllib.request.Request(url, data=data.encode("utf-8"), headers={
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"})
 
