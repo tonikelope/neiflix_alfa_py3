@@ -23,7 +23,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.37"
+NEIFLIX_VERSION = "1.38"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -122,9 +122,9 @@ def mega_login(verbose):
 
                 with open(filename_hash, "rb") as file:
 
-                    #mega = pickle.load(file)
+                    mega = pickle.load(file)
 
-                    mega.get_user()
+                    mega.get_storage_space()
 
                     login_ok = True
 
@@ -144,9 +144,9 @@ def mega_login(verbose):
 
                     mega.login(MEGA_EMAIL, MEGA_PASSWORD)
 
-                    storage = mega.get_storage_space()
+                    mega.get_storage_space()
 
-                    #pickle.dump(mega, file)
+                    pickle.dump(mega, file)
 
                     login_ok = True
 
