@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Extraído de la librería de MEGA de richardasaurus por tonikelope para NEIFLIX
+# Extraído de la librería de MEGA de richardasaurus por tonikelope para NEIFLIX y Python3
 
 import json
 import base64
@@ -93,9 +93,7 @@ def mpi_to_int(s):
 
 def base64_url_decode(data):
     data += '=='[(2 - len(data) * 3) % 4:]
-    for search, replace in (('-', '+'), ('_', '/'), (',', '')):
-        data = data.replace(search, replace)
-    return base64.b64decode(data)
+    return base64.b64decode(data.replace('-', '+').replace('_', '/').replace(',', ''))
 
 
 def base64_to_a32(s):

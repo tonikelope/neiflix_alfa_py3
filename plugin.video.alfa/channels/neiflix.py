@@ -14,6 +14,7 @@ import urllib.request, urllib.error, urllib.parse
 import xbmc
 import xbmcaddon
 import xbmcgui
+import html
 from core import httptools
 from core import scrapertools
 from core.item import Item
@@ -23,7 +24,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.38"
+NEIFLIX_VERSION = "1.39"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -116,6 +117,8 @@ def mega_login(verbose):
 
         login_ok = False
 
+        pro_account = False
+
         if os.path.isfile(filename_hash):
 
             try:
@@ -124,7 +127,7 @@ def mega_login(verbose):
 
                     mega = pickle.load(file)
 
-                    mega.get_storage_space()
+                    pro_account = mega.is_pro_account()
 
                     login_ok = True
 
@@ -144,7 +147,7 @@ def mega_login(verbose):
 
                     mega.login(MEGA_EMAIL, MEGA_PASSWORD)
 
-                    mega.get_storage_space()
+                    pro_account = mega.is_pro_account()
 
                     pickle.dump(mega, file)
 
@@ -160,10 +163,12 @@ def mega_login(verbose):
 
             mega_sid = mega.sid
 
-            logger.info("channels.neiflix LOGIN EN MEGA OK")
+            login_msg = "LOGIN EN MEGA (free) OK!" if not pro_account else "LOGIN EN MEGA (PRO) OK!"
+
+            logger.info("channels.neiflix "+login_msg+" "+MEGA_EMAIL)
 
             if verbose:
-                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "LOGIN EN MEGA OK!",
+                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', login_msg,
                                               os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
                                                            'channels', 'thumb', 'neiflix2_t.png'), 5000)
         else:
@@ -446,6 +451,8 @@ def foro(item):
                             thumbnail = ""
 
                     item.infoLabels = {'year': year}
+
+                    item.contentPlot=rating[2]
 
                 else:
                     item.parent_title = title.strip()
@@ -1269,7 +1276,19 @@ def get_filmaffinity_data_advanced(title, year, genre):
     else:
         thumb_url = None
 
-    return [rate, thumb_url]
+    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film[0-9]+\.html)\""
+
+    res = re.compile(url_film_pattern, re.DOTALL).search(data)
+
+    data = httptools.downloadpage(res.group(1)).data
+
+    sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
+
+    res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
+
+    sinopsis = html.unescape(res.group(1))
+
+    return [rate, thumb_url, sinopsis]
 
 
 def get_filmaffinity_data(title):
@@ -1305,7 +1324,19 @@ def get_filmaffinity_data(title):
     else:
         thumb_url = None
 
-    return [rate, thumb_url]
+    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film[0-9]+\.html)\""
+
+    res = re.compile(url_film_pattern, re.DOTALL).search(data)
+
+    data = httptools.downloadpage(res.group(1)).data
+
+    sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
+
+    res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
+
+    sinopsis = html.unescape(res.group(1))
+
+    return [rate, thumb_url, sinopsis]
 
 
 # NEIFLIX uses a modified version of Alfa's MEGA LIB with support for MEGACRYPTER and multi thread
@@ -1425,4 +1456,4 @@ if CHECK_MEGA_STUFF_INTEGRITY and check_nei_connector_integrity():
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
                                                'thumb', 'neiflix2_t.png'), 5000)
 
-from megaserver import Mega, MegaProxyServer, RequestError, crypto
+from megaserver import Mega, MegaProxyServer, RequestError, crypto #AL FINAL PORQUE SI HEMOS REPARADO LA LIBRERÍA DE MEGA QUEREMOS IMPORTAR LA VERSIÓN BUENA

@@ -14,17 +14,6 @@ except ImportError:
 
 from platformcode import logger
 
-def rsa_mega_decrypt(self, ciphertext):
-    from Cryptodome.Math.Numbers import Integer
-    
-    if not 0 < ciphertext < self._n:
-        raise ValueError("Ciphertext too large")
-    if not self.has_private():
-        raise TypeError("This is not a private key")
-
-    return pow(Integer(ciphertext), self._d, self._n)
-
-
 class RequestError(Exception):
     pass
 
@@ -66,18 +55,14 @@ class Mega(object):
             password_aes = prepare_key(str_to_a32(self.password))
             uh = stringhash(self.email, password_aes)
         else:
-      
-            
+
             pbkdf2_key = hashlib.pbkdf2_hmac('sha512', self.password.encode("utf-8"), base64_url_decode(self.salt), 100000, 32)
             
             password_aes = str_to_a32(pbkdf2_key[:16])
           
             uh = base64_url_encode(pbkdf2_key[-16:])
           
-
         resp = self._api_request({'a': 'us', 'user': self.email, 'uh': uh})
-
-        
 
         if isinstance(resp, int):
             raise RequestError(resp)
@@ -114,8 +99,7 @@ class Mega(object):
                 self.sid = resp['tsid']
         elif 'csid' in resp:
             encrypted_rsa_private_key = base64_to_a32(resp['privk'])
-            rsa_private_key = decrypt_key(encrypted_rsa_private_key,
-                                          self.master_key)
+            rsa_private_key = decrypt_key(encrypted_rsa_private_key, self.master_key)
 
             private_key = a32_to_str(rsa_private_key)
 
@@ -128,31 +112,12 @@ class Mega(object):
                 
                 private_key = private_key[offset:]
 
-            encrypted_sid = mpi_to_int( base64.urlsafe_b64decode(resp['csid']))
+            encrypted_sid = mpi_to_int(base64.urlsafe_b64decode(resp['csid']))
 
-            try:
-                #Pycrypto
-                rsa_decrypter = RSA.construct(
-                    (self.rsa_private_key[0] * self.rsa_private_key[1],
-                     0, self.rsa_private_key[2], self.rsa_private_key[0],
-                     self.rsa_private_key[1]))
+            sid = '%x' % pow(encrypted_sid, self.rsa_private_key[2], self.rsa_private_key[0] * self.rsa_private_key[1]) #Python3 tiene enteros grandes nativos
 
-                sid = '%x' % rsa_decrypter.key._decrypt(encrypted_sid)
-            except ValueError:
-                #Pycryptodome
-                rsa_decrypter = RSA.construct(
-                    (self.rsa_private_key[0] * self.rsa_private_key[1],
-                     0, self.rsa_private_key[2], self.rsa_private_key[0],
-                     self.rsa_private_key[1]), consistency_check=False)
-
-                rsa_decrypter.rsa_mega_decrypt = rsa_mega_decrypt.__get__(rsa_decrypter)
-
-                #sid = '%x' % pow(encrypted_sid, self.rsa_private_key[2], self.rsa_private_key[0] * self.rsa_private_key[1]) #SE PODRÍA HACER DIRECTAMENTE ASÍ en Python3
-
-                sid = '%x' % rsa_decrypter.rsa_mega_decrypt(encrypted_sid)
-
-            
             sid = binascii.unhexlify('0' + sid if len(sid) % 2 else sid)
+
             self.sid = base64_url_encode(sid[:43])
             
 
@@ -236,10 +201,16 @@ class Mega(object):
             'total': json_resp['mstrg'] / unit_coef,
         }
 
-    def get_balance(self):
-        """
-        Get account monetary balance, Pro accounts only
-        """
-        user_data = self._api_request({"a": "uq", "pro": 1})
-        if 'balance' in user_data:
-            return user_data['balance']
+    def get_account_info(self):
+      
+        user_data = self._api_request({'a': 'uq', 'xfer': 1, 'strg': 1, 'pro': 1})
+
+        logger.info(user_data)
+
+        return user_data
+
+    def is_pro_account(self):
+        info = self.get_account_info()
+
+        return ('balance' in info and info['balance'])
+
