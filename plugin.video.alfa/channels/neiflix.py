@@ -24,7 +24,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.40"
+NEIFLIX_VERSION = "1.41"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -480,15 +480,14 @@ def foro(item):
         if matches:
             url = matches.group(1)
             title = "[B]>> Página Siguiente[/B]"
-            thumbnail = ""
-            plot = ""
             itemlist.append(
                 item.clone(
                     action="foro",
                     title=title,
                     url=url,
-                    thumbnail=thumbnail,
-                    folder=True))
+                    thumbnail="",
+                    folder=True,
+                    contentPlot=""))
 
     return itemlist
 
