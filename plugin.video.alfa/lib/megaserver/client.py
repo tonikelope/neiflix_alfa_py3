@@ -24,7 +24,7 @@ class Client(object):
                   '.m4v': 'video/mp4', '.mov': 'video/quicktime', '.mpg': 'video/mpeg', '.ogv': 'video/ogg',
                   '.ogg': 'video/ogg', '.webm': 'video/webm', '.ts': 'video/mp2t', '.3gp': 'video/3gpp'}
 
-    def __init__(self, url, port=None, ip=None, auto_shutdown=True, wait_time=20, timeout=5, is_playing_fnc=None):
+    def __init__(self, url, port=None, ip=None, auto_shutdown=True, wait_time=60, timeout=90, is_playing_fnc=None):
 
         self.port = port if port else random.randint(8000, 8099)
         self.ip = ip if ip else "127.0.0.1"
