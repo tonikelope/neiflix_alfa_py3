@@ -52,8 +52,8 @@ class Mega(object):
     def _login_user(self):
 
         if self.account_version == 1:
-            password_aes = prepare_key(str_to_a32(self.password))
-            uh = stringhash(self.email, password_aes)
+            password_aes = prepare_key(str_to_a32(self.password.encode("utf-8")))
+            uh = stringhash(self.email.encode("utf-8"), password_aes)
         else:
 
             pbkdf2_key = hashlib.pbkdf2_hmac('sha512', self.password.encode("utf-8"), base64_url_decode(self.salt), 100000, 32)
