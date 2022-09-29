@@ -16,7 +16,7 @@ try:
 except ImportError:
     from Cryptodome.Util import Counter
 
-CHUNK_WORKERS = 10
+CHUNK_WORKERS = 6
 
 class Cursor(object):
     def __init__(self, file):

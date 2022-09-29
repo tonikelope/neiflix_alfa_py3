@@ -12,6 +12,7 @@ MAX_CHUNK_BUFFER_SIZE = 20
 BLOCK_SIZE = 16*1024
 SOCKET_TIMEOUT = 15
 FORCE_PROXY_MODE = False
+PAUSE_HTTP_429 = 10
 
 class ChunkDownloader():
 
@@ -129,6 +130,9 @@ class ChunkDownloader():
 									error509 = True
 								elif err.code == 403:
 									self.url = self.chunk_writer.cursor._file.refreshMegaDownloadUrl()
+								elif err.code == 429:
+									logger.info("ChunkDownloader %d me pauso %d segundos por error 429!" % (self.id, PAUSE_HTTP_429))
+									time.sleep(PAUSE_HTTP_429)
 								
 						except urllib.error.URLError as err:
 							logger.info("ChunkDownloader[%d] URL ERROR" % (self.id))

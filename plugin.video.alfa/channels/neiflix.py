@@ -24,7 +24,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.41"
+NEIFLIX_VERSION = "1.42"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -659,7 +659,7 @@ def get_video_mega_links_group(item):
 
     if os.path.isfile(filename_hash) and os.stat(filename_hash).st_size > 0:
 
-        with open(filename_hash, "r") as file:
+        with open(filename_hash, "r", encoding="utf-8") as file:
 
             i = 1
 
@@ -925,7 +925,7 @@ def find_video_mega_links(item, data):
 
         if os.path.isfile(filename_hash):
 
-            with open(filename_hash, "r") as file:
+            with open(filename_hash, "r", encoding="utf-8") as file:
 
                 i = 1
 
