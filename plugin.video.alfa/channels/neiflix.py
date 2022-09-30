@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.44"
+NEIFLIX_VERSION = "1.45"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -518,7 +518,7 @@ def foro(item):
                     thumbnail=thumbnail +
                               "|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
                               "Chrome/65.0.3163.100 Safari/537.36",
-                    folder=True, contentTitle=content_title))
+                    folder=True, contentTitle=content_title, uploader=uploader))
 
         patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
@@ -826,6 +826,8 @@ def get_video_mega_links_group(item):
                                              title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE "
                                                    "(habla con el uploader para que lo suba sin comprimir).[/B][/COLOR]",
                                              action="", url="", folder=False))
+                        itemlist.append(Item(channel=item.channel,
+                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
 
                         break
 
@@ -874,6 +876,8 @@ def get_video_mega_links_group(item):
                                              title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE "
                                                    "(habla con el uploader para que lo suba sin comprimir).[/B][/COLOR]",
                                              action="", url="", folder=False))
+                        itemlist.append(Item(channel=item.channel,
+                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
 
                         break
 
@@ -885,6 +889,9 @@ def get_video_mega_links_group(item):
                                 Item(channel=item.channel, action="play", server='nei', title=title, url=url,
                                      parentContent=item, folder=False))
 
+    if len(itemlist)==0:
+            itemlist.append(Item(channel=item.channel,
+                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
     itemlist.append(
                 Item(
                     channel=item.channel,
@@ -926,6 +933,21 @@ def find_video_gvideo_links(item, data):
                                  url=matches[0], parentContent=item, folder=False))
 
     return itemlist
+
+
+
+def ignore_uploader(item):
+
+    if item.uploader in UPLOADERS_BLACKLIST:
+        UPLOADERS_BLACKLIST.remove(item.uploader)
+
+    UPLOADERS_BLACKLIST.append(item.uploader)
+
+    config.set_setting("neiflix_blacklist_uploaders", ",".join(UPLOADERS_BLACKLIST), "neiflix")
+
+    xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', item.uploader+ " añadid@ a IGNORADOS",
+                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
+                                               'thumb', 'neiflix2_t.png'), 5000)
 
 
 def find_video_mega_links(item, data):
@@ -1077,6 +1099,9 @@ def find_video_mega_links(item, data):
                                                            " (habla con el uploader para que lo suba sin comprimir)."
                                                            "[/B][/COLOR]",
                                                      action="", url="", folder=False))
+
+                                itemlist.append(Item(channel=item.channel,
+                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
                                 break
                             else:
                                 title = name + ' [' + str(format_bytes(size)) + ']'
@@ -1123,11 +1148,18 @@ def find_video_mega_links(item, data):
                                                            " (habla con el uploader para que lo suba sin comprimir)."
                                                            "[/B][/COLOR]",
                                                      action="", url="", folder=False))
+                                
+                                itemlist.append(Item(channel=item.channel,
+                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+
                                 break
                             else:
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
                                          url=url, parentContent=item, folder=False))
+        if len(itemlist)==0:
+            itemlist.append(Item(channel=item.channel,
+                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
         itemlist.append(
                 Item(
                     channel=item.channel,
