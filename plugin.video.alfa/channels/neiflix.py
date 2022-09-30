@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.52"
+NEIFLIX_VERSION = "1.53"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -499,9 +499,9 @@ def foro(item):
                         else:
                             thumbnail = ""
 
-                    item.infoLabels = {'year': year}
+                        item.contentPlot=rating[2]
 
-                    item.contentPlot=rating[2]
+                    item.infoLabels = {'year': year}
 
                     item.thumbnail = thumbnail +"|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3163.100 Safari/537.36"
 
