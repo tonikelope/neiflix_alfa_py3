@@ -5,10 +5,11 @@ import urllib.request, urllib.error, urllib.parse
 import collections
 import time
 import threading
+import random
 from platformcode import config,logger
 
 PROXY_LIST_URL='https://raw.githubusercontent.com/tonikelope/megabasterd/proxy_list/proxy.txt'
-PROXY_BLOCK_TIME = 180
+PROXY_BLOCK_TIME = 30
 
 def synchronized_with_attr(lock_name):
     
@@ -34,7 +35,8 @@ class MegaProxyManager():
 
         if custom_proxy_list:
             self.proxy_list_url=custom_proxy_list
-            logger.info("USANDO LISTA DE PROXYS PARA MEGA: "+self.proxy_list_url)
+        
+        logger.info("USANDO LISTA DE PROXYS PARA MEGA: "+self.proxy_list_url)
 
     @synchronized_with_attr("lock")
     def refresh_proxy_list(self):
@@ -63,16 +65,33 @@ class MegaProxyManager():
             self.refresh_proxy_list()
             return next(iter(self.proxy_list.items()))[0] if len(self.proxy_list) > 0 else None
         else:
-            for proxy, timestamp in self.proxy_list.items():
-                if time.time() > timestamp:
-                    return proxy
+            next_proxy = self.get_next_rand_proxy()
+
+            if next_proxy:
+                return next_proxy
 
             self.refresh_proxy_list()
 
-            return next(iter(self.proxy_list.items()))[0] if len(self.proxy_list) > 0 else None
+            return self.get_next_rand_proxy()
 
     @synchronized_with_attr("lock")
     def block_proxy(self,proxy):
 
         if proxy in self.proxy_list:
             self.proxy_list[proxy] = time.time() + PROXY_BLOCK_TIME
+
+    
+    @synchronized_with_attr("lock")
+    def get_next_rand_proxy(self):
+        
+        pos = random.randint(0, len(self.proxy_list)-1)
+
+        i = 0
+
+        for proxy, timestamp in self.proxy_list.items():
+            if i < pos:
+                i+=1
+            elif time.time() > timestamp:
+                return proxy
+
+        return None

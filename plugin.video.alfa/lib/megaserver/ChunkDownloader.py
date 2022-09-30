@@ -13,6 +13,7 @@ BLOCK_SIZE = 16*1024
 SOCKET_TIMEOUT = 15
 FORCE_PROXY_MODE = False
 PAUSE_HTTP_429 = 10
+BLOCK_ERROR_PROXY = True
 
 class ChunkDownloader():
 
@@ -52,7 +53,7 @@ class ChunkDownloader():
 
 					if error509 or proxy_error or FORCE_PROXY_MODE:
 
-						if self.proxy and (error509 or proxy_error):
+						if BLOCK_ERROR_PROXY and self.proxy and (error509 or proxy_error):
 							logger.info("ChunkDownloader[%d] bloqueando proxy %s" % (self.id, self.proxy))
 							self.proxy_manager.block_proxy(self.proxy)
 
@@ -88,7 +89,6 @@ class ChunkDownloader():
 
 							if self.proxy:
 								req.set_proxy(self.proxy, 'http')
-								logger.info("ChunkDownloader[%d] usando proxy %s" % (self.id, self.proxy))
 
 							connection = urllib.request.urlopen(req, timeout=SOCKET_TIMEOUT)
 
@@ -125,14 +125,14 @@ class ChunkDownloader():
 
 							if self.proxy:
 								proxy_error = True
-							else:
-								if err.code == 509:
-									error509 = True
-								elif err.code == 403:
-									self.url = self.chunk_writer.cursor._file.refreshMegaDownloadUrl()
-								elif err.code == 429:
-									logger.info("ChunkDownloader %d me pauso %d segundos por error 429!" % (self.id, PAUSE_HTTP_429))
-									time.sleep(PAUSE_HTTP_429)
+							
+							if err.code == 509:
+								error509 = True
+							elif err.code == 403:
+								self.url = self.chunk_writer.cursor._file.refreshMegaDownloadUrl()
+							elif err.code == 429:
+								logger.info("ChunkDownloader %d me pauso %d segundos por error 429!" % (self.id, PAUSE_HTTP_429))
+								time.sleep(PAUSE_HTTP_429)
 								
 						except urllib.error.URLError as err:
 							logger.info("ChunkDownloader[%d] URL ERROR" % (self.id))
@@ -148,8 +148,6 @@ class ChunkDownloader():
 
 							if self.proxy:
 								proxy_error = True
-							else:
-								self.url = self.chunk_writer.cursor._file.refreshMegaDownloadUrl()
 					else:
 						logger.info("ChunkDownloader[%d] END OFFSET" % self.id)
 						self.exit = True

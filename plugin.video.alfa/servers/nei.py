@@ -13,7 +13,7 @@ def test_video_exists(page_url):
     c = Client(url=page_url, is_playing_fnc=platformtools.is_playing)
     global files
     files = c.get_files()
-    if isinstance(files, (int, long)):
+    if isinstance(files, int):
         return False, "Error codigo %s" % str(files)
 
     return True, ""

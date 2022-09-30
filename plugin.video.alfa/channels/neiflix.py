@@ -10,11 +10,13 @@ import pickle
 import random
 import re
 import socket
+import xml.etree.ElementTree as ET
 import urllib.request, urllib.error, urllib.parse
 import xbmc
 import xbmcaddon
 import xbmcgui
 import html
+import time
 from core import httptools
 from core import scrapertools
 from core.item import Item
@@ -24,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.42"
+NEIFLIX_VERSION = "1.43"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -253,6 +255,12 @@ def mainlist(item):
                     channel=item.channel,
                     title="[COLOR red][B]Borrar historial[/B][/COLOR]",
                     action="clean_history"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="Regenerar fichero de ajustes avanzados",
+                    action="improve_streaming"))
         else:
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "ERROR AL HACER LOGIN EN NEI",
                                           os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
@@ -269,6 +277,45 @@ def mainlist(item):
 
     return itemlist
 
+
+def improve_streaming(item):
+    
+    if os.path.exists(xbmc.translatePath('special://userdata/advancedsettings.xml')):
+        os.rename(xbmc.translatePath('special://userdata/advancedsettings.xml'), xbmc.translatePath('special://userdata/advancedsettings.xml')+"."+str(int(time.time()))+".bak")
+    
+    settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
+
+    cache = settings_xml.findall("cache")
+    cache = ET.Element('cache')
+    memorysize = ET.Element('memorysize')
+    memorysize.text = '52428800'
+    readfactor = ET.Element('readfactor')
+    readfactor.text = '8'
+    cache.append(memorysize)
+    cache.append(readfactor)
+    settings_xml.getroot().append(cache)
+
+    network = settings_xml.findall("network")
+    network = ET.Element('network')
+    curlclienttimeout = ET.Element('curlclienttimeout')
+    curlclienttimeout.text = '90'
+    network.append(curlclienttimeout)
+    curllowspeedtime = ET.Element('curllowspeedtime')
+    curllowspeedtime.text = '90'
+    network.append(curllowspeedtime)
+    settings_xml.getroot().append(network)
+
+    playlisttimeout = settings_xml.findall('playlisttimeout')
+    playlisttimeout = ET.Element('playlisttimeout')
+    playlisttimeout.text = '90'
+    settings_xml.getroot().append(playlisttimeout)
+
+    settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
+
+    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+
+    if ret:
+        xbmc.executebuiltin('RestartApp')
 
 def settings_nei(item):
     platformtools.show_channel_settings()

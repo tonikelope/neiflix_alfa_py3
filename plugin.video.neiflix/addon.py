@@ -4,6 +4,7 @@ import json
 import os
 import xml.etree.ElementTree as ET
 import sys
+import time
 
 if sys.version_info[0] >= 3:
     from urllib.parse import quote
@@ -22,37 +23,34 @@ import xbmcgui
 
 def improve_streaming():
     if os.path.exists(xbmc.translatePath('special://userdata/advancedsettings.xml')):
-        settings_xml = ET.parse(xbmc.translatePath('special://userdata/advancedsettings.xml'))
-    else:
-        settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
+        os.rename(xbmc.translatePath('special://userdata/advancedsettings.xml'), xbmc.translatePath('special://userdata/advancedsettings.xml')+"."+str(int(time.time()))+".bak")
+    
+    settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
 
     cache = settings_xml.findall("cache")
-
-    if not cache:
-        cache = ET.Element('cache')
-        memorysize = ET.Element('memorysize')
-        memorysize.text = '52428800'
-        readfactor = ET.Element('readfactor')
-        readfactor.text = '8'
-        cache.append(memorysize)
-        cache.append(readfactor)
-        settings_xml.getroot().append(cache)
+    cache = ET.Element('cache')
+    memorysize = ET.Element('memorysize')
+    memorysize.text = '52428800'
+    readfactor = ET.Element('readfactor')
+    readfactor.text = '8'
+    cache.append(memorysize)
+    cache.append(readfactor)
+    settings_xml.getroot().append(cache)
 
     network = settings_xml.findall("network")
-
-    if not network:
-        network = ET.Element('network')
-        curlclienttimeout = ET.Element('curlclienttimeout')
-        curlclienttimeout.text = '60'
-        network.append(curlclienttimeout)
-        settings_xml.getroot().append(network)
+    network = ET.Element('network')
+    curlclienttimeout = ET.Element('curlclienttimeout')
+    curlclienttimeout.text = '90'
+    network.append(curlclienttimeout)
+    curllowspeedtime = ET.Element('curllowspeedtime')
+    curllowspeedtime.text = '90'
+    network.append(curllowspeedtime)
+    settings_xml.getroot().append(network)
 
     playlisttimeout = settings_xml.findall('playlisttimeout')
-
-    if not playlisttimeout:
-        playlisttimeout = ET.Element('playlisttimeout')
-        playlisttimeout.text = '60'
-        settings_xml.getroot().append(playlisttimeout)
+    playlisttimeout = ET.Element('playlisttimeout')
+    playlisttimeout.text = '90'
+    settings_xml.getroot().append(playlisttimeout)
 
     settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
 
