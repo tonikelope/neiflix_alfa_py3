@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.46"
+NEIFLIX_VERSION = "1.47"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -896,7 +896,7 @@ def get_video_mega_links_group(item):
                 Item(
                     channel=item.channel,
                     title="[B]REFRESCAR CONTENIDO[/B]",
-                    action="clean_cache", folder=False))
+                    action="refrescar_contenido", folder=False))
     return itemlist
 
 
@@ -1164,10 +1164,18 @@ def find_video_mega_links(item, data):
                 Item(
                     channel=item.channel,
                     title="[B]REFRESCAR CONTENIDO[/B]",
-                    action="clean_cache", folder=False))
+                    action="refrescar_contenido", folder=False))
 
     return itemlist
 
+
+def refrescar_contenido(item):
+
+    for file in os.listdir(KODI_TEMP_PATH):
+        if file.startswith("kodi_nei_mc_"):
+            os.remove(KODI_TEMP_PATH + file)
+
+    platformtools.itemlist_refresh()
 
 def indice_links(item):
     itemlist = []
@@ -1326,6 +1334,13 @@ def parse_title(title):
 
 
 def get_filmaffinity_data_advanced(title, year, genre):
+    
+    fa_data_filename = KODI_TEMP_PATH + 'kodi_nei_fa_' + hashlib.sha1((title+year+genre).encode('utf-8')).hexdigest()
+
+    if os.path.isfile(fa_data_filename):
+        with open(fa_data_filename, "rb") as f:
+            return pickle.load(f)
+
     url = "https://www.filmaffinity.com/es/advsearch.php?stext=" + title.replace(' ',
                                                                                  '+').replace('?', '') + "&stype%5B%5D" \
                                                                                                          "=title&country=" \
@@ -1374,10 +1389,22 @@ def get_filmaffinity_data_advanced(title, year, genre):
     else:
         sinopsis = None
 
-    return [rate, thumb_url, sinopsis]
+    fa_data = [rate, thumb_url, sinopsis]
+
+    with open(fa_data_filename, 'wb') as f:
+        pickle.dump(fa_data, f)
+
+    return fa_data
 
 
 def get_filmaffinity_data(title):
+
+    fa_data_filename = KODI_TEMP_PATH + 'kodi_nei_fa_' + hashlib.sha1((title).encode('utf-8')).hexdigest()
+
+    if os.path.isfile(fa_data_filename):
+        with open(fa_data_filename, "rb") as f:
+            return pickle.load(f)
+
     url = "https://www.filmaffinity.com/es/search.php?stext=" + title.replace(' ', '+').replace('?', '')
 
     logger.info(url)
@@ -1430,7 +1457,12 @@ def get_filmaffinity_data(title):
     else:
         sinopsis = None
 
-    return [rate, thumb_url, sinopsis]
+    fa_data = [rate, thumb_url, sinopsis]
+
+    with open(fa_data_filename, 'wb') as f:
+        pickle.dump(fa_data, f)
+
+    return fa_data
 
 
 # NEIFLIX uses a modified version of Alfa's MEGA LIB with support for MEGACRYPTER and multi thread
