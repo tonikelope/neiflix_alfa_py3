@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.51"
+NEIFLIX_VERSION = "1.52"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -206,20 +206,20 @@ def mainlist(item):
                                                        'channels', 'thumb', 'neiflix2_t.png'), 5000)
             mega_login(True)
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
-            itemlist.append(Item(channel=item.channel, title="Películas", action="foro",
+            itemlist.append(Item(channel=item.channel, title="PELÍCULAS", foro="PELÍCULAS", contentType="movie", action="foro",
                                  url="https://noestasinvitado.com/peliculas/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png", folder=True, fa=True, fa_genre=""))
-            itemlist.append(Item(channel=item.channel, title="Series", action="foro",
+            itemlist.append(Item(channel=item.channel, title="SERIES", foro="SERIES", contentType="tvshow", action="foro",
                                  url="https://noestasinvitado.com/series/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png", folder=True, fa=True, fa_genre="TV_SE"))
-            itemlist.append(Item(channel=item.channel, title="Documetales", action="foro",
+            itemlist.append(Item(channel=item.channel, title="Documetales", foro="Documentales", action="foro",
                                  url="https://noestasinvitado.com/documentales/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png", folder=True))
-            itemlist.append(Item(channel=item.channel, title="Vídeos deportivos", action="foro",
+            itemlist.append(Item(channel=item.channel, title="Vídeos deportivos", foro="Vídeos deportivos", action="foro",
                                  url="https://noestasinvitado.com/deportes/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png", folder=True))
-            itemlist.append(Item(channel=item.channel, title="Anime", action="foro",
+            itemlist.append(Item(channel=item.channel, title="Anime", action="foro", foro="Anime",
                                  url="https://noestasinvitado.com/anime/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png", folder=True))
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
-                itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", action="foro",
+                itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", foro="\"Guarreridas\"", action="foro",
                                      url="https://noestasinvitado.com/18-15/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", folder=True, xxx=True))
-            itemlist.append(Item(channel=item.channel, title="Listados alfabéticos", action="indices",
+            itemlist.append(Item(channel=item.channel, title="Listados alfabéticos", foro="Listados", action="indices",
                                  url="https://noestasinvitado.com/indices/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_movie_az.png", folder=True))
             itemlist.append(
                 Item(
@@ -518,11 +518,12 @@ def foro(item):
                         else:
                             item.thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
                     else:
-                        if item.title.strip() == "Películas":
+                        if item.title.strip() == "PELÍCULAS":
                             item.thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
-                        elif item.title.strip() == "Series":
+                        elif item.title.strip() == "SERIES":
                             item.thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
 
+                    title = "["+item.foro + "] " + title
                     
                     item.parent_title = title.strip()
 
