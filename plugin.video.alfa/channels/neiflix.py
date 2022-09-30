@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.55"
+NEIFLIX_VERSION = "1.56"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -473,9 +473,9 @@ def foro(item):
                         else:
                             rating = get_filmaffinity_data_advanced(content_title, year, item.fa_genre)
 
-                        if item.parent_title.startswith('Ultra HD '):
+                        if 'Ultra HD ' in item.parent_title:
                             quality = 'UHD'
-                        elif item.parent_title.startswith('HD '):
+                        elif 'HD ' in item.parent_title:
                             quality = 'HD'
                         else:
                             quality = 'SD'
