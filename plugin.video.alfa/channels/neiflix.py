@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.43"
+NEIFLIX_VERSION = "1.44"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1326,13 +1326,21 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     res = re.compile(url_film_pattern, re.DOTALL).search(data)
 
-    data = httptools.downloadpage(res.group(1)).data
+    if res:
 
-    sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
+        data = httptools.downloadpage(res.group(1)).data
 
-    res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
+        sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
 
-    sinopsis = html.unescape(res.group(1))
+        res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
+
+        if res:
+            sinopsis = html.unescape(res.group(1))
+        else:
+            sinopsis = None
+
+    else:
+        sinopsis = None
 
     return [rate, thumb_url, sinopsis]
 
@@ -1374,13 +1382,21 @@ def get_filmaffinity_data(title):
 
     res = re.compile(url_film_pattern, re.DOTALL).search(data)
 
-    data = httptools.downloadpage(res.group(1)).data
+    if res:
 
-    sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
+        data = httptools.downloadpage(res.group(1)).data
 
-    res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
+        sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
 
-    sinopsis = html.unescape(res.group(1))
+        res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
+
+        if res:
+            sinopsis = html.unescape(res.group(1))
+        else:
+            sinopsis = None
+
+    else:
+        sinopsis = None
 
     return [rate, thumb_url, sinopsis]
 
