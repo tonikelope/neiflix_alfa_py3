@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.47"
+NEIFLIX_VERSION = "1.48"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -43,6 +43,8 @@ USE_MC_REVERSE = config.get_setting("neiflix_use_mc_reverse", "neiflix")
 KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
 KODI_USERDATA_PATH = xbmc.translatePath('special://userdata/')
+
+NEIFLIX_RESOURCES_URL = "https://noestasinvitado.com/neiflix_resources/"
 
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/"
 
@@ -205,62 +207,62 @@ def mainlist(item):
             mega_login(True)
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
             itemlist.append(Item(channel=item.channel, title="Películas", action="foro",
-                                 url="https://noestasinvitado.com/peliculas/", folder=True, fa=True, fa_genre=""))
+                                 url="https://noestasinvitado.com/peliculas/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png", folder=True, fa=True, fa_genre=""))
             itemlist.append(Item(channel=item.channel, title="Series", action="foro",
-                                 url="https://noestasinvitado.com/series/", folder=True, fa=True, fa_genre="TV_SE"))
+                                 url="https://noestasinvitado.com/series/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png", folder=True, fa=True, fa_genre="TV_SE"))
             itemlist.append(Item(channel=item.channel, title="Documetales", action="foro",
-                                 url="https://noestasinvitado.com/documentales/", folder=True))
+                                 url="https://noestasinvitado.com/documentales/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png", folder=True))
             itemlist.append(Item(channel=item.channel, title="Vídeos deportivos", action="foro",
-                                 url="https://noestasinvitado.com/deportes/", folder=True))
+                                 url="https://noestasinvitado.com/deportes/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png", folder=True))
             itemlist.append(Item(channel=item.channel, title="Anime", action="foro",
-                                 url="https://noestasinvitado.com/anime/", folder=True))
+                                 url="https://noestasinvitado.com/anime/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png", folder=True))
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", action="foro",
-                                     url="https://noestasinvitado.com/18-15/", folder=True, xxx=True))
+                                     url="https://noestasinvitado.com/18-15/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", folder=True, xxx=True))
             itemlist.append(Item(channel=item.channel, title="Listados alfabéticos", action="indices",
-                                 url="https://noestasinvitado.com/indices/", folder=True))
+                                 url="https://noestasinvitado.com/indices/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_movie_az.png", folder=True))
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[COLOR darkorange][B]Buscar[/B][/COLOR]",
-                    action="search"))
+                    action="search", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_search.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[B]Preferencias[/B]",
-                    action="settings_nei"))
+                    action="settings_nei", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="[B]Borrar caché[/B]",
+                    action="clean_cache",  thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="[COLOR red][B]Borrar historial[/B][/COLOR]",
+                    action="clean_history", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="Regenerar fichero de ajustes avanzados",
+                    action="improve_streaming", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(
                     Item(
                         channel=item.channel,
                         title="Desactivar contenido adulto",
-                        action="xxx_off"))
+                        action="xxx_off", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
             else:
                 itemlist.append(
                     Item(
                         channel=item.channel,
                         title="Reactivar contenido adulto",
-                        action="xxx_on"))
-
-            itemlist.append(
-                Item(
-                    channel=item.channel,
-                    title="[B]Borrar caché[/B]",
-                    action="clean_cache"))
-
-            itemlist.append(
-                Item(
-                    channel=item.channel,
-                    title="[COLOR red][B]Borrar historial[/B][/COLOR]",
-                    action="clean_history"))
-
-            itemlist.append(
-                Item(
-                    channel=item.channel,
-                    title="Regenerar fichero de ajustes avanzados",
-                    action="improve_streaming"))
+                        action="xxx_on", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
         else:
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "ERROR AL HACER LOGIN EN NEI",
                                           os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
@@ -268,12 +270,12 @@ def mainlist(item):
             itemlist.append(
                 Item(channel=item.channel,
                      title="[COLOR red][B]ERROR: Usuario y/o password de NEI incorrectos (revisa las preferencias)[/B][/COLOR]",
-                     action=""))
+                     action="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
             itemlist.append(
                 Item(channel=item.channel,
                      title="[COLOR darkorange][B]Habilita tu cuenta de NEI en preferencias.[/B][/COLOR]",
-                     action="settings_nei"))
+                     action="settings_nei", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
     return itemlist
 
@@ -501,8 +503,29 @@ def foro(item):
 
                     item.contentPlot=rating[2]
 
+                    item.thumbnail = thumbnail +"|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3163.100 Safari/537.36"
+
                 else:
+                    
+                    if '(Ultra HD)' in item.title or '(Ultra HD)' in title:
+                        if 'Español' in item.title or 'Español' in title:
+                            item.thumbnail = NEIFLIX_RESOURCES_URL+"uhd_es.png"
+                        else:
+                            item.thumbnail = NEIFLIX_RESOURCES_URL+"uhd.png"
+                    elif '(HD)' in item.title or '(HD)' in title:
+                        if 'Español' in item.title or 'Español' in title:
+                            item.thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
+                        else:
+                            item.thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
+                    else:
+                        if item.title.strip() == "Películas":
+                            item.thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
+                        elif item.title.strip() == "Series":
+                            item.thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
+
+                    
                     item.parent_title = title.strip()
+
                     content_title = ""
                     matches = re.compile("([^/]+)/$", re.DOTALL).search(url)
 
@@ -511,13 +534,11 @@ def foro(item):
                                                 'seriesovas-anime-espanol', 'seriesovas-anime-v-o-v-o-s'):
                         url = url + "?sort=first_post;desc"
 
+                
                 itemlist.append(item.clone(
                     action=action,
                     title=title,
                     url=url,
-                    thumbnail=thumbnail +
-                              "|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
-                              "Chrome/65.0.3163.100 Safari/537.36",
                     folder=True, contentTitle=content_title, uploader=uploader))
 
         patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
@@ -734,7 +755,7 @@ def get_video_mega_links_group(item):
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title,
                                  url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, parentContent=item,
-                                 folder=False))
+                                 folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
 
                 else:
 
@@ -825,9 +846,9 @@ def get_video_mega_links_group(item):
                         itemlist.append(Item(channel=item.channel,
                                              title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE "
                                                    "(habla con el uploader para que lo suba sin comprimir).[/B][/COLOR]",
-                                             action="", url="", folder=False))
+                                             action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
                         itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
 
                         break
 
@@ -845,7 +866,7 @@ def get_video_mega_links_group(item):
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title,
                                  url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid,
-                                 parentContent=item, folder=False))
+                                 parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
 
         else:
             patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+'
@@ -875,9 +896,9 @@ def get_video_mega_links_group(item):
                         itemlist.append(Item(channel=item.channel,
                                              title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE "
                                                    "(habla con el uploader para que lo suba sin comprimir).[/B][/COLOR]",
-                                             action="", url="", folder=False))
+                                             action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
                         itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                                     title="[COLOR red][B] TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
 
                         break
 
@@ -887,11 +908,11 @@ def get_video_mega_links_group(item):
                             title = "[COLOR green][B](VISTO)[/B][/COLOR] " + title
                             itemlist.append(
                                 Item(channel=item.channel, action="play", server='nei', title=title, url=url,
-                                     parentContent=item, folder=False))
+                                     parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
 
     if len(itemlist)==0:
             itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
     itemlist.append(
                 Item(
                     channel=item.channel,
@@ -1098,10 +1119,10 @@ def find_video_mega_links(item, data):
                                                      title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE"
                                                            " (habla con el uploader para que lo suba sin comprimir)."
                                                            "[/B][/COLOR]",
-                                                     action="", url="", folder=False))
+                                                     action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
 
                                 itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
                                 break
                             else:
                                 title = name + ' [' + str(format_bytes(size)) + ']'
@@ -1110,7 +1131,7 @@ def find_video_mega_links(item, data):
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
                                          url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, parentContent=item,
-                                         folder=False))
+                                         folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
 
             else:
                 patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
@@ -1131,7 +1152,7 @@ def find_video_mega_links(item, data):
                                 file_id = url.split("!")[1]
                                 file_key = url.split("!")[2]
                                 file = mega_api_req({'a': 'g', 'g': 1, 'p': file_id})
-                                logger.info("***************************NEI MEGA API RESPONSE -> "+json.dumps(file, indent = 4))
+                                
                                 key = crypto.base64_to_a32(file_key)
                                 k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
                                 attributes = crypto.base64_url_decode(file['at'])
@@ -1147,19 +1168,16 @@ def find_video_mega_links(item, data):
                                                      title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE"
                                                            " (habla con el uploader para que lo suba sin comprimir)."
                                                            "[/B][/COLOR]",
-                                                     action="", url="", folder=False))
+                                                     action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
                                 
                                 itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
 
                                 break
                             else:
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url, parentContent=item, folder=False))
-        if len(itemlist)==0:
-            itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                         url=url, parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
         itemlist.append(
                 Item(
                     channel=item.channel,
