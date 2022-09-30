@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.45"
+NEIFLIX_VERSION = "1.46"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1334,7 +1334,7 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     logger.info(url)
 
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
     res = re.compile(
         "< *?div +class *?= *?\"avgrat-box\" *?> *?([0-9,]+) *?<",
@@ -1360,7 +1360,7 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     if res:
 
-        data = httptools.downloadpage(res.group(1)).data
+        data = httptools.downloadpage(res.group(1), ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
         sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
 
@@ -1382,7 +1382,7 @@ def get_filmaffinity_data(title):
 
     logger.info(url)
 
-    data = httptools.downloadpage(url).data
+    data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
     rate_pattern1 = "\"avgrat-box\" *?> *?([0-9,.]+) *?<"
 
@@ -1416,7 +1416,7 @@ def get_filmaffinity_data(title):
 
     if res:
 
-        data = httptools.downloadpage(res.group(1)).data
+        data = httptools.downloadpage(res.group(1), ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
         sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
 
