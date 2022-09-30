@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.48"
+NEIFLIX_VERSION = "1.49"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1352,6 +1352,8 @@ def parse_title(title):
 
 
 def get_filmaffinity_data_advanced(title, year, genre):
+
+	title = re.sub('^Saga ' , '', title)
     
     fa_data_filename = KODI_TEMP_PATH + 'kodi_nei_fa_' + hashlib.sha1((title+year+genre).encode('utf-8')).hexdigest()
 
@@ -1416,6 +1418,8 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
 
 def get_filmaffinity_data(title):
+
+    title = re.sub('^Saga ' , '', title)
 
     fa_data_filename = KODI_TEMP_PATH + 'kodi_nei_fa_' + hashlib.sha1((title).encode('utf-8')).hexdigest()
 
