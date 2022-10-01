@@ -27,7 +27,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.57"
+NEIFLIX_VERSION = "1.58"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -804,6 +804,8 @@ def get_video_mega_links_group(item):
 
                 file.write((links_hash + "\n"))
 
+                i=1
+
                 for title, url in matches:
 
                     url_split = url.split('/!')
@@ -850,10 +852,14 @@ def get_video_mega_links_group(item):
 
                         file.write((url + "\n"))
 
+                        infoLabels=item.infoLabels
+
+                        infoLabels['episode'] = i
+
                         itemlist.append(
-                            Item(channel=item.channel, action="play", server='nei', title=title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid,
-                                 parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
+                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
+
+                    i=i+1
 
         else:
             patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+'
