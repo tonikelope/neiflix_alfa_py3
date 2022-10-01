@@ -27,7 +27,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.59"
+NEIFLIX_VERSION = "1.60"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -209,7 +209,7 @@ def mainlist(item):
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
             itemlist.append(Item(channel=item.channel, title="PELÍCULAS", section="PELÍCULAS", mode="movie", action="foro",
                                  url="https://noestasinvitado.com/peliculas/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
-            itemlist.append(Item(channel=item.channel, title="SERIES", section="SERIES", mode="tv", action="foro",
+            itemlist.append(Item(channel=item.channel, title="SERIES", section="SERIES", mode="tvshow", action="foro",
                                  url="https://noestasinvitado.com/series/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
             itemlist.append(Item(channel=item.channel, title="Documetales", section="Documentales", mode="movie", action="foro",
                                  url="https://noestasinvitado.com/documentales/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png"))
@@ -462,11 +462,11 @@ def foro(item):
 
                     content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
 
-                    if "movie" in item.mode:
-                        content_type = "movie"
-                    else:
+                    if item.mode == "tvshow":
                         content_type = "tvshow"
                         content_serie_name = content_title
+                    else:
+                        content_type = "movie"
 
                     info_labels = {'year': parsed_title['year']}
 
@@ -683,6 +683,10 @@ def indices(item):
                 thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
             else:
                 thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
+        elif 'Series' in cat:
+            thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
+        else:
+            thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
 
         mode=""
 
@@ -755,11 +759,12 @@ def get_video_mega_links_group(item):
 
                         infoLabels=item.infoLabels
 
-                        infoLabels['episode'] = i
+                        if item.mode == "tvshow":
+                            infoLabels['episode'] = i
 
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
+                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
 
                 else:
 
@@ -871,10 +876,11 @@ def get_video_mega_links_group(item):
 
                         infoLabels=item.infoLabels
 
-                        infoLabels['episode'] = i
+                        if item.mode == "tvshow":
+                            infoLabels['episode'] = i
 
                         itemlist.append(
-                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
+                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", mode=item.mode, infoLabels=infoLabels))
 
                     i=i+1
 
@@ -918,7 +924,7 @@ def get_video_mega_links_group(item):
                             title = "[COLOR green][B](VISTO)[/B][/COLOR] " + title
                             itemlist.append(
                                 Item(channel=item.channel, action="play", server='nei', title=title, url=url,
-                                     parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
+                                     mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
 
     if len(itemlist)==0:
             itemlist.append(Item(channel=item.channel,
@@ -958,10 +964,10 @@ def find_video_gvideo_links(item, data):
             for url in list(OrderedDict.fromkeys(matches)):
                 itemlist.append(
                     Item(channel=item.channel, action="play", server='gvideo', title='[GVIDEO] ' + item.title, url=url,
-                         parentContent=item, folder=False))
+                         mode=item.mode))
         else:
             itemlist.append(Item(channel=item.channel, action="play", server='gvideo', title='[GVIDEO] ' + item.title,
-                                 url=matches[0], parentContent=item, folder=False))
+                                 url=matches[0], mode=item.mode))
 
     return itemlist
 
@@ -1012,11 +1018,12 @@ def find_video_mega_links(item, data):
 
                 infoLabels=item.infoLabels
 
-                infoLabels['season']=i
-
+                if item.mode == "tvshow":
+                    infoLabels['season']=i
+                
                 itemlist.append(Item(channel=item.channel, action="get_video_mega_links_group",
                                      title='[' + str(i) + '/' + str(len(matches)) + '] ' + item.title, url=item.url,
-                                     mc_group_id=id, infoLabels=infoLabels))
+                                     mc_group_id=id, infoLabels=infoLabels, mode=item.mode))
 
                 i = i + 1
 
@@ -1024,8 +1031,11 @@ def find_video_mega_links(item, data):
 
         else:
             infoLabels=item.infoLabels
-            infoLabels['season'] = 1
-            itemlist = get_video_mega_links_group(Item(channel=item.channel, action='', title='', url=item.url, mc_group_id=matches[0], infoLabels=infoLabels))
+            
+            if item.mode == "tvshow":
+                infoLabels['season'] = 1
+            
+            itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=matches[0], infoLabels=infoLabels))
     else:
 
         mega_sid = mega_login(False)
@@ -1056,11 +1066,12 @@ def find_video_mega_links(item, data):
 
                         infoLabels=item.infoLabels
 
-                        infoLabels['season']=i
+                        if item.mode == "tvshow":
+                            infoLabels['season']=i
 
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, infoLabels=infoLabels))
+                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, nfoLabels=infoLabels))
 
                     else:
 
@@ -1152,8 +1163,7 @@ def find_video_mega_links(item, data):
                                 file.write((url + "\n"))
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, parentContent=item,
-                                         folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
+                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
 
             else:
                 patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
@@ -1199,7 +1209,7 @@ def find_video_mega_links(item, data):
                             else:
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url, parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
+                                         url=url, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
     
         itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
