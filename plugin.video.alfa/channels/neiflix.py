@@ -20,13 +20,14 @@ import time
 from core import httptools
 from core import scrapertools
 from core.item import Item
+from core import tmdb
 from platformcode import config, logger
 from platformcode import platformtools
 from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.56"
+NEIFLIX_VERSION = "1.57"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -206,21 +207,21 @@ def mainlist(item):
                                                        'channels', 'thumb', 'neiflix2_t.png'), 5000)
             mega_login(True)
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
-            itemlist.append(Item(channel=item.channel, title="PELÍCULAS", foro="PELÍCULAS", contentType="movie", action="foro",
-                                 url="https://noestasinvitado.com/peliculas/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png", folder=True, fa=True, fa_genre=""))
-            itemlist.append(Item(channel=item.channel, title="SERIES", foro="SERIES", contentType="tvshow", action="foro",
-                                 url="https://noestasinvitado.com/series/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png", folder=True, fa=True, fa_genre="TV_SE"))
-            itemlist.append(Item(channel=item.channel, title="Documetales", foro="Documentales", action="foro",
-                                 url="https://noestasinvitado.com/documentales/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png", folder=True))
-            itemlist.append(Item(channel=item.channel, title="Vídeos deportivos", foro="Vídeos deportivos", action="foro",
-                                 url="https://noestasinvitado.com/deportes/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png", folder=True))
-            itemlist.append(Item(channel=item.channel, title="Anime", action="foro", foro="Anime",
-                                 url="https://noestasinvitado.com/anime/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png", folder=True))
+            itemlist.append(Item(channel=item.channel, title="PELÍCULAS", section="PELÍCULAS", mode="movie", action="foro",
+                                 url="https://noestasinvitado.com/peliculas/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
+            itemlist.append(Item(channel=item.channel, title="SERIES", section="SERIES", mode="tv", action="foro",
+                                 url="https://noestasinvitado.com/series/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
+            itemlist.append(Item(channel=item.channel, title="Documetales", section="Documentales", mode="movie", action="foro",
+                                 url="https://noestasinvitado.com/documentales/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png"))
+            itemlist.append(Item(channel=item.channel, title="Vídeos deportivos", section="Vídeos deportivos", mode="movie", action="foro",
+                                 url="https://noestasinvitado.com/deportes/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png"))
+            itemlist.append(Item(channel=item.channel, title="Anime", action="foro", section="Anime",
+                                 url="https://noestasinvitado.com/anime/", mode="movie", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
-                itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", foro="\"Guarreridas\"", action="foro",
-                                     url="https://noestasinvitado.com/18-15/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", folder=True, xxx=True))
-            itemlist.append(Item(channel=item.channel, title="Listados alfabéticos", foro="Listados", action="indices",
-                                 url="https://noestasinvitado.com/indices/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_movie_az.png", folder=True))
+                itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", mode="movie", section="Guarreridas", action="foro",
+                                     url="https://noestasinvitado.com/18-15/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", xxx=True))
+            itemlist.append(Item(channel=item.channel, title="Listados alfabéticos", mode="movie", section="Listados", action="indices",
+                                 url="https://noestasinvitado.com/indices/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_movie_az.png"))
             itemlist.append(
                 Item(
                     channel=item.channel,
@@ -453,94 +454,67 @@ def foro(item):
 
                 thumbnail = ""
 
+                content_serie_name = ""
+
                 if final_item:
 
                     parsed_title = parse_title(scrapedtitle)
 
-                    content_title = parsed_title['title']
+                    content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
 
-                    year = parsed_title['year']
+                    if "movie" in item.mode:
+                        content_type = "movie"
+                    else:
+                        content_type = "tvshow"
+                        content_serie_name = content_title
 
-                    item.infoLabels = {'year': year}
+                    info_labels = {'year': parsed_title['year']}
 
-                    if item.fa:
+                    if 'Ultra HD ' in item.parent_title:
+                        quality = 'UHD'
+                    elif 'HD ' in item.parent_title:
+                        quality = 'HD'
+                    else:
+                        quality = 'SD'
 
-                        if item.fa_genre == 'TV_SE':
-                            rating = get_filmaffinity_data(content_title)
+                    title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
 
-                            if rating[0] is None:
-                                rating = get_filmaffinity_data_advanced(content_title, year, item.fa_genre)
-                        else:
-                            rating = get_filmaffinity_data_advanced(content_title, year, item.fa_genre)
-
-                        if 'Ultra HD ' in item.parent_title:
-                            quality = 'UHD'
-                        elif 'HD ' in item.parent_title:
-                            quality = 'HD'
-                        else:
-                            quality = 'SD'
-
-                        if rating[0]:
-                            if float(rating[0]) >= 7.0:
-                                rating_text = "[COLOR green][FA " + \
-                                              rating[0] + "][/COLOR]"
-                            elif float(rating[0]) < 4.0:
-                                rating_text = "[COLOR red][FA " + \
-                                              rating[0] + "][/COLOR]"
-                            else:
-                                rating_text = "[FA " + rating[0] + "]"
-                        else:
-                            rating_text = "[FA ---]"
-
-                        title = "[COLOR darkorange][B]" + content_title + "[/B][/COLOR] " + (
-                            "(" + year + ")" if year else "") + " [" + quality + "] [B]" + \
-                                rating_text + "[/B] (" + uploader + ")"
-
-                        if rating[1]:
-                            thumbnail = rating[1].replace('msmall', 'large')
-                        else:
-                            thumbnail = ""
-
-                        item.contentPlot=rating[2]
-
-                    item.thumbnail = thumbnail +"|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3163.100 Safari/537.36"
+                    #item.thumbnail = thumbnail +"|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3163.100 Safari/537.36"
 
                 else:
                     
                     if '(Ultra HD)' in item.title or '(Ultra HD)' in title:
                         if 'Español' in item.title or 'Español' in title:
-                            item.thumbnail = NEIFLIX_RESOURCES_URL+"uhd_es.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+"uhd_es.png"
                         else:
-                            item.thumbnail = NEIFLIX_RESOURCES_URL+"uhd.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+"uhd.png"
                     elif '(HD)' in item.title or '(HD)' in title:
                         if 'Español' in item.title or 'Español' in title:
-                            item.thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
                         else:
-                            item.thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
                     else:
                         if item.title.strip() == "PELÍCULAS":
-                            item.thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
+                            thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
                         elif item.title.strip() == "SERIES":
-                            item.thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
+                            thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
 
-                    title = "["+item.foro + "] " + title
+                    title = "["+ item.section + "] " + title
                     
                     item.parent_title = title.strip()
 
                     content_title = ""
+
+                    content_type = ""
+
+                    info_labels = []
+                    
                     matches = re.compile("([^/]+)/$", re.DOTALL).search(url)
 
-                    if matches.group(1) not in ('hd-espanol-59', 'hd-v-o-v-o-s-61', 'hd-animacion-62',
-                                                'sd-espanol-53', 'sd-v-o-v-o-s-54', 'sd-animacion',
-                                                'seriesovas-anime-espanol', 'seriesovas-anime-v-o-v-o-s'):
+                    if matches.group(1) not in ('hd-espanol-59', 'hd-v-o-v-o-s-61', 'hd-animacion-62', 'sd-espanol-53', 'sd-v-o-v-o-s-54', 'sd-animacion', 'seriesovas-anime-espanol', 'seriesovas-anime-v-o-v-o-s'):
                         url = url + "?sort=first_post;desc"
 
-                
-                itemlist.append(item.clone(
-                    action=action,
-                    title=title,
-                    url=url,
-                    folder=True, contentTitle=content_title, uploader=uploader))
+                itemlist.append(Item(channel=item.channel, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action=action, title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
         patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
@@ -549,14 +523,23 @@ def foro(item):
         if matches:
             url = matches.group(1)
             title = "[B]>> Página Siguiente[/B]"
-            itemlist.append(
-                item.clone(
-                    action="foro",
-                    title=title,
-                    url=url,
-                    thumbnail="",
-                    folder=True,
-                    contentPlot=""))
+            itemlist.append(Item(channel=item.channel, parent_title=item.parent_title, mode=item.mode, section=item.section, action="foro", title=title, url=url))
+
+        tmdb.set_infoLabels_itemlist(itemlist, True)
+
+        for i in itemlist:
+            if i.infoLabels and 'rating' in i.infoLabels:
+
+                if i.infoLabels['rating'] >= 7.0:
+                    rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                elif i.infoLabels['rating'] < 4.0:
+                    rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                else:
+                    rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+
+                i.title = i.title.replace('##*NOTA*##', rating_text)
+            else:
+                i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
 
@@ -753,10 +736,13 @@ def get_video_mega_links_group(item):
                         if hashlib.sha1(title.encode("utf-8")).hexdigest() in HISTORY:
                             title = "[COLOR green][B](VISTO)[/B][/COLOR] " + title
 
+                        infoLabels=item.infoLabels
+
+                        infoLabels['episode'] = i
+
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, parentContent=item,
-                                 folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
+                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
 
                 else:
 
@@ -919,6 +905,9 @@ def get_video_mega_links_group(item):
                     channel=item.channel,
                     title="[B]REFRESCAR CONTENIDO[/B]",
                     action="refrescar_contenido", folder=False))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
     return itemlist
 
 
@@ -1000,14 +989,20 @@ def find_video_mega_links(item, data):
             i = 1
 
             for id in list(OrderedDict.fromkeys(matches)):
+
+                infoLabels=item.infoLabels
+
+                infoLabels['season']=i
+
                 itemlist.append(Item(channel=item.channel, action="get_video_mega_links_group",
                                      title='[' + str(i) + '/' + str(len(matches)) + '] ' + item.title, url=item.url,
-                                     mc_group_id=id, folder=True))
+                                     mc_group_id=id, infoLabels=infoLabels))
 
                 i = i + 1
         else:
-            itemlist = get_video_mega_links_group(
-                Item(channel=item.channel, action='', title='', url=item.url, mc_group_id=matches[0], folder=True))
+            infoLabels=item.infoLabels
+            infoLabels['season'] = 1
+            itemlist = get_video_mega_links_group(Item(channel=item.channel, action='', title='', url=item.url, mc_group_id=matches[0], infoLabels=infoLabels))
     else:
 
         mega_sid = mega_login(False)
@@ -1036,10 +1031,13 @@ def find_video_mega_links(item, data):
 
                         title = name + ' [' + str(format_bytes(float(size))) + ']'
 
+                        infoLabels=item.infoLabels
+
+                        infoLabels['season']=i
+
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid,
-                                 parentContent=item, folder=False))
+                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, infoLabels=infoLabels))
 
                     else:
 
@@ -1184,6 +1182,8 @@ def find_video_mega_links(item, data):
                     channel=item.channel,
                     title="[B]REFRESCAR CONTENIDO[/B]",
                     action="refrescar_contenido", folder=False))
+        
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
     return itemlist
 
@@ -1311,7 +1311,7 @@ def extract_title(title):
 
     if res:
 
-        return res.group(0)
+        return res.group(0).strip()
 
     else:
 
