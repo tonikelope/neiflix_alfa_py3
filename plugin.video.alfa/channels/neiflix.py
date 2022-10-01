@@ -27,7 +27,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.61"
+NEIFLIX_VERSION = "1.62"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -572,24 +572,54 @@ def search(item, texto):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, uploader in matches:
+
         url = urllib.parse.urljoin(item.url, scrapedurl)
 
         scrapedtitle = scrapertools.htmlclean(scrapedtitle)
 
-        title = scrapedtitle + " [" + uploader + "]"
+        if uploader != '>':
+            title = scrapedtitle + " (" + uploader + ")"
+        else:
+            title = scrapedtitle
 
         thumbnail = ""
 
+        content_serie_name = ""
+
         parsed_title = parse_title(scrapedtitle)
 
-        year = parsed_title['year']
+        content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
 
-        content_title = parsed_title['title']
+        quality = None
 
-        item.infoLabels = {'year': year}
+        if "/hd-espanol-235/" in url or "/hd-v-o-v-o-s-236/" in url or "/uhd-animacion/" in url:
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "UHD"
+        elif "/hd-espanol-59/" in url or "/hd-v-o-v-o-s-61/" in url or "/hd-animacion-62/" in url:
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "HD"
+        elif "/sd-espanol-53/" in url or "/sd-v-o-v-o-s-54/" in url or "/sd-animacion/" in url:
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "SD"
 
-        itemlist.append(item.clone(action="foro", title=title, url=url, thumbnail=thumbnail, contentTitle=content_title,
-                                   folder=True))
+        if "/ultrahd-espanol/" in url or "/ultrahd-vo/" in url:
+            content_type = "movie"
+            quality = "UHD"
+        elif "/hd-espanol/" in url or "/hd-v-o-v-o-s/" in url:
+            content_type = "movie"
+            quality = "HD"
+        elif not quality:
+            content_type = "movie"
+            quality = "SD"
+
+        info_labels = {'year': parsed_title['year']}
+
+        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+
+        itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
     patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
@@ -600,13 +630,23 @@ def search(item, texto):
         title = "[B]>> Página Siguiente[/B]"
         thumbnail = ""
         plot = ""
-        itemlist.append(
-            item.clone(
-                action="search_pag",
-                title=title,
-                url=url,
-                thumbnail=thumbnail,
-                folder=True))
+        itemlist.append(Item(channel=item.channel, action="search_pag", title=title, url=url, thumbnail=item.thumbnail))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    for i in itemlist:
+        if i.infoLabels and 'rating' in i.infoLabels:
+
+            if i.infoLabels['rating'] >= 7.0:
+                rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+            elif i.infoLabels['rating'] < 4.0:
+                rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+            else:
+                rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+
+            i.title = i.title.replace('##*NOTA*##', rating_text)
+        else:
+            i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
 
@@ -626,20 +666,49 @@ def search_pag(item):
 
         scrapedtitle = scrapertools.htmlclean(scrapedtitle)
 
-        title = scrapedtitle + " [" + uploader + "]"
+        if uploader != '>':
+            title = scrapedtitle + " (" + uploader + ")"
+        else:
+            title = scrapedtitle
 
         thumbnail = ""
 
+        content_serie_name = ""
+
         parsed_title = parse_title(scrapedtitle)
 
-        year = parsed_title['year']
+        content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
 
-        content_title = parsed_title['title']
+        quality = None
 
-        item.infoLabels = {'year': year}
+        if "/hd-espanol-235/" in url or "/hd-v-o-v-o-s-236/" in url or "/uhd-animacion/" in url:
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "UHD"
+        elif "/hd-espanol-59/" in url or "/hd-v-o-v-o-s-61/" in url or "/hd-animacion-62/" in url:
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "HD"
+        elif "/sd-espanol-53/" in url or "/sd-v-o-v-o-s-54/" in url or "/sd-animacion/" in url:
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "SD"
 
-        itemlist.append(item.clone(action="foro", title=title, url=url, thumbnail=thumbnail, contentTitle=content_title,
-                                   folder=True))
+        if "/ultrahd-espanol/" in url or "/ultrahd-vo/" in url:
+            content_type = "movie"
+            quality = "UHD"
+        elif "/hd-espanol/" in url or "/hd-v-o-v-o-s/" in url:
+            content_type = "movie"
+            quality = "HD"
+        elif not quality:
+            content_type = "movie"
+            quality = "SD"
+
+        info_labels = {'year': parsed_title['year']}
+
+        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+
+        itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
     patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
@@ -650,13 +719,23 @@ def search_pag(item):
         title = "[B]>> Página Siguiente[/B]"
         thumbnail = ""
         plot = ""
-        itemlist.append(
-            item.clone(
-                action="search_pag",
-                title=title,
-                url=url,
-                thumbnail=thumbnail,
-                folder=True))
+        itemlist.append(Item(channel=item.channel, action="search_pag", title=title, url=url, thumbnail=item.thumbnail))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    for i in itemlist:
+        if i.infoLabels and 'rating' in i.infoLabels:
+
+            if i.infoLabels['rating'] >= 7.0:
+                rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+            elif i.infoLabels['rating'] < 4.0:
+                rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+            else:
+                rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+
+            i.title = i.title.replace('##*NOTA*##', rating_text)
+        else:
+            i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
 
@@ -760,7 +839,12 @@ def get_video_mega_links_group(item):
                         infoLabels=item.infoLabels
 
                         if item.mode == "tvshow":
-                            infoLabels['episode'] = i
+                            episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                            
+                            if episode:
+                                infoLabels['episode'] = int(episode.group(1))
+                            else:
+                                infoLabels['episode'] = i
 
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title,
@@ -877,7 +961,12 @@ def get_video_mega_links_group(item):
                         infoLabels=item.infoLabels
 
                         if item.mode == "tvshow":
-                            infoLabels['episode'] = i
+                            episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                            
+                            if episode:
+                                infoLabels['episode'] = int(episode.group(1))
+                            else:
+                                infoLabels['episode'] = i
 
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", mode=item.mode, infoLabels=infoLabels))
