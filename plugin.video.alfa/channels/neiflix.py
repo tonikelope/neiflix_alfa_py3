@@ -27,7 +27,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.58"
+NEIFLIX_VERSION = "1.59"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -208,62 +208,62 @@ def mainlist(item):
             mega_login(True)
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
             itemlist.append(Item(channel=item.channel, title="PELÍCULAS", section="PELÍCULAS", mode="movie", action="foro",
-                                 url="https://noestasinvitado.com/peliculas/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
+                                 url="https://noestasinvitado.com/peliculas/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
             itemlist.append(Item(channel=item.channel, title="SERIES", section="SERIES", mode="tv", action="foro",
-                                 url="https://noestasinvitado.com/series/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
+                                 url="https://noestasinvitado.com/series/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
             itemlist.append(Item(channel=item.channel, title="Documetales", section="Documentales", mode="movie", action="foro",
-                                 url="https://noestasinvitado.com/documentales/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png"))
+                                 url="https://noestasinvitado.com/documentales/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png"))
             itemlist.append(Item(channel=item.channel, title="Vídeos deportivos", section="Vídeos deportivos", mode="movie", action="foro",
-                                 url="https://noestasinvitado.com/deportes/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png"))
+                                 url="https://noestasinvitado.com/deportes/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png"))
             itemlist.append(Item(channel=item.channel, title="Anime", action="foro", section="Anime",
-                                 url="https://noestasinvitado.com/anime/", mode="movie", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
+                                 url="https://noestasinvitado.com/anime/", mode="movie", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", mode="movie", section="Guarreridas", action="foro",
-                                     url="https://noestasinvitado.com/18-15/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", xxx=True))
+                                     url="https://noestasinvitado.com/18-15/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", xxx=True))
             itemlist.append(Item(channel=item.channel, title="Listados alfabéticos", mode="movie", section="Listados", action="indices",
-                                 url="https://noestasinvitado.com/indices/", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_movie_az.png"))
+                                 url="https://noestasinvitado.com/indices/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_movie_az.png"))
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[COLOR darkorange][B]Buscar[/B][/COLOR]",
-                    action="search", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_search.png"))
+                    action="search", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_search.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[B]Preferencias[/B]",
-                    action="settings_nei", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="settings_nei", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[B]Borrar caché[/B]",
-                    action="clean_cache",  thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="clean_cache", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="[COLOR red][B]Borrar historial[/B][/COLOR]",
-                    action="clean_history", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="clean_history", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="Regenerar fichero de ajustes avanzados",
-                    action="improve_streaming", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="improve_streaming", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(
                     Item(
                         channel=item.channel,
                         title="Desactivar contenido adulto",
-                        action="xxx_off", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                        action="xxx_off", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
             else:
                 itemlist.append(
                     Item(
                         channel=item.channel,
                         title="Reactivar contenido adulto",
-                        action="xxx_on", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                        action="xxx_on", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
         else:
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "ERROR AL HACER LOGIN EN NEI",
                                           os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
@@ -271,12 +271,12 @@ def mainlist(item):
             itemlist.append(
                 Item(channel=item.channel,
                      title="[COLOR red][B]ERROR: Usuario y/o password de NEI incorrectos (revisa las preferencias)[/B][/COLOR]",
-                     action="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                     action="", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
             itemlist.append(
                 Item(channel=item.channel,
                      title="[COLOR darkorange][B]Habilita tu cuenta de NEI en preferencias.[/B][/COLOR]",
-                     action="settings_nei", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                     action="settings_nei", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
     return itemlist
 
@@ -664,22 +664,41 @@ def search_pag(item):
 def indices(item):
     itemlist = []
 
-    categories = ['Películas HD Español', 'Películas HD VO', 'Películas SD Español', 'Películas SD VO',
-                  'Series HD Español', 'Series HD VO', 'Series SD Español', 'Series SD VO', 'Películas Anime Español',
+    categories = ['Películas Ultra HD Español', 'Películas Ultra HD VO', 'Películas HD Español', 'Películas HD VO', 'Películas SD Español', 'Películas SD VO',
+                  'Series Ultra HD Español', 'Series Ultra HD VO', 'Series HD Español', 'Series HD VO', 'Series SD Español', 'Series SD VO', 'Películas Anime Español',
                   'Películas Anime VO', 'Series Anime Español', 'Series Anime VO', 'Películas clásicas', 'Deportes',
                   'Películas XXX HD', 'Películas XXX SD', 'Vídeos XXX HD', 'Vídeos XXX SD']
 
     for cat in categories:
-        itemlist.append(
-            Item(channel=item.channel, title=cat, action="gen_index", url="https://noestasinvitado.com/indices/",
-                 folder=True))
+
+        thumbnail = ""
+
+        if 'Ultra HD' in cat:
+            if 'Español' in cat:
+                thumbnail = NEIFLIX_RESOURCES_URL+"uhd_es.png"
+            else:
+                thumbnail = NEIFLIX_RESOURCES_URL+"uhd.png"
+        elif 'HD' in cat:
+            if 'Español' in cat:
+                thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
+            else:
+                thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
+
+        mode=""
+
+        if 'Películas' in cat:
+            mode = "movie"
+        elif 'Series' in cat:
+            mode="tvshow"
+
+        itemlist.append(Item(channel=item.channel, cat=cat, title=cat, mode=mode, action="gen_index", url="https://noestasinvitado.com/indices/", thumbnail=thumbnail))
 
     return itemlist
 
 
 def gen_index(item):
-    categories = {'Películas HD Español': 47, 'Películas HD VO': 48, 'Películas SD Español': 44, 'Películas SD VO': 42,
-                  'Series HD Español': 59, 'Series HD VO': 61, 'Series SD Español': 53, 'Series SD VO': 54,
+    categories = {'Películas Ultra HD Español':229, 'Películas Ultra HD VO': 230, 'Películas HD Español': 47, 'Películas HD VO': 48, 'Películas SD Español': 44, 'Películas SD VO': 42,
+                  'Series Ultra HD Español': 235, 'Series Ultra HD VO': 236, 'Series HD Español': 59, 'Series HD VO': 61, 'Series SD Español': 53, 'Series SD VO': 54,
                   'Películas Anime Español': 66, 'Películas Anime VO': 67, 'Series Anime Español': 68,
                   'Series Anime VO': 69, 'Películas clásicas': 218, 'Deportes': 23, 'Películas XXX HD': 182,
                   'Películas XXX SD': 183, 'Vídeos XXX HD': 185, 'Vídeos XXX SD': 186}
@@ -692,9 +711,7 @@ def gen_index(item):
     start = 1
 
     for letter in letters:
-        itemlist.append(Item(channel=item.channel, title="%s (Letra %s)" % (item.title, letter), action="indice_links",
-                             url="https://noestasinvitado.com/indices/?id=%d;start=%d" % (
-                                 categories[item.title], start), folder=True))
+        itemlist.append(Item(channel=item.channel, cat=item.cat, mode=item.mode, thumbnail=item.thumbnail, title="%s (Letra %s)" % (item.title, letter), action="indice_links",url="https://noestasinvitado.com/indices/?id=%d;start=%d" % (categories[item.title], start), folder=True))
         start = start + 1
 
     return itemlist
@@ -906,11 +923,8 @@ def get_video_mega_links_group(item):
     if len(itemlist)==0:
             itemlist.append(Item(channel=item.channel,
                                                      title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
-    itemlist.append(
-                Item(
-                    channel=item.channel,
-                    title="[B]REFRESCAR CONTENIDO[/B]",
-                    action="refrescar_contenido", folder=False))
+    
+    itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -1005,6 +1019,9 @@ def find_video_mega_links(item, data):
                                      mc_group_id=id, infoLabels=infoLabels))
 
                 i = i + 1
+
+            itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
+
         else:
             infoLabels=item.infoLabels
             infoLabels['season'] = 1
@@ -1183,11 +1200,8 @@ def find_video_mega_links(item, data):
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
                                          url=url, parentContent=item, folder=False, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
-        itemlist.append(
-                Item(
-                    channel=item.channel,
-                    title="[B]REFRESCAR CONTENIDO[/B]",
-                    action="refrescar_contenido", folder=False))
+    
+        itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -1218,31 +1232,53 @@ def indice_links(item):
 
         scrapedtitle = scrapertools.htmlclean(scrapedtitle)
 
-        parsed_title = parse_title(scrapedtitle)
-
-        year = parsed_title['year']
-
-        content_title = parsed_title['title']
-
-        if item.title.find('Películas') != -1:
-
-            if item.title.find(' HD ') != -1:
-                quality = 'HD'
-            else:
-                quality = 'SD'
-
-            title = "[COLOR darkorange][B]" + content_title + \
-                    "[/B][/COLOR] (" + year + ") [" + quality + \
-                    "] (" + uploader + ")"
+        if uploader != '>':
+            title = scrapedtitle + " (" + uploader + ")"
         else:
             title = scrapedtitle
 
         thumbnail = ""
 
-        item.infoLabels = {'year': year}
+        content_serie_name = ""
 
-        itemlist.append(item.clone(action="foro", title=title, url=url, thumbnail=thumbnail, folder=True,
-                                   contentTitle=content_title))
+        parsed_title = parse_title(scrapedtitle)
+
+        content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
+
+        if item.mode == "tvshow":
+            content_type = "tvshow"
+            content_serie_name = content_title
+        else:
+            content_type = "movie"
+
+        info_labels = {'year': parsed_title['year']}
+
+        if 'Ultra HD' in item.cat:
+            quality = 'UHD'
+        elif 'HD' in item.cat:
+            quality = 'HD'
+        else:
+            quality = 'SD'
+
+        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+
+        itemlist.append(Item(channel=item.channel, mode=item.mode, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    for i in itemlist:
+        if i.infoLabels and 'rating' in i.infoLabels:
+
+            if i.infoLabels['rating'] >= 7.0:
+                rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+            elif i.infoLabels['rating'] < 4.0:
+                rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+            else:
+                rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+
+            i.title = i.title.replace('##*NOTA*##', rating_text)
+        else:
+            i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
 
