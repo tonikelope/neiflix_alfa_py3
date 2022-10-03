@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.67"
+NEIFLIX_VERSION = "1.68"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1398,7 +1398,7 @@ def leer_criticas_fa(item):
     criticas = []
 
     for critica_nota, critica_url, critica_title, critica_nick in res:
-        criticas.append({'nota': critica_nota, 'url': critica_url, 'title': critica_title, 'nick': critica_nick})
+        criticas.append({'nota': critica_nota, 'url': critica_url, 'title': html.unescape(critica_title), 'nick': critica_nick})
 
     itemlist = []
 
