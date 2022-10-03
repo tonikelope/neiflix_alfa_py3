@@ -17,7 +17,6 @@ import xbmcaddon
 import xbmcgui
 import html
 import time
-import cgi
 import shutil
 from core import httptools
 from core import scrapertools
@@ -29,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.66"
+NEIFLIX_VERSION = "1.67"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
