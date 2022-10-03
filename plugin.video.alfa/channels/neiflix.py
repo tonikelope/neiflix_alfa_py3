@@ -17,6 +17,7 @@ import xbmcaddon
 import xbmcgui
 import html
 import time
+import cgi
 from core import httptools
 from core import scrapertools
 from core.item import Item
@@ -27,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.62"
+NEIFLIX_VERSION = "1.63"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -531,7 +532,7 @@ def foro(item):
             if i.infoLabels and 'rating' in i.infoLabels:
 
                 if i.infoLabels['rating'] >= 7.0:
-                    rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                    rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
                 elif i.infoLabels['rating'] < 4.0:
                     rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
                 else:
@@ -638,7 +639,7 @@ def search(item, texto):
         if i.infoLabels and 'rating' in i.infoLabels:
 
             if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             elif i.infoLabels['rating'] < 4.0:
                 rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             else:
@@ -727,7 +728,7 @@ def search_pag(item):
         if i.infoLabels and 'rating' in i.infoLabels:
 
             if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             elif i.infoLabels['rating'] < 4.0:
                 rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             else:
@@ -834,7 +835,7 @@ def get_video_mega_links_group(item):
                         title = "[MEGA] " + name + ' [' + str(format_bytes(float(size))) + ']'
 
                         if hashlib.sha1(title.encode("utf-8")).hexdigest() in HISTORY:
-                            title = "[COLOR green][B](VISTO)[/B][/COLOR] " + title
+                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
 
                         infoLabels=item.infoLabels
 
@@ -952,7 +953,7 @@ def get_video_mega_links_group(item):
                         title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
 
                         if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                            title = "[COLOR green][B](VISTO)[/B][/COLOR] " + title
+                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
 
                         url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
 
@@ -974,12 +975,12 @@ def get_video_mega_links_group(item):
                     i=i+1
 
         else:
-            patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+'
+            patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
 
             matches = re.compile(patron_mega).findall(data)
 
             if matches:
-
+                i=1
                 for url in matches:
 
                     if len(url.split("!")) == 3:
@@ -1010,15 +1011,28 @@ def get_video_mega_links_group(item):
                     else:
 
                         if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                            title = "[COLOR green][B](VISTO)[/B][/COLOR] " + title
-                            itemlist.append(
-                                Item(channel=item.channel, action="play", server='nei', title=title, url=url,
-                                     mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
+                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+                            
+                            infoLabels=item.infoLabels
+
+                            if item.mode == "tvshow":
+                                episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                                
+                                if episode:
+                                    infoLabels['episode'] = int(episode.group(1))
+                                else:
+                                    infoLabels['episode'] = i
+
+                            itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png", infoLabels=infoLabels))
+
+                    i=i+1
 
     if len(itemlist)==0:
             itemlist.append(Item(channel=item.channel,
                                                      title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
     
+    itemlist.append(Item(channel=item.channel, title="[COLOR deeppink][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+
     itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1116,6 +1130,8 @@ def find_video_mega_links(item, data):
 
                 i = i + 1
 
+            itemlist.append(Item(channel=item.channel, title="[COLOR deeppink][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+
             itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
         else:
@@ -1204,6 +1220,8 @@ def find_video_mega_links(item, data):
 
                     file.write((links_hash + "\n"))
 
+                    i = 1
+
                     for url in matches:
 
                         if url not in urls:
@@ -1250,9 +1268,22 @@ def find_video_mega_links(item, data):
                                 title = name + ' [' + str(format_bytes(size)) + ']'
                                 url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
                                 file.write((url + "\n"))
+
+                                infoLabels=item.infoLabels
+
+                                if item.mode == "tvshow":
+                                    episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                                    
+                                    if episode:
+                                        infoLabels['episode'] = int(episode.group(1))
+                                    else:
+                                        infoLabels['episode'] = i
+
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png"))
+                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
+
+                            i=i+1
 
             else:
                 patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
@@ -1260,7 +1291,8 @@ def find_video_mega_links(item, data):
                 matches = re.compile(patron_mega).findall(data)
 
                 if matches:
-
+                    i = 1
+                    
                     for url in matches:
 
                         url = re.sub(r"(\.nz/file/)([^#]+)#", r".nz/#!\2!", url)
@@ -1296,16 +1328,74 @@ def find_video_mega_links(item, data):
 
                                 break
                             else:
-                                itemlist.append(
-                                    Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png"))
-    
+                                infoLabels=item.infoLabels
+
+                                if item.mode == "tvshow":
+                                    episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                                    
+                                    if episode:
+                                        infoLabels['episode'] = int(episode.group(1))
+                                    else:
+                                        infoLabels['episode'] = i
+                                
+                                itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png", infoLabels=infoLabels))
+                        
+                            i = i+1
+
+        itemlist.append(Item(channel=item.channel, title="[COLOR deeppink][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+
         itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     return itemlist
 
+def leer_criticas_fa(item):
+    fa_data = get_filmaffinity_data_advanced(item.contentTitle, str(item.year), "TV_SE" if item.mode=="tvshow" else "")
+
+    itemlist = []
+
+    if float(fa_data[0]) >= 7.0:
+        rating_text = "[B][COLOR lightgreen]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/COLOR][/B]"
+    elif float(fa_data[0]) < 4.0:
+        rating_text = "[B][COLOR red]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/COLOR][/B]"
+    else:
+        rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/B]"
+
+    itemlist.append(Item(channel=item.channel, title=rating_text, action="", thumbnail=item.thumbnail))
+
+    for critica in fa_data[3]:
+        if float(critica['nota']) >= 7.0:
+            rating_text = "[B][COLOR lightgreen][" + str(critica['nota']) + "][/COLOR][/B]"
+            thumbnail = NEIFLIX_RESOURCES_URL+"buena.png"
+        elif float(critica['nota']) < 4.0:
+            rating_text = "[B][COLOR red][" + str(critica['nota']) + "][/COLOR][/B]"
+            thumbnail = NEIFLIX_RESOURCES_URL+"mala.png"
+        else:
+            rating_text = "[B][" + str(critica['nota']) + "][/B]"
+            thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
+
+        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url'], critica_title=critica['title']+" ("+critica['nick']+")"))
+
+    return itemlist
+
+def clean_html_tags(data):
+    tag_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
+
+    # Remove well-formed tags, fixing mistakes by legitimate users
+    no_tags = tag_re.sub('', data)
+
+    return no_tags
+
+def cargar_critica(item):
+    data = httptools.downloadpage(item.url, ignore_response_code=True, headers={"Referer": item.url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+
+    critica_pattern = "\"review-text1\" *?>(.*?)< *?/ *?div"
+
+    res = re.compile(critica_pattern, re.DOTALL).search(data)
+
+    if res:
+        xbmcgui.Dialog().textviewer(item.critica_title, html.unescape(clean_html_tags(res.group(1).replace('<br>', "\n"))))
 
 def refrescar_contenido(item):
 
@@ -1369,7 +1459,7 @@ def indice_links(item):
         if i.infoLabels and 'rating' in i.infoLabels:
 
             if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR green][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             elif i.infoLabels['rating'] < 4.0:
                 rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             else:
@@ -1462,7 +1552,7 @@ def extract_title(title):
 def play(item):
     itemlist = []
 
-    checksum = hashlib.sha1(item.title.replace("[COLOR green][B](VISTO)[/B][/COLOR] ", '').encode('utf-8')).hexdigest()
+    checksum = hashlib.sha1(item.title.replace("[COLOR lightgreen][B](VISTO)[/B][/COLOR] ", '').encode('utf-8')).hexdigest()
 
     if checksum not in HISTORY:
         HISTORY.append(checksum)
@@ -1531,11 +1621,13 @@ def get_filmaffinity_data_advanced(title, year, genre):
     else:
         thumb_url = None
 
-    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film[0-9]+\.html)\""
+    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film([0-9]+)\.html)\""
 
     res = re.compile(url_film_pattern, re.DOTALL).search(data)
 
     if res:
+
+        film_id = res.group(2)
 
         data = httptools.downloadpage(res.group(1), ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
@@ -1548,10 +1640,22 @@ def get_filmaffinity_data_advanced(title, year, genre):
         else:
             sinopsis = None
 
+        criticas_url = "https://www.filmaffinity.com/es/reviews2/1/"+film_id+".html"
+
+        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+
+        criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
+
+        res = re.compile(criticas_pattern, re.DOTALL).findall(data)
+            
+        criticas = []
+
+        for critica_nota, critica_url, critica_title, critica_nick in res:
+            criticas.append({'nota': critica_nota, 'url': critica_url, 'title': critica_title, 'nick': critica_nick})
     else:
         sinopsis = None
 
-    fa_data = [rate, thumb_url, sinopsis]
+    fa_data = [rate, thumb_url, sinopsis, criticas]
 
     with open(fa_data_filename, 'wb') as f:
         pickle.dump(fa_data, f)

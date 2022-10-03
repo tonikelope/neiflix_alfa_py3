@@ -17,7 +17,7 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 
-CHECK_MEGA_STUFF_INTEGRITY = True
+CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY = True
 
 MONITOR_TIME = 15
 
@@ -64,21 +64,21 @@ for filename, checksum in sha1_checksums.items():
 
 os.remove(KODI_TEMP_PATH + 'neiflix_channel.sha1')
 
-if CHECK_MEGA_STUFF_INTEGRITY and updated:
+if CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY and updated:
     for f in FILES:
         urlretrieve(ALFA_URL + f, ALFA_PATH + f)
 
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX actualizado!',
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
 
-elif CHECK_MEGA_STUFF_INTEGRITY and broken:
+elif CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY and broken:
     for f in FILES:
         urlretrieve(ALFA_URL + f, ALFA_PATH + f)
 
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX instalado/reparado!',
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
     
-elif CHECK_MEGA_STUFF_INTEGRITY is False:
+elif CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY is False:
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX ALTERADO PERO NO REPARADO!',
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
 
