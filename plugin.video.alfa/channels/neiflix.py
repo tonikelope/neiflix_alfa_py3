@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.69"
+NEIFLIX_VERSION = "1.70"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1409,7 +1409,7 @@ def leer_criticas_fa(item):
     else:
         rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/B]"
 
-    itemlist.append(Item(channel=item.channel, title=rating_text, action="", thumbnail=item.thumbnail))
+    itemlist.append(Item(channel=item.channel, contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
 
     for critica in criticas:
         if float(critica['nota']) >= 7.0:
@@ -1422,7 +1422,7 @@ def leer_criticas_fa(item):
             rating_text = "[B][" + str(critica['nota']) + "][/B]"
             thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
 
-        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url'], critica_title="["+critica['nota']+"] "+critica['title']+" ("+critica['nick']+")"))
+        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url'], critica_title="["+critica['nota']+"] "+critica['title']+" ("+critica['nick']+")"))
 
     return itemlist
 
