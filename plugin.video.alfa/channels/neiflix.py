@@ -18,6 +18,7 @@ import xbmcgui
 import html
 import time
 import cgi
+import shutil
 from core import httptools
 from core import scrapertools
 from core.item import Item
@@ -28,7 +29,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.65"
+NEIFLIX_VERSION = "1.66"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -253,6 +254,13 @@ def mainlist(item):
                     title="Regenerar fichero de ajustes avanzados",
                     action="improve_streaming", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
+            itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="Regenerar miniaturas (todo KODI)",
+                    action="thumbnail_refresh", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+
+
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(
                     Item(
@@ -282,44 +290,71 @@ def mainlist(item):
     return itemlist
 
 
-def improve_streaming(item):
-    
-    if os.path.exists(xbmc.translatePath('special://userdata/advancedsettings.xml')):
-        os.rename(xbmc.translatePath('special://userdata/advancedsettings.xml'), xbmc.translatePath('special://userdata/advancedsettings.xml')+"."+str(int(time.time()))+".bak")
-    
-    settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
+def thumbnail_refresh(item):
 
-    cache = settings_xml.findall("cache")
-    cache = ET.Element('cache')
-    memorysize = ET.Element('memorysize')
-    memorysize.text = '52428800'
-    readfactor = ET.Element('readfactor')
-    readfactor.text = '8'
-    cache.append(memorysize)
-    cache.append(readfactor)
-    settings_xml.getroot().append(cache)
-
-    network = settings_xml.findall("network")
-    network = ET.Element('network')
-    curlclienttimeout = ET.Element('curlclienttimeout')
-    curlclienttimeout.text = '90'
-    network.append(curlclienttimeout)
-    curllowspeedtime = ET.Element('curllowspeedtime')
-    curllowspeedtime.text = '90'
-    network.append(curllowspeedtime)
-    settings_xml.getroot().append(network)
-
-    playlisttimeout = settings_xml.findall('playlisttimeout')
-    playlisttimeout = ET.Element('playlisttimeout')
-    playlisttimeout.text = '90'
-    settings_xml.getroot().append(playlisttimeout)
-
-    settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
-
-    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), '¿SEGURO?')
 
     if ret:
-        xbmc.executebuiltin('RestartApp')
+
+        try:
+            os.remove(xbmc.translatePath('special://userdata/Database/Textures13.db'));
+
+            shutil.rmtree(xbmc.translatePath('special://userdata/Thumbnails'))
+
+            xbmcgui.Dialog().notification('NEIFLIX', 'Miniaturas regeneradas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+
+            ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'Se ha añadido NEIFLIX a ALFA.\n\nES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+
+            if ret:
+                xbmc.executebuiltin('RestartApp')
+
+        except Exception as e:
+            xbmcgui.Dialog().notification('NEIFLIX', 'ERROR al intentar regenerar miniaturas',os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+
+def improve_streaming(item):
+
+    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), '¿SEGURO?')
+
+    if ret:
+    
+        if os.path.exists(xbmc.translatePath('special://userdata/advancedsettings.xml')):
+            os.rename(xbmc.translatePath('special://userdata/advancedsettings.xml'), xbmc.translatePath('special://userdata/advancedsettings.xml')+"."+str(int(time.time()))+".bak")
+        
+        settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
+
+        cache = settings_xml.findall("cache")
+        cache = ET.Element('cache')
+        memorysize = ET.Element('memorysize')
+        memorysize.text = '52428800'
+        readfactor = ET.Element('readfactor')
+        readfactor.text = '8'
+        cache.append(memorysize)
+        cache.append(readfactor)
+        settings_xml.getroot().append(cache)
+
+        network = settings_xml.findall("network")
+        network = ET.Element('network')
+        curlclienttimeout = ET.Element('curlclienttimeout')
+        curlclienttimeout.text = '60'
+        network.append(curlclienttimeout)
+        curllowspeedtime = ET.Element('curllowspeedtime')
+        curllowspeedtime.text = '60'
+        network.append(curllowspeedtime)
+        settings_xml.getroot().append(network)
+
+        playlisttimeout = settings_xml.findall('playlisttimeout')
+        playlisttimeout = ET.Element('playlisttimeout')
+        playlisttimeout.text = '60'
+        settings_xml.getroot().append(playlisttimeout)
+
+        settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
+
+        xbmcgui.Dialog().notification('NEIFLIX', 'Ajustes avanzados regenerados', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+
+        ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+
+        if ret:
+            xbmc.executebuiltin('RestartApp')
 
 def settings_nei(item):
     platformtools.show_channel_settings()
