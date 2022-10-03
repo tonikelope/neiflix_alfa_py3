@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.75"
+NEIFLIX_VERSION = "1.76"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1065,7 +1065,7 @@ def get_video_mega_links_group(item):
             itemlist.append(Item(channel=item.channel,
                                                      title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
     
-    itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+    itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, contentSerieName=item.contentSerieName, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
     itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
@@ -1164,7 +1164,7 @@ def find_video_mega_links(item, data):
 
                 i = i + 1
 
-            itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+            itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, contentSerieName=item.contentSerieName, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
             itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
@@ -1376,7 +1376,7 @@ def find_video_mega_links(item, data):
                         
                             i = i+1
 
-        itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+        itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentSerieName=item.contentSerieName, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
         itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
@@ -1409,7 +1409,7 @@ def leer_criticas_fa(item):
     else:
         rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/B]"
 
-    itemlist.append(Item(channel=item.channel, contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
+    itemlist.append(Item(channel=item.channel, contentPlot="[I]Crítica de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
 
     for critica in criticas:
         if float(critica['nota']) >= 7.0:
