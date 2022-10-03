@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.63"
+NEIFLIX_VERSION = "1.64"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1031,7 +1031,7 @@ def get_video_mega_links_group(item):
             itemlist.append(Item(channel=item.channel,
                                                      title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
     
-    itemlist.append(Item(channel=item.channel, title="[COLOR deeppink][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+    itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
     itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
@@ -1130,7 +1130,7 @@ def find_video_mega_links(item, data):
 
                 i = i + 1
 
-            itemlist.append(Item(channel=item.channel, title="[COLOR deeppink][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+            itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
             itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
@@ -1342,7 +1342,7 @@ def find_video_mega_links(item, data):
                         
                             i = i+1
 
-        itemlist.append(Item(channel=item.channel, title="[COLOR deeppink][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+        itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=item.contentTitle, thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
         itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
@@ -1375,7 +1375,7 @@ def leer_criticas_fa(item):
             rating_text = "[B][" + str(critica['nota']) + "][/B]"
             thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
 
-        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url'], critica_title=critica['title']+" ("+critica['nick']+")"))
+        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url'], critica_title="["+critica['nota']+"] "+critica['title']+" ("+critica['nick']+")"))
 
     return itemlist
 
