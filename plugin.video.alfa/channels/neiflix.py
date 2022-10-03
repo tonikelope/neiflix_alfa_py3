@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.64"
+NEIFLIX_VERSION = "1.65"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1353,6 +1353,19 @@ def find_video_mega_links(item, data):
 def leer_criticas_fa(item):
     fa_data = get_filmaffinity_data_advanced(item.contentTitle, str(item.year), "TV_SE" if item.mode=="tvshow" else "")
 
+    criticas_url = "https://www.filmaffinity.com/es/reviews2/1/"+fa_data[3]+".html"
+
+    data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": criticas_url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+
+    criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
+
+    res = re.compile(criticas_pattern, re.DOTALL).findall(data)
+        
+    criticas = []
+
+    for critica_nota, critica_url, critica_title, critica_nick in res:
+        criticas.append({'nota': critica_nota, 'url': critica_url, 'title': critica_title, 'nick': critica_nick})
+
     itemlist = []
 
     if float(fa_data[0]) >= 7.0:
@@ -1364,7 +1377,7 @@ def leer_criticas_fa(item):
 
     itemlist.append(Item(channel=item.channel, title=rating_text, action="", thumbnail=item.thumbnail))
 
-    for critica in fa_data[3]:
+    for critica in criticas:
         if float(critica['nota']) >= 7.0:
             rating_text = "[B][COLOR lightgreen][" + str(critica['nota']) + "][/COLOR][/B]"
             thumbnail = NEIFLIX_RESOURCES_URL+"buena.png"
@@ -1625,6 +1638,10 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     res = re.compile(url_film_pattern, re.DOTALL).search(data)
 
+    film_id = None
+
+    sinopsis = None
+
     if res:
 
         film_id = res.group(2)
@@ -1637,25 +1654,8 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
         if res:
             sinopsis = html.unescape(res.group(1))
-        else:
-            sinopsis = None
 
-        criticas_url = "https://www.filmaffinity.com/es/reviews2/1/"+film_id+".html"
-
-        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
-
-        criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
-
-        res = re.compile(criticas_pattern, re.DOTALL).findall(data)
-            
-        criticas = []
-
-        for critica_nota, critica_url, critica_title, critica_nick in res:
-            criticas.append({'nota': critica_nota, 'url': critica_url, 'title': critica_title, 'nick': critica_nick})
-    else:
-        sinopsis = None
-
-    fa_data = [rate, thumb_url, sinopsis, criticas]
+    fa_data = [rate, thumb_url, sinopsis, film_id]
 
     with open(fa_data_filename, 'wb') as f:
         pickle.dump(fa_data, f)
@@ -1705,11 +1705,17 @@ def get_filmaffinity_data(title):
     else:
         thumb_url = None
 
-    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film[0-9]+\.html)\""
+    film_id = None
+
+    sinopsis = None
+
+    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film([0-9]+)\.html)\""
 
     res = re.compile(url_film_pattern, re.DOTALL).search(data)
 
     if res:
+
+        film_id = res.group(2)
 
         data = httptools.downloadpage(res.group(1), ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
@@ -1719,13 +1725,8 @@ def get_filmaffinity_data(title):
 
         if res:
             sinopsis = html.unescape(res.group(1))
-        else:
-            sinopsis = None
 
-    else:
-        sinopsis = None
-
-    fa_data = [rate, thumb_url, sinopsis]
+    fa_data = [rate, thumb_url, sinopsis, film_id]
 
     with open(fa_data_filename, 'wb') as f:
         pickle.dump(fa_data, f)
