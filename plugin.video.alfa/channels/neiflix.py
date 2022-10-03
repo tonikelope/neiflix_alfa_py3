@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.68"
+NEIFLIX_VERSION = "1.69"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -567,7 +567,7 @@ def foro(item):
 
                 if i.infoLabels['rating'] >= 7.0:
                     rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-                elif i.infoLabels['rating'] < 4.0:
+                elif i.infoLabels['rating'] < 5.0:
                     rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
                 else:
                     rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
@@ -674,7 +674,7 @@ def search(item, texto):
 
             if i.infoLabels['rating'] >= 7.0:
                 rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-            elif i.infoLabels['rating'] < 4.0:
+            elif i.infoLabels['rating'] < 5.0:
                 rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             else:
                 rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
@@ -763,7 +763,7 @@ def search_pag(item):
 
             if i.infoLabels['rating'] >= 7.0:
                 rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-            elif i.infoLabels['rating'] < 4.0:
+            elif i.infoLabels['rating'] < 5.0:
                 rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             else:
                 rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
@@ -1404,7 +1404,7 @@ def leer_criticas_fa(item):
 
     if float(fa_data[0]) >= 7.0:
         rating_text = "[B][COLOR lightgreen]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/COLOR][/B]"
-    elif float(fa_data[0]) < 4.0:
+    elif float(fa_data[0]) < 5.0:
         rating_text = "[B][COLOR red]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/COLOR][/B]"
     else:
         rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/B]"
@@ -1415,7 +1415,7 @@ def leer_criticas_fa(item):
         if float(critica['nota']) >= 7.0:
             rating_text = "[B][COLOR lightgreen][" + str(critica['nota']) + "][/COLOR][/B]"
             thumbnail = NEIFLIX_RESOURCES_URL+"buena.png"
-        elif float(critica['nota']) < 4.0:
+        elif float(critica['nota']) < 5.0:
             rating_text = "[B][COLOR red][" + str(critica['nota']) + "][/COLOR][/B]"
             thumbnail = NEIFLIX_RESOURCES_URL+"mala.png"
         else:
@@ -1507,7 +1507,7 @@ def indice_links(item):
 
             if i.infoLabels['rating'] >= 7.0:
                 rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-            elif i.infoLabels['rating'] < 4.0:
+            elif i.infoLabels['rating'] < 5.0:
                 rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
             else:
                 rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
