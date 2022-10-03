@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.77"
+NEIFLIX_VERSION = "1.78"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1422,7 +1422,7 @@ def leer_criticas_fa(item):
             rating_text = "[B][" + str(critica['nota']) + "][/B]"
             thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
 
-        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url'], critica_title="["+critica['nota']+"] "+critica['title']+" ("+critica['nick']+")"))
+        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url']))
 
     return itemlist
 
@@ -1442,7 +1442,7 @@ def cargar_critica(item):
     res = re.compile(critica_pattern, re.DOTALL).search(data)
 
     if res:
-        xbmcgui.Dialog().textviewer(item.critica_title, html.unescape(clean_html_tags(res.group(1).replace('<br>', "\n"))))
+        xbmcgui.Dialog().textviewer(item.title, html.unescape(clean_html_tags(res.group(1).replace('<br>', "\n"))))
 
 def refrescar_contenido(item):
 
