@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.78"
+NEIFLIX_VERSION = "1.79"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1385,46 +1385,69 @@ def find_video_mega_links(item, data):
     return itemlist
 
 def leer_criticas_fa(item):
-    fa_data = get_filmaffinity_data_advanced(item.contentTitle, str(item.year), "TV_SE" if item.mode=="tvshow" else "")
+    
+    fa_data = None
 
-    criticas_url = "https://www.filmaffinity.com/es/reviews2/1/"+fa_data[3]+".html"
+    if 'fa_data' in item:
+        fa_data = item.fa_data
 
-    data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": criticas_url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+    if not fa_data:
+        fa_data = get_filmaffinity_data_advanced(item.contentTitle, str(item.year), "TV_SE" if item.mode=="tvshow" else "")
 
-    criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
+    if isinstance(fa_data, list) and len(fa_data)>1:
 
-    res = re.compile(criticas_pattern, re.DOTALL).findall(data)
-        
-    criticas = []
+        itemlist = []
 
-    for critica_nota, critica_url, critica_title, critica_nick in res:
-        criticas.append({'nota': critica_nota, 'url': critica_url, 'title': html.unescape(critica_title), 'nick': critica_nick})
+        for item_fa_data in fa_data:
+            itemlist.append(Item(channel=item.channel, fa_data=item_fa_data, contentTitle=item_fa_data['fa_title'], contentPlot="[I]Críticas de: "+item_fa_data['fa_title']+"[/I]", title=item_fa_data['fa_title'], action="leer_criticas_fa", thumbnail=item.thumbnail))
 
-    itemlist = []
+        return itemlist
 
-    if float(fa_data[0]) >= 7.0:
-        rating_text = "[B][COLOR lightgreen]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/COLOR][/B]"
-    elif float(fa_data[0]) < 5.0:
-        rating_text = "[B][COLOR red]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/COLOR][/B]"
     else:
-        rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data[0]) + "] *****[/B]"
+        
+        if isinstance(fa_data, list):
+            fa_data = fa_data[0]
 
-    itemlist.append(Item(channel=item.channel, contentPlot="[I]Críticas de: "+item.contentTitle+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
+        film_id = fa_data['film_id']
 
-    for critica in criticas:
-        if float(critica['nota']) >= 7.0:
-            rating_text = "[B][COLOR lightgreen][" + str(critica['nota']) + "][/COLOR][/B]"
-            thumbnail = NEIFLIX_RESOURCES_URL+"buena.png"
-        elif float(critica['nota']) < 5.0:
-            rating_text = "[B][COLOR red][" + str(critica['nota']) + "][/COLOR][/B]"
-            thumbnail = NEIFLIX_RESOURCES_URL+"mala.png"
+        criticas_url = "https://www.filmaffinity.com/es/reviews2/1/"+film_id+".html"
+
+        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": criticas_url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+
+        criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
+
+        res = re.compile(criticas_pattern, re.DOTALL).findall(data)
+            
+        criticas = []
+
+        for critica_nota, critica_url, critica_title, critica_nick in res:
+            criticas.append({'nota': critica_nota, 'url': critica_url, 'title': html.unescape(critica_title), 'nick': critica_nick})
+
+        itemlist = []
+
+        if float(fa_data['rate']) >= 7.0:
+            rating_text = "[B][COLOR lightgreen]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/COLOR][/B]"
+        elif float(fa_data['rate']) < 5.0:
+            rating_text = "[B][COLOR red]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/COLOR][/B]"
         else:
-            rating_text = "[B][" + str(critica['nota']) + "][/B]"
-            thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
+            rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/B]"
 
-        itemlist.append(Item(channel=item.channel, nota_fa=fa_data[0], contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url']))
+        itemlist.append(Item(channel=item.channel, contentPlot="[I]Críticas de: "+item.contentTitle+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
 
-    return itemlist
+        for critica in criticas:
+            if float(critica['nota']) >= 7.0:
+                rating_text = "[B][COLOR lightgreen][" + str(critica['nota']) + "][/COLOR][/B]"
+                thumbnail = NEIFLIX_RESOURCES_URL+"buena.png"
+            elif float(critica['nota']) < 5.0:
+                rating_text = "[B][COLOR red][" + str(critica['nota']) + "][/COLOR][/B]"
+                thumbnail = NEIFLIX_RESOURCES_URL+"mala.png"
+            else:
+                rating_text = "[B][" + str(critica['nota']) + "][/B]"
+                thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
+
+            itemlist.append(Item(channel=item.channel, nota_fa=fa_data['rate'], contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url']))
+
+        return itemlist
 
 def clean_html_tags(data):
     tag_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
@@ -1650,117 +1673,15 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
 
-    res = re.compile(
-        "< *?div +class *?= *?\"avgrat-box\" *?> *?([0-9,]+) *?<",
-        re.DOTALL).search(data)
+    res = re.compile("title=\"([^\"]+)\"[^<>]+href=\"https://www.filmaffinity.com/es/film([0-9]+)\.html\".*?(https://pics\.filmaffinity\.com/[^\"]+-msmall\.jpg).*?\"avgrat-box\" *?> *?([0-9,]+).*?", re.DOTALL).findall(data)
 
-    res_thumb = re.compile(
-        "https://pics\\.filmaffinity\\.com/[^\"]+-msmall\\.jpg",
-        re.DOTALL).search(data)
+    fa_data=[]
 
-    if res:
-        rate = res.group(1).replace(',', '.')
-    else:
-        rate = None
+    for fa_title, film_id, thumb_url, rate in res:
 
-    if res_thumb:
-        thumb_url = res_thumb.group(0)
-    else:
-        thumb_url = None
+        rate = rate.replace(',', '.')
 
-    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film([0-9]+)\.html)\""
-
-    res = re.compile(url_film_pattern, re.DOTALL).search(data)
-
-    film_id = None
-
-    sinopsis = None
-
-    if res:
-
-        film_id = res.group(2)
-
-        data = httptools.downloadpage(res.group(1), ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
-
-        sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
-
-        res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
-
-        if res:
-            sinopsis = html.unescape(res.group(1))
-
-    fa_data = [rate, thumb_url, sinopsis, film_id]
-
-    with open(fa_data_filename, 'wb') as f:
-        pickle.dump(fa_data, f)
-
-    return fa_data
-
-
-def get_filmaffinity_data(title):
-
-    title = re.sub('^Saga ' , '', title)
-
-    fa_data_filename = KODI_TEMP_PATH + 'kodi_nei_fa_' + hashlib.sha1((title).encode('utf-8')).hexdigest()
-
-    if os.path.isfile(fa_data_filename):
-        with open(fa_data_filename, "rb") as f:
-            return pickle.load(f)
-
-    url = "https://www.filmaffinity.com/es/search.php?stext=" + title.replace(' ', '+').replace('?', '')
-
-    logger.info(url)
-
-    data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
-
-    rate_pattern1 = "\"avgrat-box\" *?> *?([0-9,.]+) *?<"
-
-    rate_pattern2 = "itemprop *?= *?\"ratingValue\" *?content *?= *?\"([0-9,.]+)"
-
-    thumb_pattern = "https://pics\\.filmaffinity\\.com/[^\"]+-m[^\"]+\\.jpg"
-
-    res = re.compile(rate_pattern1, re.DOTALL).search(data)
-
-    res_thumb = re.compile(thumb_pattern, re.DOTALL).search(data)
-
-    if res:
-        rate = res.group(1).replace(',', '.')
-    else:
-
-        res = re.compile(rate_pattern2, re.DOTALL).search(data)
-
-        if res:
-            rate = res.group(1).replace(',', '.')
-        else:
-            rate = None
-
-    if res_thumb:
-        thumb_url = res_thumb.group(0).replace('mmed.jpg', 'msmall.jpg')
-    else:
-        thumb_url = None
-
-    film_id = None
-
-    sinopsis = None
-
-    url_film_pattern = "href=\"(https://www.filmaffinity.com/es/film([0-9]+)\.html)\""
-
-    res = re.compile(url_film_pattern, re.DOTALL).search(data)
-
-    if res:
-
-        film_id = res.group(2)
-
-        data = httptools.downloadpage(res.group(1), ignore_response_code=True, headers={"Referer": url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
-
-        sinopsis_pattern = "Sinopsis.*?itemprop=\"description\">([^<]+)<"
-
-        res = re.compile(sinopsis_pattern, re.DOTALL).search(data)
-
-        if res:
-            sinopsis = html.unescape(res.group(1))
-
-    fa_data = [rate, thumb_url, sinopsis, film_id]
+        fa_data.append({'rate': rate, 'film_id': film_id, 'fa_title': fa_title, 'thumb_url': thumb_url})
 
     with open(fa_data_filename, 'wb') as f:
         pickle.dump(fa_data, f)
