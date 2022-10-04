@@ -39,6 +39,10 @@ class MegaProxyManager():
         logger.info("USANDO LISTA DE PROXYS PARA MEGA: "+self.proxy_list_url)
 
     @synchronized_with_attr("lock")
+    def error_509(self, client):
+        client.error_509_notify()
+
+    @synchronized_with_attr("lock")
     def refresh_proxy_list(self):
 
         self.proxy_list.clear()

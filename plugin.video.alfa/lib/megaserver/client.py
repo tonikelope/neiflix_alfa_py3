@@ -6,10 +6,13 @@ import hashlib
 import json
 import random
 import struct
+import xbmcgui
+import xbmcaddon
 import time
 import urllib.request, urllib.parse, urllib.error
 import urllib.request, urllib.error, urllib.parse
 import socket
+import os
 from .crypto import *
 from threading import Thread
 from .file import File
@@ -38,6 +41,7 @@ class Client(object):
         self.running = False
         self.file = None
         self.files = []
+        self.error_509_notified = False
 
         self._server = Server((self.ip, self.port), Handler, client=self)
         self.add_url(url)
@@ -51,6 +55,12 @@ class Client(object):
         t.setDaemon(True)
         t.start()
         logger.info("MEGA Server Started")
+
+    def error_509_notify(self):
+        
+        if not self.error_509_notified:
+            self.error_509_notified = True
+            xbmcgui.Dialog().notification('NEIFLIX', "AVISO: LÍMITE DE MEGA ALCANZADO (probando proxies...)",os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
 
     def load_mega_proxy(self, host, port, password):
         try:

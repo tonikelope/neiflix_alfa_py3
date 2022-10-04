@@ -26,6 +26,7 @@ class ChunkDownloader():
 		self.url = self.chunk_writer.cursor._file.url
 		self.proxy = None
 		self.exit = False
+		self.error_509_aviso = False
 
 
 	def run(self):
@@ -52,6 +53,10 @@ class ChunkDownloader():
 				if not self.chunk_writer.exit and not self.exit:
 
 					if error509 or proxy_error or FORCE_PROXY_MODE:
+
+						if not self.error_509_aviso:
+							self.error_509_aviso = True
+							self.proxy_manager.error_509(self.cursor._file._client)
 
 						if BLOCK_ERROR_PROXY and self.proxy and (error509 or proxy_error):
 							logger.info("ChunkDownloader[%d] bloqueando proxy %s" % (self.id, self.proxy))
