@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.79"
+NEIFLIX_VERSION = "1.80"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -557,7 +557,7 @@ def foro(item):
 
         if matches:
             url = matches.group(1)
-            title = "[B]>> Página Siguiente[/B]"
+            title = "[B]>> PÁGINA SIGUIENTE[/B]"
             itemlist.append(Item(channel=item.channel, parent_title=item.parent_title, mode=item.mode, section=item.section, action="foro", title=title, url=url))
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -662,7 +662,7 @@ def search(item, texto):
 
     if matches:
         url = matches.group(1)
-        title = "[B]>> Página Siguiente[/B]"
+        title = "[B]>> PÁGINA SIGUIENTE[/B]"
         thumbnail = ""
         plot = ""
         itemlist.append(Item(channel=item.channel, action="search_pag", title=title, url=url, thumbnail=item.thumbnail))
@@ -751,7 +751,7 @@ def search_pag(item):
 
     if matches:
         url = matches.group(1)
-        title = "[B]>> Página Siguiente[/B]"
+        title = "[B]>> PÁGINA SIGUIENTE[/B]"
         thumbnail = ""
         plot = ""
         itemlist.append(Item(channel=item.channel, action="search_pag", title=title, url=url, thumbnail=item.thumbnail))
@@ -1065,7 +1065,8 @@ def get_video_mega_links_group(item):
             itemlist.append(Item(channel=item.channel,
                                                      title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
     
-    itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+    if len(itemlist)>0:
+        itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
     itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
@@ -1164,7 +1165,8 @@ def find_video_mega_links(item, data):
 
                 i = i + 1
 
-            itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+            if len(itemlist)>0:
+                itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
             itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
@@ -1376,7 +1378,8 @@ def find_video_mega_links(item, data):
                         
                             i = i+1
 
-        itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+        if len(itemlist)>0:
+            itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
         itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
@@ -1406,7 +1409,11 @@ def leer_criticas_fa(item):
     else:
         
         if isinstance(fa_data, list):
-            fa_data = fa_data[0]
+
+            if len(fa_data) > 0:
+                fa_data = fa_data[0]
+            else:
+                return []
 
         film_id = fa_data['film_id']
 
