@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.80"
+NEIFLIX_VERSION = "1.81"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -300,15 +300,15 @@ def thumbnail_refresh(item):
 
             shutil.rmtree(xbmc.translatePath('special://userdata/Thumbnails'))
 
-            xbmcgui.Dialog().notification('NEIFLIX', 'Miniaturas regeneradas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+            xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'Miniaturas regeneradas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
 
-            ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'Se ha añadido NEIFLIX a ALFA.\n\nES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+            ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
 
             if ret:
                 xbmc.executebuiltin('RestartApp')
 
         except Exception as e:
-            xbmcgui.Dialog().notification('NEIFLIX', 'ERROR al intentar regenerar miniaturas',os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+        	xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'ERROR al intentar regenerar miniaturas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
 
 def improve_streaming(item):
 
@@ -348,7 +348,7 @@ def improve_streaming(item):
 
         settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
 
-        xbmcgui.Dialog().notification('NEIFLIX', 'Ajustes avanzados regenerados', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Ajustes avanzados regenerados", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
 
         ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
 
@@ -405,9 +405,7 @@ def xxx_on(item):
 
             if hashlib.md5(password.encode('utf-8')).hexdigest() == file_pass:
                 os.remove(KODI_USERDATA_PATH + 'neiflix_xxx')
-                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Porno reactivado",
-                                              os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
-                                                           'channels', 'thumb', 'neiflix2_t.png'), 5000)
+                xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Porno reactivado", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
                 return mainlist(item)
             else:
                 xbmcgui.Dialog().ok('NEIFLIX: reactivar contenido adulto', 'Contraseña incorrecta')
