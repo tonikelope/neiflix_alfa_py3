@@ -18,17 +18,14 @@ import xbmcgui
 import html
 import time
 import shutil
-from core import httptools
-from core import scrapertools
 from core.item import Item
-from core import tmdb
-from platformcode import config, logger
-from platformcode import platformtools
+from core import httptools, scrapertools, tmdb
+from platformcode import config, logger, platformtools
 from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.84"
+NEIFLIX_VERSION = "1.85"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -215,9 +212,9 @@ def mainlist(item):
                                                        'channels', 'thumb', 'neiflix2_t.png'), 5000)
             mega_login(True)
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
-            itemlist.append(Item(channel=item.channel, title="PELÍCULAS", section="PELÍCULAS", mode="movie", action="foro",
+            itemlist.append(Item(channel=item.channel, title="[B]PELÍCULAS[/B]", section="PELÍCULAS", mode="movie", action="foro",
                                  url="https://noestasinvitado.com/peliculas/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
-            itemlist.append(Item(channel=item.channel, title="SERIES", section="SERIES", mode="tvshow", action="foro",
+            itemlist.append(Item(channel=item.channel, title="[B]SERIES[/B]", section="SERIES", mode="tvshow", action="foro",
                                  url="https://noestasinvitado.com/series/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
             itemlist.append(Item(channel=item.channel, title="Documetales", section="Documentales", mode="movie", action="foro",
                                  url="https://noestasinvitado.com/documentales/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_documentary.png"))
@@ -315,7 +312,7 @@ def thumbnail_refresh(item):
                 xbmc.executebuiltin('RestartApp')
 
         except Exception as e:
-        	xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'ERROR al intentar regenerar miniaturas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
+            xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'ERROR al intentar regenerar miniaturas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix2_t.png'), 5000)
 
 def improve_streaming(item):
 
@@ -519,8 +516,6 @@ def foro(item):
 
                     title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
 
-                    #item.thumbnail = thumbnail +"|User-Agent=Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3163.100 Safari/537.36"
-
                 else:
                     
                     if '(Ultra HD)' in item.title or '(Ultra HD)' in title:
@@ -630,36 +625,43 @@ def search(item, texto):
 
         content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
 
-        quality = None
+        quality = ""
+
+        section = ""
 
         if "/hd-espanol-235/" in url or "/hd-v-o-v-o-s-236/" in url or "/uhd-animacion/" in url:
             content_type = "tvshow"
             content_serie_name = content_title
             quality = "UHD"
+            section = "SERIES"
         elif "/hd-espanol-59/" in url or "/hd-v-o-v-o-s-61/" in url or "/hd-animacion-62/" in url:
             content_type = "tvshow"
             content_serie_name = content_title
             quality = "HD"
+            section = "SERIES"
         elif "/sd-espanol-53/" in url or "/sd-v-o-v-o-s-54/" in url or "/sd-animacion/" in url:
             content_type = "tvshow"
             content_serie_name = content_title
             quality = "SD"
+            section = "SERIES"
 
         if "/ultrahd-espanol/" in url or "/ultrahd-vo/" in url:
             content_type = "movie"
             quality = "UHD"
+            section = "PELÍCULAS"
         elif "/hd-espanol/" in url or "/hd-v-o-v-o-s/" in url:
             content_type = "movie"
             quality = "HD"
+            section = "PELÍCULAS"
         elif not quality:
             content_type = "movie"
             quality = "SD"
 
         info_labels = {'year': parsed_title['year']}
 
-        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+        title = ("[ "+section+"] " is section else "")+"[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
 
-        itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
+        itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
     patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
