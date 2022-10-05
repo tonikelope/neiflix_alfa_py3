@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.89"
+NEIFLIX_VERSION = "1.90"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -599,16 +599,16 @@ def search(item, texto):
 
     data = httptools.downloadpage("https://noestasinvitado.com/search2/", post=post).data
 
-    return search_parse(data)
+    return search_parse(data, item)
 
 
 def search_pag(item):
     data = httptools.downloadpage(item.url).data
 
-    return search_parse(data)
+    return search_parse(data, item)
 
 
-def search_parse(data):
+def search_parse(data, item):
     itemlist=[]
 
     patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
@@ -668,7 +668,7 @@ def search_parse(data):
 
         info_labels = {'year': parsed_title['year']}
 
-        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'].strip() + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+        title = ("["+section+"] " if section else "")+"[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
 
         itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
