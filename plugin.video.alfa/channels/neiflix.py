@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.83"
+NEIFLIX_VERSION = "1.84"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -98,7 +98,7 @@ def get_neiflix_resource_path(resource):
 
     if os.path.exists(xbmc.translatePath("special://home/addons/plugin.video.neiflix/resources/"+resource)):
         return "special://home/addons/plugin.video.neiflix/resources/"+resource
-    else
+    else:
         return NEIFLIX_RESOURCES_URL+resource
 
 def login():
