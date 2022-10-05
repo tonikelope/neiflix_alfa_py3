@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.87"
+NEIFLIX_VERSION = "1.88"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -580,8 +580,7 @@ def foro(item):
 
 
 def search(item, texto):
-    itemlist = []
-
+    
     if texto != "":
         texto = texto.replace(" ", "+")
 
@@ -598,16 +597,26 @@ def search(item, texto):
                                           "1%5D=91&brd%5B90%5D=90&brd%5B92%5D=92&brd%5B88%5D=88&brd%5B84%5D" \
                                           "=84&brd%5B212%5D=212&brd%5B94%5D=94&brd%5B23%5D=23&submit=Buscar"
 
-    data = httptools.downloadpage(
-        "https://noestasinvitado.com/search2/", post=post).data
+    data = httptools.downloadpage("https://noestasinvitado.com/search2/", post=post).data
 
-    patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<span[^<>]*>.*?' \
-             '<a[^<>]*"Ver +perfil +de +([^"]+)"'
+    return search_parse(data)
+
+
+def search_pag(item):
+    data = httptools.downloadpage(item.url).data
+
+    return search_parse(data)
+
+
+def search_parse(data):
+	itemlist=[]
+
+	patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
+             'an[^<>]*>.*?<a[^<>]*"Ver +perfil +de +([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, uploader in matches:
-
         url = urllib.parse.urljoin(item.url, scrapedurl)
 
         scrapedtitle = scrapertools.htmlclean(scrapedtitle)
@@ -659,96 +668,7 @@ def search(item, texto):
 
         info_labels = {'year': parsed_title['year']}
 
-        title = ("["+section+"] " if section else "")+"[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
-
-        itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
-
-    patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
-
-    matches = re.compile(patron, re.DOTALL).search(data)
-
-    if matches:
-        url = matches.group(1)
-        title = "[B]>> PÁGINA SIGUIENTE[/B]"
-        thumbnail = ""
-        plot = ""
-        itemlist.append(Item(channel=item.channel, action="search_pag", title=title, url=url, thumbnail=item.thumbnail))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    for i in itemlist:
-        if i.infoLabels and 'rating' in i.infoLabels:
-
-            if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-            elif i.infoLabels['rating'] < 5.0:
-                rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-            else:
-                rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
-
-            i.title = i.title.replace('##*NOTA*##', rating_text)
-        else:
-            i.title = i.title.replace('##*NOTA*##', '')
-
-    return itemlist
-
-
-def search_pag(item):
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-
-    patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
-             'an[^<>]*>.*?<a[^<>]*"Ver +perfil +de +([^"]+)"'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedtitle, uploader in matches:
-        url = urllib.parse.urljoin(item.url, scrapedurl)
-
-        scrapedtitle = scrapertools.htmlclean(scrapedtitle)
-
-        if uploader != '>':
-            title = scrapedtitle + " (" + uploader + ")"
-        else:
-            title = scrapedtitle
-
-        thumbnail = ""
-
-        content_serie_name = ""
-
-        parsed_title = parse_title(scrapedtitle)
-
-        content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
-
-        quality = None
-
-        if "/hd-espanol-235/" in url or "/hd-v-o-v-o-s-236/" in url or "/uhd-animacion/" in url:
-            content_type = "tvshow"
-            content_serie_name = content_title
-            quality = "UHD"
-        elif "/hd-espanol-59/" in url or "/hd-v-o-v-o-s-61/" in url or "/hd-animacion-62/" in url:
-            content_type = "tvshow"
-            content_serie_name = content_title
-            quality = "HD"
-        elif "/sd-espanol-53/" in url or "/sd-v-o-v-o-s-54/" in url or "/sd-animacion/" in url:
-            content_type = "tvshow"
-            content_serie_name = content_title
-            quality = "SD"
-
-        if "/ultrahd-espanol/" in url or "/ultrahd-vo/" in url:
-            content_type = "movie"
-            quality = "UHD"
-        elif "/hd-espanol/" in url or "/hd-v-o-v-o-s/" in url:
-            content_type = "movie"
-            quality = "HD"
-        elif not quality:
-            content_type = "movie"
-            quality = "SD"
-
-        info_labels = {'year': parsed_title['year']}
-
-        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'].strip() + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
 
         itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
@@ -780,6 +700,7 @@ def search_pag(item):
             i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
+
 
 
 def indices(item):
