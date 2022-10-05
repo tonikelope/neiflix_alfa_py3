@@ -5,17 +5,8 @@ import os
 import xml.etree.ElementTree as ET
 import sys
 import time
-
-if sys.version_info[0] >= 3:
-    from urllib.parse import quote
-    from urllib.request import urlretrieve
-else:
-    # Not Python 3 - today, it is most likely to be Python 2
-    # But note that this might need an update when Python 4
-    # might be around one day
-    from urllib import quote
-    from urllib import urlretrieve
-
+from urllib.parse import quote
+from urllib.request import urlretrieve
 import xbmc
 import xbmcaddon
 import xbmcgui
@@ -40,16 +31,16 @@ def improve_streaming():
     network = settings_xml.findall("network")
     network = ET.Element('network')
     curlclienttimeout = ET.Element('curlclienttimeout')
-    curlclienttimeout.text = '90'
+    curlclienttimeout.text = '60'
     network.append(curlclienttimeout)
     curllowspeedtime = ET.Element('curllowspeedtime')
-    curllowspeedtime.text = '90'
+    curllowspeedtime.text = '60'
     network.append(curllowspeedtime)
     settings_xml.getroot().append(network)
 
     playlisttimeout = settings_xml.findall('playlisttimeout')
     playlisttimeout = ET.Element('playlisttimeout')
-    playlisttimeout.text = '90'
+    playlisttimeout.text = '60'
     settings_xml.getroot().append(playlisttimeout)
 
     settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
@@ -97,7 +88,7 @@ if not os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.nei
 
     improve_streaming()
     update_favourites()
-    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'Se ha añadido NEIFLIX a ALFA.\n\nES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
 
     if ret:
         xbmc.executebuiltin('RestartApp')

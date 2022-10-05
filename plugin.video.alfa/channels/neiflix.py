@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.82"
+NEIFLIX_VERSION = "1.83"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -93,6 +93,13 @@ TITLES_BLACKLIST = [
     "neiflix_blacklist_titles",
     "neiflix") else []
 
+
+def get_neiflix_resource_path(resource):
+
+    if os.path.exists(xbmc.translatePath("special://home/addons/plugin.video.neiflix/resources/"+resource)):
+        return "special://home/addons/plugin.video.neiflix/resources/"+resource
+    else
+        return NEIFLIX_RESOURCES_URL+resource
 
 def login():
     logger.info("channels.neiflix login")
@@ -518,14 +525,14 @@ def foro(item):
                     
                     if '(Ultra HD)' in item.title or '(Ultra HD)' in title:
                         if 'Español' in item.title or 'Español' in title:
-                            thumbnail = NEIFLIX_RESOURCES_URL+("series_uhd_es.png" if item.mode == "tvshow" else "pelis_uhd_es.png")
+                            thumbnail = get_neiflix_resource_path("series_uhd_es.png" if item.mode == "tvshow" else "pelis_uhd_es.png")
                         else:
-                            thumbnail = NEIFLIX_RESOURCES_URL+("series_uhd.png" if item.mode == "tvshow" else "pelis_uhd.png")
+                            thumbnail = get_neiflix_resource_path("series_uhd.png" if item.mode == "tvshow" else "pelis_uhd.png")
                     elif '(HD)' in item.title or '(HD)' in title:
                         if 'Español' in item.title or 'Español' in title:
-                            thumbnail = NEIFLIX_RESOURCES_URL+("series_hd_es.png" if item.mode == "tvshow" else "pelis_hd_es.png")
+                            thumbnail = get_neiflix_resource_path("series_hd_es.png" if item.mode == "tvshow" else "pelis_hd_es.png")
                         else:
-                            thumbnail = NEIFLIX_RESOURCES_URL+("series_hd.png" if item.mode == "tvshow" else "pelis_hd.png")
+                            thumbnail = get_neiflix_resource_path("series_hd.png" if item.mode == "tvshow" else "pelis_hd.png")
                     else:
                         if item.title.strip() == "PELÍCULAS":
                             thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
@@ -787,14 +794,14 @@ def indices(item):
 
         if 'Ultra HD' in cat:
             if 'Español' in cat:
-                thumbnail = NEIFLIX_RESOURCES_URL+"uhd_es.png"
+                thumbnail = get_neiflix_resource_path("uhd_es.png")
             else:
-                thumbnail = NEIFLIX_RESOURCES_URL+"uhd.png"
+                thumbnail = get_neiflix_resource_path("uhd.png")
         elif 'HD' in cat:
             if 'Español' in cat:
-                thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
+                thumbnail = get_neiflix_resource_path("hd_es.png")
             else:
-                thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
+                thumbnail = get_neiflix_resource_path("hd.png")
         elif 'Series' in cat:
             thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
         else:
@@ -881,7 +888,7 @@ def get_video_mega_links_group(item):
 
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title=title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
+                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
 
                 else:
 
@@ -1002,7 +1009,7 @@ def get_video_mega_links_group(item):
                                 infoLabels['episode'] = i
 
                         itemlist.append(
-                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", mode=item.mode, infoLabels=infoLabels))
+                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
 
                     i=i+1
 
@@ -1055,7 +1062,7 @@ def get_video_mega_links_group(item):
                                 else:
                                     infoLabels['episode'] = i
 
-                            itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png", infoLabels=infoLabels))
+                            itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
 
                     i=i+1
 
@@ -1315,7 +1322,7 @@ def find_video_mega_links(item, data):
 
                                 itemlist.append(
                                     Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"megacrypter.png", infoLabels=infoLabels))
+                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
 
                             i=i+1
 
@@ -1372,7 +1379,7 @@ def find_video_mega_links(item, data):
                                     else:
                                         infoLabels['episode'] = i
                                 
-                                itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=NEIFLIX_RESOURCES_URL+"mega.png", infoLabels=infoLabels))
+                                itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
                         
                             i = i+1
 
@@ -1442,13 +1449,13 @@ def leer_criticas_fa(item):
         for critica in criticas:
             if float(critica['nota']) >= 7.0:
                 rating_text = "[B][COLOR lightgreen][" + str(critica['nota']) + "][/COLOR][/B]"
-                thumbnail = NEIFLIX_RESOURCES_URL+"buena.png"
+                thumbnail = get_neiflix_resource_path("buena.png")
             elif float(critica['nota']) < 5.0:
                 rating_text = "[B][COLOR red][" + str(critica['nota']) + "][/COLOR][/B]"
-                thumbnail = NEIFLIX_RESOURCES_URL+"mala.png"
+                thumbnail = get_neiflix_resource_path("mala.png")
             else:
                 rating_text = "[B][" + str(critica['nota']) + "][/B]"
-                thumbnail = NEIFLIX_RESOURCES_URL+"neutral.png"
+                thumbnail = get_neiflix_resource_path("neutral.png")
 
             itemlist.append(Item(channel=item.channel, nota_fa=fa_data['rate'], contentPlot="[I]Crítica de: "+item.contentTitle+"[/I]", thumbnail=thumbnail, title=rating_text+" "+critica['title']+" ("+critica['nick']+")", action="cargar_critica", url=critica['url']))
 

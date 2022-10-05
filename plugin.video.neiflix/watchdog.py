@@ -2,17 +2,8 @@
 import hashlib
 import os
 import re
-
 import sys
-
-if sys.version_info[0] >= 3:
-    from urllib.request import urlretrieve
-else:
-    # Not Python 3 - today, it is most likely to be Python 2
-    # But note that this might need an update when Python 4
-    # might be around one day
-    from urllib import urlretrieve
-
+from urllib.request import urlretrieve
 import xbmc
 import xbmcaddon
 import xbmcgui
@@ -82,8 +73,8 @@ elif CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY is False:
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX ALTERADO PERO NO REPARADO!',
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
 
-# MONITOR CHANGES
 
+# MONITORS SOME NEIFLIX FILE IS DELETED AND RE-DOWNLOAD IT
 while True:
 
     xbmc.sleep(MONITOR_TIME * 1000)
