@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.88"
+NEIFLIX_VERSION = "1.89"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -609,9 +609,9 @@ def search_pag(item):
 
 
 def search_parse(data):
-	itemlist=[]
+    itemlist=[]
 
-	patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
+    patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
              'an[^<>]*>.*?<a[^<>]*"Ver +perfil +de +([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
