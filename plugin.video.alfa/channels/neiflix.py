@@ -28,7 +28,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.81"
+NEIFLIX_VERSION = "1.82"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -518,14 +518,14 @@ def foro(item):
                     
                     if '(Ultra HD)' in item.title or '(Ultra HD)' in title:
                         if 'Español' in item.title or 'Español' in title:
-                            thumbnail = NEIFLIX_RESOURCES_URL+"uhd_es.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+("series_uhd_es.png" if item.mode == "tvshow" else "pelis_uhd_es.png")
                         else:
-                            thumbnail = NEIFLIX_RESOURCES_URL+"uhd.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+("series_uhd.png" if item.mode == "tvshow" else "pelis_uhd.png")
                     elif '(HD)' in item.title or '(HD)' in title:
                         if 'Español' in item.title or 'Español' in title:
-                            thumbnail = NEIFLIX_RESOURCES_URL+"hd_es.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+("series_hd_es.png" if item.mode == "tvshow" else "pelis_hd_es.png")
                         else:
-                            thumbnail = NEIFLIX_RESOURCES_URL+"hd.png"
+                            thumbnail = NEIFLIX_RESOURCES_URL+("series_hd.png" if item.mode == "tvshow" else "pelis_hd.png")
                     else:
                         if item.title.strip() == "PELÍCULAS":
                             thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
