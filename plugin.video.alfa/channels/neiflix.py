@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.92"
+NEIFLIX_VERSION = "1.93"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -721,14 +721,14 @@ def indices(item):
 
         if 'Ultra HD' in cat:
             if 'Español' in cat:
-                thumbnail = get_neiflix_resource_path("series_uhd_es.png" if item.mode == "tvshow" else "pelis_uhd_es.png")
+                thumbnail = get_neiflix_resource_path("series_uhd_es.png" if 'Series' in cat else "pelis_uhd_es.png")
             else:
-                thumbnail = get_neiflix_resource_path("series_uhd.png" if item.mode == "tvshow" else "pelis_uhd.png")
+                thumbnail = get_neiflix_resource_path("series_uhd.png" if 'Series' in cat else "pelis_uhd.png")
         elif 'HD' in cat:
             if 'Español' in cat:
-                thumbnail = get_neiflix_resource_path("series_hd_es.png" if item.mode == "tvshow" else "pelis_hd_es.png")
+                thumbnail = get_neiflix_resource_path("series_hd_es.png" if 'Series' in cat else "pelis_hd_es.png")
             else:
-                thumbnail = get_neiflix_resource_path("series_hd.png" if item.mode == "tvshow" else "pelis_hd.png")
+                thumbnail = get_neiflix_resource_path("series_hd.png" if 'Series' in cat else "pelis_hd.png")
         elif 'Series' in cat:
             thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
         else:
@@ -740,6 +740,8 @@ def indices(item):
             mode = "movie"
         elif 'Series' in cat:
             mode="tvshow"
+        else
+            thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
 
         itemlist.append(Item(channel=item.channel, cat=cat, title=cat, mode=mode, action="gen_index", url="https://noestasinvitado.com/indices/", thumbnail=thumbnail))
 
