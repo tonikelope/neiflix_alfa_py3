@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.90"
+NEIFLIX_VERSION = "1.91"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -489,7 +489,7 @@ def foro(item):
                 else:
                     title = scrapedtitle
 
-                thumbnail = ""
+                thumbnail = item.thumbnail
 
                 content_serie_name = ""
 
@@ -511,10 +511,12 @@ def foro(item):
                         quality = 'UHD'
                     elif 'HD ' in item.parent_title:
                         quality = 'HD'
-                    else:
+                    elif 'SD ' in item.parent_title:
                         quality = 'SD'
+                    else:
+                        quality = parsed_title['quality']
 
-                    title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+                    title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*## (" + uploader + ")"
 
                 else:
                     
@@ -528,11 +530,6 @@ def foro(item):
                             thumbnail = get_neiflix_resource_path("series_hd_es.png" if item.mode == "tvshow" else "pelis_hd_es.png")
                         else:
                             thumbnail = get_neiflix_resource_path("series_hd.png" if item.mode == "tvshow" else "pelis_hd.png")
-                    else:
-                        if item.title.strip() == "PELÍCULAS":
-                            thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
-                        elif item.title.strip() == "SERIES":
-                            thumbnail = "special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
 
                     title = "["+ item.section + "] " + title
                     
@@ -662,13 +659,18 @@ def search_parse(data, item):
             content_type = "movie"
             quality = "HD"
             section = "PELÍCULAS"
+        elif "/sd-espanol/" in url or "/sd-v-o-v-o-s/" in url or "/sd-animacion/" in url or "/3d-/" in url or "/cine-clasico-/" in url :
+            content_type = "tvshow"
+            content_serie_name = content_title
+            quality = "SD"
+            section = "PELÍCULAS"
         elif not quality:
             content_type = "movie"
-            quality = "SD"
+            quality = parsed_title['quality']
 
         info_labels = {'year': parsed_title['year']}
 
-        title = ("["+section+"] " if section else "")+"[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + " [" + quality + "] ##*NOTA*## (" + uploader + ")"
+        title = ("["+section+"] " if section else "")+"[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*## (" + uploader + ")"
 
         itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
@@ -757,7 +759,7 @@ def gen_index(item):
     start = 1
 
     for letter in letters:
-        itemlist.append(Item(channel=item.channel, cat=item.cat, mode=item.mode, thumbnail=item.thumbnail, title="%s (Letra %s)" % (item.title, letter), action="indice_links",url="https://noestasinvitado.com/indices/?id=%d;start=%d" % (categories[item.title], start), folder=True))
+        itemlist.append(Item(channel=item.channel, cat=item.cat, mode=item.mode, thumbnail=item.thumbnail, title="%s (Letra %s)" % (item.title, letter), action="indice_links",url="https://noestasinvitado.com/indices/?id=%d;start=%d" % (categories[item.title], start)))
         start = start + 1
 
     return itemlist
@@ -847,7 +849,7 @@ def get_video_mega_links_group(item):
             os.remove(filename_hash)
             itemlist.append(Item(channel=item.channel,
                                  title="[COLOR red][B]Ha habido algún error, prueba de nuevo.[/B][/COLOR]",
-                                 action="", url="", folder=False))
+                                 action="", url=""))
 
     else:
 
@@ -901,13 +903,9 @@ def get_video_mega_links_group(item):
 
                     if compress:
 
-                        itemlist.append(Item(channel=item.channel,
-                                             title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE "
-                                                   "(habla con el uploader para que lo suba sin comprimir).[/B][/COLOR]",
-                                             action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
-                        itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
-
+                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                        itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+    
                         break
 
                     else:
@@ -961,13 +959,9 @@ def get_video_mega_links_group(item):
 
                     if compress:
 
-                        itemlist.append(Item(channel=item.channel,
-                                             title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE "
-                                                   "(habla con el uploader para que lo suba sin comprimir).[/B][/COLOR]",
-                                             action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
-                        itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B] TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
-
+                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                        itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+    
                         break
 
                     else:
@@ -989,13 +983,12 @@ def get_video_mega_links_group(item):
 
                     i=i+1
 
-    if len(itemlist)==0:
-            itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
-    
     if len(itemlist)>0:
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
-
+    else:
+        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+    
     itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -1095,7 +1088,10 @@ def find_video_mega_links(item, data):
 
             if len(itemlist)>0:
                 itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
-
+            else:
+                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+    
             itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
 
         else:
@@ -1219,14 +1215,9 @@ def find_video_mega_links(item, data):
 
                             if compress:
 
-                                itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE"
-                                                           " (habla con el uploader para que lo suba sin comprimir)."
-                                                           "[/B][/COLOR]",
-                                                     action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
-
-                                itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
+                                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                                itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+    
                                 break
                             else:
                                 title = name + ' [' + str(format_bytes(size)) + ']'
@@ -1281,15 +1272,9 @@ def find_video_mega_links(item, data):
                             compress = compress_pattern.search(attributes['n'])
 
                             if compress:
-                                itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B]ESTE VÍDEO ESTÁ COMPRIMIDO Y NO ES COMPATIBLE"
-                                                           " (habla con el uploader para que lo suba sin comprimir)."
-                                                           "[/B][/COLOR]",
-                                                     action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png", folder=False))
-                                
-                                itemlist.append(Item(channel=item.channel,
-                                                     title="[COLOR red][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", folder=False))
-
+                                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                                itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+    
                                 break
                             else:
                                 infoLabels=item.infoLabels
@@ -1308,6 +1293,9 @@ def find_video_mega_links(item, data):
 
         if len(itemlist)>0:
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+        else:
+            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+            itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
         itemlist.append(Item(channel=item.channel, title="[B]REFRESCAR CONTENIDO[/B]", action="refrescar_contenido", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_back.png"))
         
@@ -1553,6 +1541,19 @@ def extract_title(title):
 
         return ""
 
+def extract_quality(title):
+    patterns = [{'p': '\[[^\[\]()]*(UHD|2160)', 'q': 'UHD'}, {'p': '\[[^\[\]()]*(microHD|720|1080)', 'q': 'HD'}, {'p': '\[[^\[\]()]*(HDrip|DVD)', 'q': 'SD'}]
+    
+    for p in patterns:
+        pattern = re.compile(p['p'], re.IGNORECASE)
+
+        res = pattern.search(title)
+
+        if res:
+
+            return p['q']
+
+    return None
 
 def play(item):
     itemlist = []
@@ -1585,7 +1586,7 @@ def extract_year(title):
 
 
 def parse_title(title):
-    return {'title': extract_title(title), 'year': extract_year(title)}
+    return {'title': extract_title(title), 'year': extract_year(title), 'quality': extract_quality(title)}
 
 
 def get_filmaffinity_data_advanced(title, year, genre):
