@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.93"
+NEIFLIX_VERSION = "1.94"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -740,7 +740,7 @@ def indices(item):
             mode = "movie"
         elif 'Series' in cat:
             mode="tvshow"
-        else
+        else:
             thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"
 
         itemlist.append(Item(channel=item.channel, cat=cat, title=cat, mode=mode, action="gen_index", url="https://noestasinvitado.com/indices/", thumbnail=thumbnail))
