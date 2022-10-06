@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.91"
+NEIFLIX_VERSION = "1.92"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -459,6 +459,8 @@ def foro(item):
 
     final_item = False
 
+    action=""
+
     if '<h3 class="catbg">Subforos</h3>' in data:
         # HAY SUBFOROS
         patron = '<a class="subje(.*?)t" href="([^"]+)" name="[^"]+">([^<]+)</a(>)'
@@ -480,7 +482,7 @@ def foro(item):
 
             url = urllib.parse.urljoin(item.url, scrapedurl)
 
-            if uploader not in UPLOADERS_BLACKLIST and not any(word in scrapedtitle for word in TITLES_BLACKLIST):
+            if uploader not in UPLOADERS_BLACKLIST and not any(word in scrapedtitle for word in TITLES_BLACKLIST) and not ("Filmografías" in scrapedtitle and action == "foro"):
 
                 scrapedtitle = scrapertools.htmlclean(scrapedtitle)
 
@@ -719,14 +721,14 @@ def indices(item):
 
         if 'Ultra HD' in cat:
             if 'Español' in cat:
-                thumbnail = get_neiflix_resource_path("uhd_es.png")
+                thumbnail = get_neiflix_resource_path("series_uhd_es.png" if item.mode == "tvshow" else "pelis_uhd_es.png")
             else:
-                thumbnail = get_neiflix_resource_path("uhd.png")
+                thumbnail = get_neiflix_resource_path("series_uhd.png" if item.mode == "tvshow" else "pelis_uhd.png")
         elif 'HD' in cat:
             if 'Español' in cat:
-                thumbnail = get_neiflix_resource_path("hd_es.png")
+                thumbnail = get_neiflix_resource_path("series_hd_es.png" if item.mode == "tvshow" else "pelis_hd_es.png")
             else:
-                thumbnail = get_neiflix_resource_path("hd.png")
+                thumbnail = get_neiflix_resource_path("series_hd.png" if item.mode == "tvshow" else "pelis_hd.png")
         elif 'Series' in cat:
             thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"
         else:
