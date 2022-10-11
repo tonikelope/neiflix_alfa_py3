@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.95"
+NEIFLIX_VERSION = "1.96"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -777,155 +777,113 @@ def get_video_mega_links_group(item):
 
     id = item.mc_group_id
 
-    filename_hash = KODI_TEMP_PATH + 'kodi_nei_mc_' + hashlib.sha1((item.url + id).encode('utf-8')).hexdigest()
+    data = httptools.downloadpage(
+        "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1").data
 
-    if os.path.isfile(filename_hash) and os.stat(filename_hash).st_size > 0:
+    patron = '(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
 
-        with open(filename_hash, "r", encoding="utf-8") as file:
+    matches = re.compile(patron).findall(data)
 
-            i = 1
+    compress_pattern = re.compile('\.(zip|rar|rev)$', re.IGNORECASE)
 
-            for line in file:
+    if matches:
 
-                line = line.rstrip()
+        i=1
 
-                if i > 1:
+        for title, url in matches:
 
-                    url = line
+            url_split = url.split('/!')
 
-                    url_split = url.split('#')
+            mc_api_url = url_split[0] + '/api'
 
-                    if len(url_split) >= 3:
+            mc_api_r = {'m': 'info', 'link': url}
 
-                        name = url_split[1]
+            if USE_MC_REVERSE:
+                mc_api_r['reverse'] = MC_REVERSE_DATA
 
-                        size = url_split[2]
+            mc_info_res = mc_api_req(
+                mc_api_url, mc_api_r)
 
-                        title = "[MEGA] " + name + ' [' + str(format_bytes(float(size))) + ']'
+            name = mc_info_res['name'].replace('#', '')
 
-                        if hashlib.sha1(title.encode("utf-8")).hexdigest() in HISTORY:
-                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+            size = mc_info_res['size']
 
-                        infoLabels=item.infoLabels
+            key = mc_info_res['key']
 
-                        if item.mode == "tvshow":
-                            episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
-                            
-                            if episode:
-                                infoLabels['episode'] = int(episode.group(1))
-                            else:
-                                infoLabels['episode'] = i
+            noexpire = mc_info_res['expire'].split('#')[1]
 
-                        itemlist.append(
-                            Item(channel=item.channel, action="play", server='nei', title=title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
+            compress = compress_pattern.search(name)
+
+            if compress:
+
+                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                
+                if item.uploader:
+                    itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+
+                break
+
+            else:
+
+                title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
+
+                if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
+                    title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+
+                url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+
+                infoLabels=item.infoLabels
+
+                if item.mode == "tvshow":
+                    episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                    
+                    if episode:
+                        infoLabels['episode'] = int(episode.group(1))
+                    else:
+                        infoLabels['episode'] = i
+
+                itemlist.append(
+                    Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
+
+            i=i+1
+
+    else:
+        patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
+
+        matches = re.compile(patron_mega).findall(data)
+
+        if matches:
+            i=1
+            for url in matches:
+
+                if len(url.split("!")) == 3:
+                    file_id = url.split("!")[1]
+                    file_key = url.split("!")[2]
+                    file = mega_api_req({'a': 'g', 'g': 1, 'p': file_id})
+                    key = crypto.base64_to_a32(file_key)
+                    k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
+                    attributes = crypto.base64_url_decode(file['at'])
+                    attributes = crypto.decrypt_attr(attributes, k)
+                    title = "[MEGA] " + attributes['n'] + ' [' + str(format_bytes(file['s'])) + ']'
+                else:
+                    title = url
+
+                compress = compress_pattern.search(attributes['n'])
+
+                if compress:
+
+                    itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                    
+                    if item.uploader:
+                        itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+
+                    break
 
                 else:
 
-                    links_hash = line
-
-                    data = httptools.downloadpage(
-                        "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1").data
-
-                    patron = '(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
-
-                    matches = re.compile(patron).findall(data)
-
-                    if matches:
-
-                        hasheable = ""
-
-                        for title, url in matches:
-                            hasheable += title
-
-                        links_hash2 = hashlib.sha1(hasheable.encode('utf-8')).hexdigest()
-
-                        if links_hash != links_hash2:
-                            os.remove(filename_hash)
-
-                            return get_video_mega_links_group(item)
-                    else:
-
-                        return itemlist
-
-                i += 1
-
-        if not itemlist:
-            os.remove(filename_hash)
-            itemlist.append(Item(channel=item.channel,
-                                 title="[COLOR red][B]Ha habido algún error, prueba de nuevo.[/B][/COLOR]",
-                                 action="", url=""))
-
-    else:
-
-        data = httptools.downloadpage(
-            "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1").data
-
-        patron = '(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
-
-        matches = re.compile(patron).findall(data)
-
-        compress_pattern = re.compile('\.(zip|rar|rev)$', re.IGNORECASE)
-
-        if matches:
-
-            hasheable = ""
-
-            for title, url in matches:
-                hasheable += title
-
-            links_hash = hashlib.sha1(hasheable.encode('utf-8')).hexdigest()
-
-            with open(filename_hash, "w+", encoding="utf-8") as file:
-
-                file.write((links_hash + "\n"))
-
-                i=1
-
-                for title, url in matches:
-
-                    url_split = url.split('/!')
-
-                    mc_api_url = url_split[0] + '/api'
-
-                    mc_api_r = {'m': 'info', 'link': url}
-
-                    if USE_MC_REVERSE:
-                        mc_api_r['reverse'] = MC_REVERSE_DATA
-
-                    mc_info_res = mc_api_req(
-                        mc_api_url, mc_api_r)
-
-                    name = mc_info_res['name'].replace('#', '')
-
-                    size = mc_info_res['size']
-
-                    key = mc_info_res['key']
-
-                    noexpire = mc_info_res['expire'].split('#')[1]
-
-                    compress = compress_pattern.search(name)
-
-                    if compress:
-
-                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                    if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
+                        title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
                         
-                        if item.uploader:
-                            itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-    
-                        break
-
-                    else:
-
-                        title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
-
-                        if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
-
-                        url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
-
-                        file.write((url + "\n"))
-
                         infoLabels=item.infoLabels
 
                         if item.mode == "tvshow":
@@ -936,61 +894,9 @@ def get_video_mega_links_group(item):
                             else:
                                 infoLabels['episode'] = i
 
-                        itemlist.append(
-                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
+                        itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
 
-                    i=i+1
-
-        else:
-            patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
-
-            matches = re.compile(patron_mega).findall(data)
-
-            if matches:
-                i=1
-                for url in matches:
-
-                    if len(url.split("!")) == 3:
-                        file_id = url.split("!")[1]
-                        file_key = url.split("!")[2]
-                        file = mega_api_req({'a': 'g', 'g': 1, 'p': file_id})
-                        key = crypto.base64_to_a32(file_key)
-                        k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
-                        attributes = crypto.base64_url_decode(file['at'])
-                        attributes = crypto.decrypt_attr(attributes, k)
-                        title = "[MEGA] " + attributes['n'] + ' [' + str(format_bytes(file['s'])) + ']'
-                    else:
-                        title = url
-
-                    compress = compress_pattern.search(attributes['n'])
-
-                    if compress:
-
-                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-                        
-                        if item.uploader:
-                            itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-    
-                        break
-
-                    else:
-
-                        if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
-                            
-                            infoLabels=item.infoLabels
-
-                            if item.mode == "tvshow":
-                                episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
-                                
-                                if episode:
-                                    infoLabels['episode'] = int(episode.group(1))
-                                else:
-                                    infoLabels['episode'] = i
-
-                            itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
-
-                    i=i+1
+                i=i+1
 
     if len(itemlist)>0:
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
@@ -1115,195 +1021,130 @@ def find_video_mega_links(item, data):
 
         mega_sid = mega_login(False)
 
-        filename_hash = KODI_TEMP_PATH + 'kodi_nei_mc_' + hashlib.sha1(item.url.encode('utf-8')).hexdigest()
+        urls = []
 
-        if os.path.isfile(filename_hash):
+        patron_mc = 'https://megacrypter\.noestasinvitado\.com/[!0-9a-zA-Z_/-]+'
 
-            with open(filename_hash, "r", encoding="utf-8") as file:
+        matches = re.compile(patron_mc).findall(data)
 
-                i = 1
+        compress_pattern = re.compile(
+            '\.(zip|rar|rev)$', re.IGNORECASE)
 
-                for line in file:
+        if matches:
 
-                    line = line.rstrip()
+            i = 1
 
-                    if i > 1:
+            for url in matches:
 
-                        url = line
+                if url not in urls:
 
-                        url_split = url.split('#')
+                    urls.append(url)
 
-                        name = url_split[1]
+                    url_split = url.split('/!')
 
-                        size = url_split[2]
+                    mc_api_url = url_split[0] + '/api'
 
-                        title = name + ' [' + str(format_bytes(float(size))) + ']'
+                    mc_api_r = {'m': 'info', 'link': url}
 
+                    if USE_MC_REVERSE:
+                        mc_api_r['reverse'] = MC_REVERSE_DATA
+
+                    mc_info_res = mc_api_req(
+                        mc_api_url, mc_api_r)
+
+                    name = mc_info_res['name'].replace('#', '')
+
+                    size = mc_info_res['size']
+
+                    key = mc_info_res['key']
+
+                    if mc_info_res['expire']:
+                        noexpire = mc_info_res['expire'].split('#')[1]
+                    else:
+                        noexpire = ''
+
+                    compress = compress_pattern.search(name)
+
+                    if compress:
+
+                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                        
+                        if item.uploader:
+                            itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+
+                        break
+                    else:
+                        title = name + ' [' + str(format_bytes(size)) + ']'
+                        url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+                        
                         infoLabels=item.infoLabels
 
                         if item.mode == "tvshow":
-                            infoLabels['season']=i
+                            episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                            
+                            if episode:
+                                infoLabels['episode'] = int(episode.group(1))
+                            else:
+                                infoLabels['episode'] = i
 
                         itemlist.append(
                             Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, nfoLabels=infoLabels))
+                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
 
-                    else:
-
-                        links_hash = line
-
-                        patron = 'https://megacrypter\.noestasinvitado\.com/[!0-9a-zA-Z_/-]+'
-
-                        matches = re.compile(patron).findall(data)
-
-                        if matches:
-
-                            links_hash2 = hashlib.sha1(
-                                "".join(matches).encode('utf-8')).hexdigest()
-
-                            if links_hash != links_hash2:
-                                os.remove(filename_hash)
-
-                                return find_video_mega_links(item, data)
-                        else:
-
-                            return itemlist
-
-                    i += 1
+                    i=i+1
 
         else:
+            patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
 
-            urls = []
-
-            patron_mc = 'https://megacrypter\.noestasinvitado\.com/[!0-9a-zA-Z_/-]+'
-
-            matches = re.compile(patron_mc).findall(data)
-
-            compress_pattern = re.compile(
-                '\.(zip|rar|rev)$', re.IGNORECASE)
+            matches = re.compile(patron_mega).findall(data)
 
             if matches:
+                i = 1
+                
+                for url in matches:
 
-                with open(filename_hash, "w+", encoding="utf-8") as file:
+                    url = re.sub(r"(\.nz/file/)([^#]+)#", r".nz/#!\2!", url)
 
-                    links_hash = hashlib.sha1("".join(matches).encode('utf-8')).hexdigest()
+                    if url not in urls:
 
-                    file.write((links_hash + "\n"))
+                        urls.append(url)
 
-                    i = 1
+                        if len(url.split("!")) == 3:
+                            file_id = url.split("!")[1]
+                            file_key = url.split("!")[2]
+                            file = mega_api_req({'a': 'g', 'g': 1, 'p': file_id})
+                            
+                            key = crypto.base64_to_a32(file_key)
+                            k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
+                            attributes = crypto.base64_url_decode(file['at'])
+                            attributes = crypto.decrypt_attr(attributes, k)
+                            title = attributes['n'] + ' [' + str(format_bytes(file['s'])) + ']'
+                        else:
+                            title = url
 
-                    for url in matches:
+                        compress = compress_pattern.search(attributes['n'])
 
-                        if url not in urls:
+                        if compress:
+                            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                            
+                            if item.uploader:
+                                itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
-                            urls.append(url)
+                            break
+                        else:
+                            infoLabels=item.infoLabels
 
-                            url_split = url.split('/!')
-
-                            mc_api_url = url_split[0] + '/api'
-
-                            mc_api_r = {'m': 'info', 'link': url}
-
-                            if USE_MC_REVERSE:
-                                mc_api_r['reverse'] = MC_REVERSE_DATA
-
-                            mc_info_res = mc_api_req(
-                                mc_api_url, mc_api_r)
-
-                            name = mc_info_res['name'].replace('#', '')
-
-                            size = mc_info_res['size']
-
-                            key = mc_info_res['key']
-
-                            if mc_info_res['expire']:
-                                noexpire = mc_info_res['expire'].split('#')[1]
-                            else:
-                                noexpire = ''
-
-                            compress = compress_pattern.search(name)
-
-                            if compress:
-
-                                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                            if item.mode == "tvshow":
+                                episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
                                 
-                                if item.uploader:
-                                    itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-    
-                                break
-                            else:
-                                title = name + ' [' + str(format_bytes(size)) + ']'
-                                url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
-                                file.write((url + "\n"))
-
-                                infoLabels=item.infoLabels
-
-                                if item.mode == "tvshow":
-                                    episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
-                                    
-                                    if episode:
-                                        infoLabels['episode'] = int(episode.group(1))
-                                    else:
-                                        infoLabels['episode'] = i
-
-                                itemlist.append(
-                                    Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                         url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
-
-                            i=i+1
-
-            else:
-                patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
-
-                matches = re.compile(patron_mega).findall(data)
-
-                if matches:
-                    i = 1
+                                if episode:
+                                    infoLabels['episode'] = int(episode.group(1))
+                                else:
+                                    infoLabels['episode'] = i
+                            
+                            itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
                     
-                    for url in matches:
-
-                        url = re.sub(r"(\.nz/file/)([^#]+)#", r".nz/#!\2!", url)
-
-                        if url not in urls:
-
-                            urls.append(url)
-
-                            if len(url.split("!")) == 3:
-                                file_id = url.split("!")[1]
-                                file_key = url.split("!")[2]
-                                file = mega_api_req({'a': 'g', 'g': 1, 'p': file_id})
-                                
-                                key = crypto.base64_to_a32(file_key)
-                                k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
-                                attributes = crypto.base64_url_decode(file['at'])
-                                attributes = crypto.decrypt_attr(attributes, k)
-                                title = attributes['n'] + ' [' + str(format_bytes(file['s'])) + ']'
-                            else:
-                                title = url
-
-                            compress = compress_pattern.search(attributes['n'])
-
-                            if compress:
-                                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-                                
-                                if item.uploader:
-                                    itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-    
-                                break
-                            else:
-                                infoLabels=item.infoLabels
-
-                                if item.mode == "tvshow":
-                                    episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
-                                    
-                                    if episode:
-                                        infoLabels['episode'] = int(episode.group(1))
-                                    else:
-                                        infoLabels['episode'] = i
-                                
-                                itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
-                        
-                            i = i+1
+                        i = i+1
 
         if len(itemlist)>0:
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
