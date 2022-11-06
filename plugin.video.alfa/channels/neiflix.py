@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.96"
+NEIFLIX_VERSION = "1.97"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -463,11 +463,10 @@ def foro(item):
 
     if '<h3 class="catbg">Subforos</h3>' in data:
         # HAY SUBFOROS
-        patron = '<a class="subje(.*?)t" href="([^"]+)" name="[^"]+">([^<]+)</a(>)'
+        patron = '< *?a +class *?= *?"subje(.*?)t" +href *?= *?"([^"]+)" +name *?= *?"[^"]+" *?>([^<]+)< *?/ *?a *?(>)'
         action = "foro"
     elif '"subject windowbg4"' in data:
-        patron = '<td class="subject windowbg4">.*?<div *?>.*?<span id="([^"]+)">.*?< *?a +href *?= *?"([^"]+)" *?>([^<]+)</a> ' \
-                 '*?</span>.*?"Ver +perfil +de +([^"]+)"'
+        patron = '< *?td +class *?= *?"subject windowbg4" *?>.*?< *?div *?>.*?< *?span +id *?= *?"([^"]+)" ?>.*?< *?a +href *?= *?"([^"]+)" *?>([^<]+)< *?/ *?a *?> *?< *?/ *?span *?>.*?"Ver +perfil +de +([^"]+)"'
         final_item = True
         action = "foro"
     else:
@@ -476,7 +475,7 @@ def foro(item):
 
     if not video_links:
 
-        matches = re.compile(patron, re.DOTALL).findall(data)
+        matches = re.compile(patron, re.DOTALL|re.IGNORECASE).findall(data)
 
         for scrapedmsg, scrapedurl, scrapedtitle, uploader in matches:
 
@@ -490,6 +489,7 @@ def foro(item):
                     title = scrapedtitle + " (" + uploader + ")"
                 else:
                     title = scrapedtitle
+                    uploader=""
 
                 thumbnail = item.thumbnail
 
@@ -818,7 +818,7 @@ def get_video_mega_links_group(item):
 
                 itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                 
-                if item.uploader:
+                if item.uploader and :
                     itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
                 break
