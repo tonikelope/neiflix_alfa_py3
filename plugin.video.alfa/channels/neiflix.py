@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.98"
+NEIFLIX_VERSION = "1.99"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -50,6 +50,8 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3
 ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.alfa/"
 
 ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
+
+NEIFLIX_PATH = xbmc.translatePath('special://home/addons/plugin.video.neiflix/');
 
 try:
     HISTORY = [line.rstrip('\n') for line in open(KODI_TEMP_PATH + 'kodi_nei_history')]
@@ -222,6 +224,7 @@ def mainlist(item):
                                  url="https://noestasinvitado.com/deportes/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png"))
             itemlist.append(Item(channel=item.channel, title="Anime", action="foro", section="Anime",
                                  url="https://noestasinvitado.com/anime/", mode="movie", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
+            itemlist.append(Item(channel=item.channel, title="BIBLIOTAKU (by Akantor)", action="bibliotaku", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.neiflix/resources/akantor.gif"))
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", mode="movie", section="Guarreridas", action="foro",
                                      url="https://noestasinvitado.com/18-15/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", xxx=True))
@@ -443,6 +446,86 @@ def clean_history(item):
                                                        'channels', 'thumb', 'neiflix2_t.png'), 5000)
         except:
             pass
+
+
+def bibliotaku(item):
+
+    itemlist = []
+
+    itemlist.append(Item(channel=item.channel, title="Películas", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
+                                 url="https://noestasinvitado.com/msg.php?m=114128", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
+    itemlist.append(Item(channel=item.channel, title="Series (próximamente)", section="SERIES", mode="tvshow", action="",
+                         url="https://noestasinvitado.com/msg.php?m=114127", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
+    itemlist.append(Item(channel=item.channel, title="Anime (próximamente)", action="", section="Anime",
+                         url="https://noestasinvitado.com/msg.php?m=113529", mode="movie", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
+    return itemlist
+
+
+
+def bibliotaku_pelis(item):
+
+    data = httptools.downloadpage(item.url).data
+
+    patron = '\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
+
+    itemlist = []
+
+    matches = re.compile(patron, re.DOTALL|re.IGNORECASE).findall(data)
+
+    for scrapedtitle, mc_id in matches:
+
+        thumbnail = item.thumbnail
+
+        content_serie_name = ""
+
+        parsed_title = parse_title(scrapedtitle)
+
+        content_title = re.sub('^(Saga|Trilog.a|Duolog*a|ESDLA -) ' , '', parsed_title['title'])
+
+        if item.mode == "tvshow":
+            content_type = "tvshow"
+            content_serie_name = content_title
+        else:
+            content_type = "movie"
+
+        info_labels = {'year': parsed_title['year']}
+
+        quality = parsed_title['quality']
+
+        title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
+
+        itemlist.append(Item(channel=item.channel, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    for i in itemlist:
+            if i.infoLabels and 'rating' in i.infoLabels:
+
+                if i.infoLabels['rating'] >= 7.0:
+                    rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                elif i.infoLabels['rating'] < 5.0:
+                    rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                else:
+                    rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+
+                i.title = i.title.replace('##*NOTA*##', rating_text)
+            else:
+                i.title = i.title.replace('##*NOTA*##', '')
+
+    return itemlist
+
+
+def bibliotaku_megacrypter(item):
+    infoLabels=item.infoLabels
+            
+    if item.mode == "tvshow":
+        infoLabels['season'] = 1
+    
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    return itemlist
 
 
 def foro(item):
@@ -1472,6 +1555,12 @@ def get_filmaffinity_data_advanced(title, year, genre):
     return fa_data
 
 
+def check_neiflix_resources():
+    if not os.path.exists(NEIFLIX_PATH+"resources/akantor.gif"):
+        opener = urllib.request.URLopener()
+        opener.addheader('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36')
+        filename, headers = opener.retrieve(NEIFLIX_RESOURCES_URL + "akantor.gif", NEIFLIX_PATH+"resources/akantor.gif")
+
 # NEIFLIX uses a modified version of Alfa's MEGA LIB with support for MEGACRYPTER and multi thread
 def check_mega_lib_integrity():
     update_url = ALFA_URL + 'lib/megaserver/'
@@ -1577,6 +1666,8 @@ def check_nei_connector_integrity():
 
     return modified
 
+
+check_neiflix_resources()
 
 if CHECK_MEGA_STUFF_INTEGRITY and check_mega_lib_integrity():
     xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')',
