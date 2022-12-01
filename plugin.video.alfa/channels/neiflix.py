@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "1.99"
+NEIFLIX_VERSION = "2.0"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -224,7 +224,7 @@ def mainlist(item):
                                  url="https://noestasinvitado.com/deportes/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_sport.png"))
             itemlist.append(Item(channel=item.channel, title="Anime", action="foro", section="Anime",
                                  url="https://noestasinvitado.com/anime/", mode="movie", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
-            itemlist.append(Item(channel=item.channel, title="BIBLIOTAKU (by Akantor)", action="bibliotaku", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.neiflix/resources/akantor.gif"))
+            itemlist.append(Item(channel=item.channel, title="Bibliotaku (Akantor)", action="bibliotaku", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.neiflix/resources/akantor.gif"))
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
                 itemlist.append(Item(channel=item.channel, title="\"Guarreridas\"", mode="movie", section="Guarreridas", action="foro",
                                      url="https://noestasinvitado.com/18-15/", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_adult.png", xxx=True))
@@ -452,14 +452,125 @@ def bibliotaku(item):
 
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Películas", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
+    itemlist.append(Item(channel=item.channel, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
                                  url="https://noestasinvitado.com/msg.php?m=114128", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
-    itemlist.append(Item(channel=item.channel, title="Series (próximamente)", section="SERIES", mode="tvshow", action="",
+    itemlist.append(Item(channel=item.channel, title="Bibliotaku (SERIES)", section="SERIES", mode="tvshow", action="bibliotaku_series",
                          url="https://noestasinvitado.com/msg.php?m=114127", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
-    itemlist.append(Item(channel=item.channel, title="Anime (próximamente)", action="", section="Anime",
-                         url="https://noestasinvitado.com/msg.php?m=113529", mode="movie", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_channels_anime.png"))
     return itemlist
 
+
+def bibliotaku_series(item):
+    data = httptools.downloadpage(item.url).data
+
+    data = re.sub('[–—]', '-', html.unescape(data))
+
+    data = re.sub('[- ]*?(T|S) *?[0-9U]+[- ]*', ' ', data)
+    
+    data = re.sub(' *?-+ *?[Tt]emporadas?[^-]+-+ *?', ' ', data)
+
+    data = re.sub(' AC3', ' ', data)
+
+    patron = '\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
+
+    itemlist = []
+
+    matches = re.compile(patron, re.DOTALL|re.IGNORECASE).findall(data)
+
+    series = {}
+
+    for scrapedtitle, mc_id in matches:
+
+        parsed_title = parse_title(scrapedtitle)
+
+        if parsed_title['title'] in series:
+            series[parsed_title['title']].append(mc_id)
+        else:
+            series[parsed_title['title']]=[mc_id]
+
+            thumbnail = item.thumbnail
+
+            content_serie_name = ""
+
+            content_title = re.sub('^(Saga|Trilog.a|Duolog*a|ESDLA -) ' , '', parsed_title['title'])
+
+            content_type = "tvshow"
+
+            content_serie_name = content_title
+
+            info_labels = {'year': parsed_title['year']}
+
+            quality = parsed_title['quality']
+
+            title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
+
+            itemlist.append(Item(channel=item.channel, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    for i in itemlist:
+
+        i.mc_group_id = series[i.parsed_title]
+
+        if i.infoLabels and 'rating' in i.infoLabels:
+
+            if i.infoLabels['rating'] >= 7.0:
+                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
+            elif i.infoLabels['rating'] < 5.0:
+                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
+            else:
+                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
+
+            i.title = i.title.replace('##*NOTA*##', rating_text)
+        else:
+            i.title = i.title.replace('##*NOTA*##', '')
+
+    return itemlist
+
+
+def bibliotaku_series_temporadas(item):
+
+    itemlist = []
+
+    if len(item.mc_group_id) == 1:
+        item.infoLabels['season']=1
+
+        item.mc_group_id = item.mc_group_id[0]
+
+        itemlist = bibliotaku_series_megacrypter(item)
+
+    else:
+        
+        i = 1
+        
+        for mc_id in item.mc_group_id:
+            infoLabels=item.infoLabels
+
+            infoLabels['season']=i
+            
+            itemlist.append(Item(channel=item.channel, action="bibliotaku_series_megacrypter",
+                                 title='[' + str(i) + '/' + str(len(item.mc_group_id)) + '] ' + item.title, url=item.url,
+                                 mc_group_id=mc_id, infoLabels=infoLabels, mode=item.mode))
+
+            i = i + 1
+
+        if len(itemlist)>0:
+            itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+        else:
+            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+            
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    return itemlist
+
+
+def bibliotaku_series_megacrypter(item):
+
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    return itemlist
 
 
 def bibliotaku_pelis(item):
@@ -482,11 +593,7 @@ def bibliotaku_pelis(item):
 
         content_title = re.sub('^(Saga|Trilog.a|Duolog*a|ESDLA -) ' , '', parsed_title['title'])
 
-        if item.mode == "tvshow":
-            content_type = "tvshow"
-            content_serie_name = content_title
-        else:
-            content_type = "movie"
+        content_type = "movie"
 
         info_labels = {'year': parsed_title['year']}
 
@@ -494,33 +601,30 @@ def bibliotaku_pelis(item):
 
         title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-        itemlist.append(Item(channel=item.channel, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+        itemlist.append(Item(channel=item.channel, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     for i in itemlist:
-            if i.infoLabels and 'rating' in i.infoLabels:
+        if i.infoLabels and 'rating' in i.infoLabels:
 
-                if i.infoLabels['rating'] >= 7.0:
-                    rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-                elif i.infoLabels['rating'] < 5.0:
-                    rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
-                else:
-                    rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
-
-                i.title = i.title.replace('##*NOTA*##', rating_text)
+            if i.infoLabels['rating'] >= 7.0:
+                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
+            elif i.infoLabels['rating'] < 5.0:
+                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
             else:
-                i.title = i.title.replace('##*NOTA*##', '')
+                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
+
+            i.title = i.title.replace('##*NOTA*##', rating_text)
+        else:
+            i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
 
 
-def bibliotaku_megacrypter(item):
+def bibliotaku_pelis_megacrypter(item):
     infoLabels=item.infoLabels
             
-    if item.mode == "tvshow":
-        infoLabels['season'] = 1
-    
     itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -648,11 +752,11 @@ def foro(item):
             if i.infoLabels and 'rating' in i.infoLabels:
 
                 if i.infoLabels['rating'] >= 7.0:
-                    rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                    rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
                 elif i.infoLabels['rating'] < 5.0:
-                    rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                    rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
                 else:
-                    rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+                    rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
 
                 i.title = i.title.replace('##*NOTA*##', rating_text)
             else:
@@ -776,11 +880,11 @@ def search_parse(data, item):
         if i.infoLabels and 'rating' in i.infoLabels:
 
             if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
             elif i.infoLabels['rating'] < 5.0:
-                rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
             else:
-                rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
 
             i.title = i.title.replace('##*NOTA*##', rating_text)
         else:
@@ -1382,11 +1486,11 @@ def indice_links(item):
         if i.infoLabels and 'rating' in i.infoLabels:
 
             if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR lightgreen][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
             elif i.infoLabels['rating'] < 5.0:
-                rating_text = "[B][COLOR red][" + str(i.infoLabels['rating']) + "][/COLOR][/B]"
+                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
             else:
-                rating_text = "[B][" + str(i.infoLabels['rating']) + "][/B]"
+                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
 
             i.title = i.title.replace('##*NOTA*##', rating_text)
         else:
