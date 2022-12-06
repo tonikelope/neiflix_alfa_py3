@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.0"
+NEIFLIX_VERSION = "2.1"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -508,21 +508,7 @@ def bibliotaku_series(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     for i in itemlist:
-
-        i.mc_group_id = series[i.parsed_title]
-
-        if i.infoLabels and 'rating' in i.infoLabels:
-
-            if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
-            elif i.infoLabels['rating'] < 5.0:
-                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
-            else:
-                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
-
-            i.title = i.title.replace('##*NOTA*##', rating_text)
-        else:
-            i.title = i.title.replace('##*NOTA*##', '')
+        i.contentTitle=i.contentTitle+" @ "+i.uploader
 
     return itemlist
 
@@ -606,18 +592,7 @@ def bibliotaku_pelis(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
     for i in itemlist:
-        if i.infoLabels and 'rating' in i.infoLabels:
-
-            if i.infoLabels['rating'] >= 7.0:
-                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
-            elif i.infoLabels['rating'] < 5.0:
-                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
-            else:
-                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
-
-            i.title = i.title.replace('##*NOTA*##', rating_text)
-        else:
-            i.title = i.title.replace('##*NOTA*##', '')
+        i.contentTitle=i.contentTitle+" @ "+i.uploader
 
     return itemlist
 
@@ -687,7 +662,7 @@ def foro(item):
                     parsed_title = parse_title(scrapedtitle)
 
                     content_title = re.sub('^(Saga|Trilog.a|Duolog*a) ' , '', parsed_title['title'])
-
+                    
                     if item.mode == "tvshow":
                         content_type = "tvshow"
                         content_serie_name = content_title
@@ -706,7 +681,6 @@ def foro(item):
                         quality = parsed_title['quality']
 
                     title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*## (" + uploader + ")"
-
                 else:
                     
                     if '(Ultra HD)' in item.title or '(Ultra HD)' in title:
@@ -737,6 +711,11 @@ def foro(item):
 
                 itemlist.append(Item(channel=item.channel, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action=action, title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
+        tmdb.set_infoLabels_itemlist(itemlist, True)
+
+        for i in itemlist:
+            i.contentTitle=i.contentTitle+" @ "+i.uploader
+
         patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
         matches = re.compile(patron, re.DOTALL).search(data)
@@ -745,22 +724,6 @@ def foro(item):
             url = matches.group(1)
             title = "[B]>> PÁGINA SIGUIENTE[/B]"
             itemlist.append(Item(channel=item.channel, parent_title=item.parent_title, mode=item.mode, section=item.section, action="foro", title=title, url=url))
-
-        tmdb.set_infoLabels_itemlist(itemlist, True)
-
-        for i in itemlist:
-            if i.infoLabels and 'rating' in i.infoLabels:
-
-                if i.infoLabels['rating'] >= 7.0:
-                    rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
-                elif i.infoLabels['rating'] < 5.0:
-                    rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
-                else:
-                    rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
-
-                i.title = i.title.replace('##*NOTA*##', rating_text)
-            else:
-                i.title = i.title.replace('##*NOTA*##', '')
 
     return itemlist
 
@@ -1343,6 +1306,20 @@ def find_video_mega_links(item, data):
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
+    for i in itemlist:
+        if i.infoLabels and 'rating' in i.infoLabels:
+
+            if i.infoLabels['rating'] >= 7.0:
+                rating_text = "[B][COLOR lightgreen][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
+            elif i.infoLabels['rating'] < 5.0:
+                rating_text = "[B][COLOR red][" + str(round(i.infoLabels['rating'],1)) + "][/COLOR][/B]"
+            else:
+                rating_text = "[B][" + str(round(i.infoLabels['rating'],1)) + "][/B]"
+
+            i.title = i.title.replace('##*NOTA*##', rating_text)
+        else:
+            i.title = i.title.replace('##*NOTA*##', '')
+
     return itemlist
 
 def leer_criticas_fa(item):
@@ -1353,7 +1330,7 @@ def leer_criticas_fa(item):
         fa_data = item.fa_data
 
     if not fa_data:
-        fa_data = get_filmaffinity_data_advanced(item.contentTitle, str(item.year), "TV_SE" if item.mode=="tvshow" else "")
+        fa_data = get_filmaffinity_data_advanced(re.sub(" @.+$", "", item.contentTitle), str(item.year), "TV_SE" if item.mode=="tvshow" else "")
 
     if isinstance(fa_data, list) and len(fa_data)>1:
 
@@ -1390,12 +1367,7 @@ def leer_criticas_fa(item):
 
         itemlist = []
 
-        if float(fa_data['rate']) >= 7.0:
-            rating_text = "[B][COLOR lightgreen]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/COLOR][/B]"
-        elif float(fa_data['rate']) < 5.0:
-            rating_text = "[B][COLOR red]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/COLOR][/B]"
-        else:
-            rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/B]"
+        rating_text = "NOTA MEDIA: " + str(fa_data['rate'])
 
         itemlist.append(Item(channel=item.channel, contentPlot="[I]Críticas de: "+item.contentTitle+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
 
