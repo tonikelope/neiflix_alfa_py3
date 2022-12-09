@@ -54,6 +54,37 @@
       "visible": true
     },
     {
+      "id": "neiflix_realdebrid",
+      "type": "bool",
+      "label": "Usar REALDEBRID",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_realdebrid_mega_email",
+      "type": "text",
+      "label": "Email de MEGA (cuenta auxiliar para debrid):",
+      "enabled": "!eq(-1,false)",
+      "visible": "!eq(-1,false)"
+    },
+    {
+      "id": "neiflix_realdebrid_mega_password",
+      "type": "text",
+      "hidden": true,
+      "label": "Password de MEGA (cuenta auxiliar para debrid):",
+      "enabled": "!eq(-2,false)",
+      "visible": "!eq(-2,false)"
+    },
+    {
+      "id": "neiflix_realdebrid_proxy_port",
+      "type": "text",
+      "label": "Puerto para DEBRID proxy:",
+      "default": "21447",
+      "enabled": "!eq(-3,false)",
+      "visible": "!eq(-3,false)"
+    },
+    {
       "id": "neiflix_mega_premium",
       "type": "bool",
       "label": "Usar cuenta PREMIUM de MEGA",
@@ -64,7 +95,7 @@
     {
       "id": "neiflix_mega_email",
       "type": "text",
-      "label": "Usuario de MEGA:",
+      "label": "Email de MEGA:",
       "enabled": "!eq(-1,false)",
       "visible": "!eq(-1,false)"
     },
