@@ -459,7 +459,7 @@ def AD_get_video_url(page_url, premium=False, user="", password="", video_passwo
         else:
             return [["NEI ALL-DEBRID: es necesario activar la cuenta manualmente. Accede al menú de ayuda", ""]]
     
-    page_url = urllib.quote(page_url)
+    page_url = urllib.parse.quote(page_url)
     url = "%slink/unlock?agent=%s&apikey=%s&link=%s" % (AD_API, agent_id, api_key, page_url)
     
     dd = httptools.downloadpage(url).json
