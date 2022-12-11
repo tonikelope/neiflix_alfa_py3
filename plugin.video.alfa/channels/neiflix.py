@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.3"
+NEIFLIX_VERSION = "2.4"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -119,7 +119,6 @@ def login():
 
         return false
 
-
 def mega_login(verbose):
     mega_sid = ''
 
@@ -212,6 +211,7 @@ def mainlist(item):
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "¡Bienvenido " + NEIFLIX_LOGIN + "!",
                                           os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
                                                        'channels', 'thumb', 'neiflix2_t.png'), 5000)
+            
             mega_login(True)
             load_mega_proxy('', MC_REVERSE_PORT, MC_REVERSE_PASS)
             itemlist.append(Item(channel=item.channel, title="[B]PELÍCULAS[/B]", section="PELÍCULAS", mode="movie", action="foro",
@@ -424,7 +424,7 @@ def clean_cache(item):
     conta_files = 0
 
     for file in os.listdir(KODI_TEMP_PATH):
-        if file.startswith("kodi_nei_") and file != 'kodi_nei_history':
+        if file.startswith("kodi_nei_") and not file.startswith('kodi_nei_debrid_') and file != 'kodi_nei_history':
             os.remove(KODI_TEMP_PATH + file)
             conta_files = conta_files + 1
 

@@ -28,11 +28,19 @@ from socketserver import ThreadingMixIn
 import threading
 import re
 import base64
+import hashlib
+import xbmc
+import os
+import pickle
+
+KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:65.0) Gecko/20100101 Firefox/65.0'}
 
 AD_API = 'https://api.alldebrid.com/v4/'
+
 agent_id = "AlfaAddon"
+
 AD_ERRORS = {  
         'GENERIC': 'Ha ocurrido un error',
         '404': "Error en la url de la api",
@@ -90,14 +98,14 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
 
-            print(url)
+            logger.info(url)
 
             request_headers={}
 
             for h in self.headers:
                 if h != 'Host':
                     request_headers[h]=self.headers[h]
-                    print('do_HEAD HEADER '+h+' '+self.headers[h])
+                    logger.info('do_HEAD HEADER '+h+' '+self.headers[h])
 
             request = urllib.request.Request(url, headers=request_headers, method='HEAD')
             
@@ -116,7 +124,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             for h in good_headers:
                 self.send_header(h, good_headers[h])
-                print('GH '+h+' '+good_headers[h])
+                logger.info('GH '+h+' '+good_headers[h])
 
             self.end_headers()
 
@@ -128,8 +136,6 @@ class DebridProxy(BaseHTTPRequestHandler):
                     chunk = response.read(8192)
             except:
                 pass
-
-            self.finish()
 
 
     def do_GET(self):
@@ -146,14 +152,14 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
 
-            print(url)
+            logger.info(url)
 
             request_headers={}
 
             for h in self.headers:
                 if h != 'Host':
                     request_headers[h]=self.headers[h]
-                    print('do_GET HEADER '+h+' '+self.headers[h])
+                    logger.info('do_GET HEADER '+h+' '+self.headers[h])
 
             request = urllib.request.Request(url, headers=request_headers)
             
@@ -170,15 +176,15 @@ class DebridProxy(BaseHTTPRequestHandler):
             for header in headers:
 
                 if header[0] == 'Content-Length':
-                    size = header[1]
+                    size = int(header[1])
                     good_headers[header[0]]=header[1]
                 elif header[0] == 'Content-Range':
-                    inicio = re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1])
+                    inicio = int(re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1]))
 
-                    if inicio == '0' and file_size == None and self.headers['Range'] == 'bytes=0-':
+                    if inicio == 0 and file_size == None and self.headers['Range'] == 'bytes=0-':
                         file_size = size
 
-                    final = int(inicio) + int(size) - 1
+                    final = inicio + size - 1
 
                     good_headers[header[0]]='bytes '+str(inicio)+'-'+str(final)+'/'+str(file_size)
                 else:
@@ -186,7 +192,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             for h in good_headers:
                 self.send_header(h, good_headers[h])
-                print('GH '+h+' '+good_headers[h])
+                logger.info('GH '+h+' '+good_headers[h])
 
             self.end_headers()
 
@@ -198,8 +204,6 @@ class DebridProxy(BaseHTTPRequestHandler):
                     chunk = response.read(8192)
             except:
                 pass
-
-            self.finish()
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
     pass
@@ -227,7 +231,21 @@ def megacrypter2debrid(link):
 
     mega_link = re.sub(r'^.*?(http.+)$', r'\1', mega_link_response.data)
 
-    return mega_link.strip() if 'httpERROR' not in mega_link else None
+    fid_hash = re.sub(r'^.*?@(.*?)#.*$', r'\1', mega_link_response.data)
+
+    return (mega_link.strip(), fid_hash.strip()) if 'httpERROR' not in mega_link else None
+
+
+def megacrypter2debridHASH(link):
+    megacrypter_link = link.split('#')
+
+    link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
+
+    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data)
+
+    fid_hash = re.sub(r'^.*?@(.*?)#.*$', r'\1', mega_link_response.data)
+
+    return fid_hash.strip() if 'hashERROR' not in fid_hash else None
 
 
 def test_video_exists(page_url):
@@ -245,30 +263,129 @@ def test_video_exists(page_url):
     return True, ""
 
 
+def check_debrid_urls(itemlist):
+
+    for i in itemlist:
+        url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', i[1]))
+        logger.info(url)
+        request = urllib.request.Request(url, method='HEAD')
+        response = urllib.request.urlopen(request)
+
+        if response.status != 200:
+            return True
+
+    return False
+
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
 
     logger.info(page_url)
 
     if NEIFLIX_REALDEBRID:
+
+        if proxy_server:
+            start_proxy()
     
         if 'megacrypter.noestasinvitado' in page_url:
-            page_url = megacrypter2debrid(page_url)
 
-            if not page_url:
-                return [["NEI DEBRID: revisa los datos de tu cuenta auxiliar de MEGA", ""]]
+            fid_hash = megacrypter2debridHASH(page_url)
 
-        return RD_get_video_url(page_url)
+            filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+
+            if os.path.isfile(filename_hash):
+                with open(filename_hash, "rb") as file:
+                    urls = pickle.load(file)
+                    logger.info('REALDEBRID USANDO CACHE -> '+fid_hash)
+
+                if check_debrid_urls(urls):
+                    os.remove(filename_hash)
+
+            if not os.path.isfile(filename_hash):
+                with open(filename_hash, "wb") as file:
+
+                    response = megacrypter2debrid(page_url)
+
+                    if not response:
+                        return [["NEI DEBRID: revisa los datos de tu cuenta auxiliar de MEGA", ""]]
+
+                    page_url = response[0]
+
+                    urls = RD_get_video_url(page_url)
+
+                    pickle.dump(urls, file)
+        else:
+
+            fid = re.subr(r'^.*?#F?!(.*?)!.*$', r'\1', page_url)
+
+            fid_hash = hashlib.sha256(fid).hexdigest()
+
+            filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+
+            if os.path.isfile(filename_hash):
+                with open(filename_hash, "rb") as file:
+                    urls = pickle.load(file)
+                    logger.info('REALDEBRID USANDO CACHE -> '+fid_hash)
+           
+                if check_debrid_urls(urls):
+                    os.remove(filename_hash)
+
+            if os.path.isfile(filename_hash):
+                with open(filename_hash, "wb") as file:
+                    urls = RD_get_video_url(page_url)
+                    pickle.dump(urls, file)
+
+        return urls
 
     if NEIFLIX_ALLDEBRID:
     
         if 'megacrypter.noestasinvitado' in page_url:
-            page_url = megacrypter2debrid(page_url)
 
-            if not page_url:
-                return [["NEI DEBRID: revisa los datos de tu cuenta auxiliar de MEGA", ""]]
+            fid_hash = megacrypter2debridHASH(page_url)
 
-        return AD_get_video_url(page_url)
+            filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
 
+            if os.path.isfile(filename_hash):
+                with open(filename_hash, "rb") as file:
+                    urls = pickle.load(file)
+                    logger.info('ALLDEBRID USANDO CACHE -> '+fid_hash)
+
+                if check_debrid_urls(urls):
+                    os.remove(filename_hash)
+
+            if not os.path.isfile(filename_hash):
+                with open(filename_hash, "wb") as file:
+
+                    response = megacrypter2debrid(page_url)
+
+                    if not response:
+                        return [["NEI DEBRID: revisa los datos de tu cuenta auxiliar de MEGA", ""]]
+
+                    page_url = response[0]
+
+                    urls = AD_get_video_url(page_url)
+
+                    pickle.dump(urls, file)
+        else:
+
+            fid = re.subr(r'^.*?#F?!(.*?)!.*$', r'\1', page_url)
+
+            fid_hash = hashlib.sha256(fid).hexdigest()
+
+            filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+
+            if os.path.isfile(filename_hash):
+                with open(filename_hash, "rb") as file:
+                    urls = pickle.load(file)
+                    logger.info('ALLDEBRID USANDO CACHE -> '+fid_hash)
+           
+                if check_debrid_urls(urls):
+                    os.remove(filename_hash)
+
+            if os.path.isfile(filename_hash):
+                with open(filename_hash, "wb") as file:
+                    urls = AD_get_video_url(page_url)
+                    pickle.dump(urls, file)
+
+        return urls
 
     page_url = page_url.replace('/embed#', '/#')
     logger.info("(page_url='%s')" % page_url)
@@ -291,9 +408,6 @@ def start_proxy():
 
 # Returns an array of possible video url's from the page_url
 def RD_get_video_url(page_url, premium=False, user="", password="", video_password=""):
-
-    if proxy_server:
-        start_proxy()
 
     logger.info("(page_url='%s' , video_password=%s)" % (page_url, video_password))
     page_url = page_url.replace(".nz/embed", ".nz/")
