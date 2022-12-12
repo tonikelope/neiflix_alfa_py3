@@ -252,7 +252,7 @@ def megacrypter2debrid(link):
 
     logger.info('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''))
 
-    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''))
+    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''), timeout=60)
 
     mega_link = re.sub(r'^.*?(http.+)$', r'\1', mega_link_response.data)
 
@@ -266,7 +266,7 @@ def megacrypter2debridHASH(link):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data)
+    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data, timeout=60)
 
     fid_hash = re.sub(r'^.*?@(.*?)#.*$', r'\1', mega_link_response.data)
 
