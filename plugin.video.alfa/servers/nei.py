@@ -74,13 +74,28 @@ hostName = "localhost"
 
 hostPort = int(config.get_setting("neiflix_debrid_proxy_port", "neiflix").strip())
 
-file_size = None
-
 NEIFLIX_REALDEBRID = config.get_setting("neiflix_realdebrid", "neiflix")
 
 NEIFLIX_ALLDEBRID = config.get_setting("neiflix_alldebrid", "neiflix")
 
+file_url=None
+file_size=0
+lock = threading.Lock()
+
 class DebridProxy(BaseHTTPRequestHandler):
+
+    def update_file_size(self, url):
+        request_headers={}
+        request_headers['Range']='bytes=0-'
+        request = urllib.request.Request(url, headers=request_headers, method='HEAD')
+        response = urllib.request.urlopen(request)
+        headers = response.getheaders()
+
+        for header in headers:
+            if header[0] == 'Content-Length':
+                return int(header[1])
+
+        return 0
 
     def do_HEAD(self):
 
@@ -92,13 +107,17 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         else:
 
-            global file_size
-
-            file_size = None
+            global file_url, file_size
 
             url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
 
             logger.info(url)
+
+            lock.acquire()
+            if file_url!=url:
+                file_url = url
+                file_size=self.update_file_size(file_url)
+            lock.release()
 
             request_headers={}
 
@@ -148,11 +167,17 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         else:
 
-            global file_size
+            global file_url, file_size
 
             url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
 
             logger.info(url)
+
+            lock.acquire()
+            if file_url!=url:
+                file_url = url
+                file_size=self.update_file_size(file_url)
+            lock.release()
 
             request_headers={}
 
@@ -171,21 +196,19 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             good_headers={}
 
-            size=0
+            range_size=0
 
             for header in headers:
 
                 if header[0] == 'Content-Length':
-                    size = int(header[1])
+                    range_size = int(header[1])
                     good_headers[header[0]]=header[1]
-                elif header[0] == 'Content-Range':
+             
+            for header in headers:
+
+                if header[0] == 'Content-Range':
                     inicio = int(re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1]))
-
-                    if inicio == 0 and file_size == None and self.headers['Range'] == 'bytes=0-':
-                        file_size = size
-
-                    final = inicio + size - 1
-
+                    final = inicio + range_size - 1
                     good_headers[header[0]]='bytes '+str(inicio)+'-'+str(final)+'/'+str(file_size)
                 else:
                     good_headers[header[0]]=header[1]
@@ -196,7 +219,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             self.end_headers()
 
-            #HAY QUE METER HILOS AQUI
+            #¿HILOS AQUI?
 
             chunk = response.read(1024*1024)
             
