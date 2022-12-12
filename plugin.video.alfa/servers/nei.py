@@ -196,12 +196,14 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             self.end_headers()
 
-            chunk = response.read(8192)
+            #HAY QUE METER HILOS AQUI
+
+            chunk = response.read(1024*1024)
             
             try:
                 while chunk:
                     self.wfile.write(chunk)
-                    chunk = response.read(8192)
+                    chunk = response.read(1024*1024)
             except:
                 pass
 
@@ -265,14 +267,17 @@ def test_video_exists(page_url):
 
 def check_debrid_urls(itemlist):
 
-    for i in itemlist:
-        url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', i[1]))
-        logger.info(url)
-        request = urllib.request.Request(url, method='HEAD')
-        response = urllib.request.urlopen(request)
+    try:
+        for i in itemlist:
+            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', i[1]))
+            logger.info(url)
+            request = urllib.request.Request(url, method='HEAD')
+            response = urllib.request.urlopen(request)
 
-        if response.status != 200:
-            return True
+            if response.status != 200:
+                return True
+    except:
+        return True
 
     return False
 
@@ -293,10 +298,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             if os.path.isfile(filename_hash):
                 with open(filename_hash, "rb") as file:
-                    urls = pickle.load(file)
-                    logger.info('REALDEBRID USANDO CACHE -> '+fid_hash)
+                    try:
+                        urls = pickle.load(file)
+                        logger.info('DEBRID USANDO CACHE -> '+fid_hash)
+                    except:
+                        urls = None
 
-                if check_debrid_urls(urls):
+                if urls==None or check_debrid_urls(urls):
                     os.remove(filename_hash)
 
             if not os.path.isfile(filename_hash):
@@ -322,10 +330,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             if os.path.isfile(filename_hash):
                 with open(filename_hash, "rb") as file:
-                    urls = pickle.load(file)
-                    logger.info('REALDEBRID USANDO CACHE -> '+fid_hash)
+                    try:
+                        urls = pickle.load(file)
+                        logger.info('DEBRID USANDO CACHE -> '+fid_hash)
+                    except:
+                        urls = None
            
-                if check_debrid_urls(urls):
+                if urls==None or check_debrid_urls(urls):
                     os.remove(filename_hash)
 
             if os.path.isfile(filename_hash):
@@ -345,10 +356,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             if os.path.isfile(filename_hash):
                 with open(filename_hash, "rb") as file:
-                    urls = pickle.load(file)
-                    logger.info('ALLDEBRID USANDO CACHE -> '+fid_hash)
+                    try:
+                        urls = pickle.load(file)
+                        logger.info('DEBRID USANDO CACHE -> '+fid_hash)
+                    except:
+                        urls = None
 
-                if check_debrid_urls(urls):
+                if urls==None or check_debrid_urls(urls):
                     os.remove(filename_hash)
 
             if not os.path.isfile(filename_hash):
@@ -374,10 +388,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             if os.path.isfile(filename_hash):
                 with open(filename_hash, "rb") as file:
-                    urls = pickle.load(file)
-                    logger.info('ALLDEBRID USANDO CACHE -> '+fid_hash)
+                    try:
+                        urls = pickle.load(file)
+                        logger.info('DEBRID USANDO CACHE -> '+fid_hash)
+                    except:
+                        urls = None
            
-                if check_debrid_urls(urls):
+                if urls==None or check_debrid_urls(urls):
                     os.remove(filename_hash)
 
             if os.path.isfile(filename_hash):
