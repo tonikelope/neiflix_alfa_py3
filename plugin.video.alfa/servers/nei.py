@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # Versión modificada del conector de MEGA para Noestasinvitado.com
-# Soporte (experimental) para usar MegaCrypter con RealDebrid 
-# Incluye proxy para parchear al vuelo cabeceras Content-Range defectuosas aleatorias de realdebrid y poder saltar en el vídeo hacia delante/atrás
+# Soporte (experimental) para usar MegaCrypter con RealDebrid / Alldebrid
+# Incluye proxy para parchear al vuelo cabeceras Content-Range defectuosas 
+#aleatorias de RealDebrid y poder saltar en el vídeo hacia delante/atrás
 
 
 import sys
