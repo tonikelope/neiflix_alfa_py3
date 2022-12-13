@@ -147,12 +147,12 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             self.end_headers()
 
-            chunk = response.read(8192)
+            chunk = response.read(4096)
             
             try:
                 while chunk:
                     self.wfile.write(chunk)
-                    chunk = response.read(8192)
+                    chunk = response.read(4096)
             except:
                 pass
 
@@ -221,12 +221,12 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             #¿HILOS AQUI?
 
-            chunk = response.read(1024*1024)
+            chunk = response.read(4096)
             
             try:
                 while chunk:
                     self.wfile.write(chunk)
-                    chunk = response.read(1024*1024)
+                    chunk = response.read(4096)
             except:
                 pass
 
