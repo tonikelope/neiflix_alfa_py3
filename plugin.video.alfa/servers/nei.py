@@ -3,7 +3,7 @@
 # Versión modificada del conector de MEGA para Noestasinvitado.com
 # Soporte (experimental) para usar MegaCrypter con RealDebrid / Alldebrid
 # Incluye proxy para parchear al vuelo cabeceras Content-Range defectuosas 
-#aleatorias de RealDebrid y poder saltar en el vídeo hacia delante/atrás
+# aleatorias de RealDebrid y poder saltar en el vídeo hacia delante/atrás
 
 
 import sys
@@ -33,6 +33,7 @@ import hashlib
 import xbmc
 import os
 import pickle
+import shutil
 
 KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
@@ -148,12 +149,8 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             self.end_headers()
 
-            chunk = response.read(4096)
-            
             try:
-                while chunk:
-                    self.wfile.write(chunk)
-                    chunk = response.read(4096)
+                shutil.copyfileobj(response, self.wfile)
             except:
                 pass
 
@@ -220,14 +217,8 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             self.end_headers()
 
-            #¿HILOS AQUI?
-
-            chunk = response.read(4096)
-            
             try:
-                while chunk:
-                    self.wfile.write(chunk)
-                    chunk = response.read(4096)
+                shutil.copyfileobj(response, self.wfile)
             except:
                 pass
 
@@ -238,7 +229,6 @@ try:
     proxy_server = ThreadingSimpleServer((hostName, hostPort), DebridProxy)
 except:
     proxy_server = None
-
 
 
 def megacrypter2debrid(link):
