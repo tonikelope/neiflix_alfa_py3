@@ -100,6 +100,7 @@ class DebridProxyChunkWriter():
         self.exit = False
         self.next_offset_required = start_offset
         self.chunk_offset_lock = threading.Lock()
+        self.dormido = False
 
 
     def run(self):
@@ -133,9 +134,13 @@ class DebridProxyChunkWriter():
                     with self.cv_queue_full:
                         self.cv_queue_full.notify_all()
 
+                    self.dormido = False
+
                 if CHUNK_WRITER==self and not self.exit and self.bytes_written < self.end_offset:
 
-                    logger.debug("CHUNKWRITER me duermo hasta que llegue el offset -> "+str(self.bytes_written))
+                    if not self.dormido:
+                        logger.debug("CHUNKWRITER me duermo hasta que llegue el offset -> "+str(self.bytes_written))
+                        self.dormido=True
 
                     with self.cv_new_element:
                         self.cv_new_element.wait(1)
@@ -167,6 +172,7 @@ class DebridProxyChunkDownloader():
         self.url = url
         self.exit = False
         self.chunk_writer = chunk_writer
+        self.dormido = False
 
     def run(self):
 
@@ -190,9 +196,15 @@ class DebridProxyChunkDownloader():
                     try:
 
                         while not self.chunk_writer.exit and not self.exit and len(self.chunk_writer.queue) >= MAX_CHUNKS_IN_QUEUE and offset!=self.chunk_writer.bytes_written:
-                            logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
+
+                            if not self.dormido:
+                                logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
+                                self.dormido = True
+                            
                             with self.chunk_writer.cv_queue_full:
                                 self.chunk_writer.cv_queue_full.wait(1)
+
+                        self.dormido = False
 
                         request = urllib.request.Request(self.url, headers=request_headers)
 
@@ -221,7 +233,7 @@ class DebridProxyChunkDownloader():
             else:
                 self.exit = True
 
-        logger.info('CHUNKDOWNLOADER '+str(self.id)+' ['+str(inicio)+'-] BYE')
+        logger.info('CHUNKDOWNLOADER '+str(self.id)+' ['+str(offset)+'-] BYE')
 
 class DebridProxy(BaseHTTPRequestHandler):
 
