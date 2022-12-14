@@ -37,11 +37,11 @@ import shutil
 
 KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:65.0) Gecko/20100101 Firefox/65.0'}
+DEFAULT_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:65.0) Gecko/20100101 Firefox/65.0'}
 
 AD_API = 'https://api.alldebrid.com/v4/'
 
-agent_id = "AlfaAddon"
+AGENT_ID = "AlfaAddon"
 
 AD_ERRORS = {  
         'GENERIC': 'Ha ocurrido un error',
@@ -70,19 +70,158 @@ AD_ERRORS = {
 
         'NO_SERVER': "Los servidores no tienen permitido usar esta opción. \nVisite https://alldebrid.com/vpn si está usando una VPN."}
 
-files = None
+MEGA_FILES = None
 
-hostName = "localhost"
-
-hostPort = int(config.get_setting("neiflix_debrid_proxy_port", "neiflix").strip())
-
+DEBRID_PROXY_HOST = "localhost"
+DEBRID_PROXY_PORT = int(config.get_setting("neiflix_debrid_proxy_port", "neiflix").strip())
 NEIFLIX_REALDEBRID = config.get_setting("neiflix_realdebrid", "neiflix")
-
 NEIFLIX_ALLDEBRID = config.get_setting("neiflix_alldebrid", "neiflix")
 
-file_url=None
-file_size=0
-lock = threading.Lock()
+DEBRID_PROXY_FILE_URL=None
+DEBRID_PROXY_FILE_SIZE=0
+DEBRID_PROXY_URL_LOCK = threading.Lock()
+
+CHUNK_SIZE = 5*1024*1024 #COMPROMISO
+WORKERS = 4 #Lo mismo, no subir mucho porque PETA
+MAX_CHUNKS_IN_QUEUE = 20 #Si sobra la RAM se puede aumentar (este buffer se suma al propio buffer de KODI)
+CHUNK_QUEUE = {}
+CHUNK_WRITER = None
+
+class DebridProxyChunkWriter():
+
+    def __init__(self, wfile, start_offset, end_offset):
+        self.start_offset = start_offset
+        self.end_offset = end_offset
+        self.output = wfile
+        self.queue = CHUNK_QUEUE
+        self.cv_queue_full = threading.Condition()
+        self.cv_new_element = threading.Condition()
+        self.bytes_written = start_offset
+        self.exit = False
+        self.next_offset_required = start_offset
+        self.chunk_offset_lock = threading.Lock()
+
+
+    def run(self):
+
+        logger.info("CHUNKWRITER HELLO!")
+
+        logger.debug('CHUNKWRITER vaciando cola de chunks que no me sirven...')
+
+        for offset in list(self.queue):
+
+            if offset < self.start_offset or offset > self.start_offset+MAX_CHUNKS_IN_QUEUE*CHUNK_SIZE:
+                del self.queue[offset]
+            
+                with self.cv_queue_full:
+                    self.cv_queue_full.notify_all()
+
+        try:
+
+            while CHUNK_WRITER==self and not self.exit and self.bytes_written < self.end_offset:
+
+                while CHUNK_WRITER==self and not self.exit and self.bytes_written < self.end_offset and self.bytes_written in self.queue:
+
+                    current_chunk = self.queue.pop(self.bytes_written)
+
+                    self.output.write(current_chunk)
+
+                    logger.debug('CHUNKWRITER -> '+str(self.bytes_written)+'-'+str(self.bytes_written+len(current_chunk)-1)+' ('+str(len(current_chunk))+' bytes) SENT!')
+
+                    self.bytes_written+=len(current_chunk)
+
+                    with self.cv_queue_full:
+                        self.cv_queue_full.notify_all()
+
+                if CHUNK_WRITER==self and not self.exit and self.bytes_written < self.end_offset:
+
+                    logger.debug("CHUNKWRITER me duermo hasta que llegue el offset -> "+str(self.bytes_written))
+
+                    with self.cv_new_element:
+                        self.cv_new_element.wait(1)
+        except:
+            pass
+
+        self.exit = True
+
+        logger.info('CHUNKWRITER '+' ['+str(self.start_offset)+'-] BYE')
+
+
+    def nextOffset(self):
+        
+        self.chunk_offset_lock.acquire()
+
+        next_offset = self.next_offset_required
+
+        self.next_offset_required = self.next_offset_required + CHUNK_SIZE if self.next_offset_required + CHUNK_SIZE < self.end_offset else -1;
+
+        self.chunk_offset_lock.release()
+
+        return next_offset
+
+
+class DebridProxyChunkDownloader():
+    
+    def __init__(self, id, url, chunk_writer):
+        self.id = id
+        self.url = url
+        self.exit = False
+        self.chunk_writer = chunk_writer
+
+    def run(self):
+
+        logger.info('CHUNKDOWNLOADER ['+str(self.chunk_writer.start_offset)+'-] '+str(self.id)+' HELLO')
+
+        while not self.exit and not self.chunk_writer.exit:
+
+            offset = self.chunk_writer.nextOffset()
+
+            if offset >=0:
+
+                inicio = offset
+
+                final = min(inicio + CHUNK_SIZE - 1, self.chunk_writer.end_offset)
+
+                request_headers = {'Range': 'bytes='+str(inicio)+'-'+str(final+5)} #Pedimos 5 bytes de más porque a veces RealDebrid devuelve menos
+
+                error = True
+
+                while not self.exit and error and not self.chunk_writer.exit:
+                    try:
+
+                        while not self.chunk_writer.exit and not self.exit and len(self.chunk_writer.queue) >= MAX_CHUNKS_IN_QUEUE and offset!=self.chunk_writer.bytes_written:
+                            logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
+                            with self.chunk_writer.cv_queue_full:
+                                self.chunk_writer.cv_queue_full.wait(1)
+
+                        request = urllib.request.Request(self.url, headers=request_headers)
+
+                        with urllib.request.urlopen(request) as response:
+
+                            required_chunk_size = min(CHUNK_SIZE, final-inicio+1)
+
+                            chunk=response.read(required_chunk_size)
+
+                            if len(chunk) == required_chunk_size:
+                                self.chunk_writer.queue[inicio]=chunk
+
+                                logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' ('+str(len(chunk))+' bytes)  DOWNLOADED!')
+                            
+                                with self.chunk_writer.cv_new_element:
+                                    self.chunk_writer.cv_new_element.notify_all()
+
+                                error = False
+                            else:
+                                logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' ('+str(len(chunk))+' bytes) CHUNK SIZE ERROR!')
+                                time.sleep(5)
+
+                    except Exception as ex:
+                        logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' HTTP ERROR!')
+                        time.sleep(5)
+            else:
+                self.exit = True
+
+        logger.info('CHUNKDOWNLOADER '+str(self.id)+' ['+str(inicio)+'-] BYE')
 
 class DebridProxy(BaseHTTPRequestHandler):
 
@@ -109,54 +248,65 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         else:
 
-            global file_url, file_size
+            global DEBRID_PROXY_FILE_URL, DEBRID_PROXY_FILE_SIZE, exit
 
             url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
 
-            logger.info(url)
+            logger.debug(url)
 
-            lock.acquire()
-            if file_url!=url:
-                file_url = url
-                file_size=self.update_file_size(file_url)
-            lock.release()
+            DEBRID_PROXY_URL_LOCK.acquire()
+            
+            if DEBRID_PROXY_FILE_URL != url:
+                DEBRID_PROXY_FILE_URL = url
+                DEBRID_PROXY_FILE_SIZE = self.update_file_size(DEBRID_PROXY_FILE_URL)
+            
+            DEBRID_PROXY_URL_LOCK.release()
 
             request_headers={}
 
             for h in self.headers:
                 if h != 'Host':
                     request_headers[h]=self.headers[h]
-                    logger.info('do_HEAD HEADER '+h+' '+self.headers[h])
+                    logger.debug('do_HEAD HEADER '+h+' '+self.headers[h])
 
             request = urllib.request.Request(url, headers=request_headers, method='HEAD')
             
-            response = urllib.request.urlopen(request)
+            with urllib.request.urlopen(request) as response:
             
-            headers = response.getheaders()
-            
-            self.send_response(response.status)
+                response_headers = response.getheaders()
+                
+                self.send_response(response.status)
 
-            good_headers={}
+                fixed_response_headers={}
 
-            size=0
+                size=0
 
-            for header in headers:
-                good_headers[header[0]]=header[1]
+                for header in response_headers:
+                    fixed_response_headers[header[0]]=header[1]
 
-            for h in good_headers:
-                self.send_header(h, good_headers[h])
-                logger.info('GH '+h+' '+good_headers[h])
+                for h in fixed_response_headers:
+                    self.send_header(h, fixed_response_headers[h])
+                    logger.debug('GH '+h+' '+fixed_response_headers[h])
 
-            self.end_headers()
+                self.end_headers()
 
-            try:
-                shutil.copyfileobj(response, self.wfile)
-            except:
-                pass
+                try:
+                    shutil.copyfileobj(response, self.wfile)
+                except:
+                    pass
 
 
     def do_GET(self):
-            
+
+        multi = config.get_setting("neiflix_debrid_proxy_multi", "neiflix")
+
+        if multi:
+            return self.do_MULTI_GET()
+        else:
+            return self.do_NORMAL_GET()
+
+
+    def do_NORMAL_GET(self):
         if self.path.startswith('/isalive'):
             
             self.send_response(200, "OK")
@@ -165,24 +315,26 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         else:
 
-            global file_url, file_size
+            global DEBRID_PROXY_FILE_URL, DEBRID_PROXY_FILE_SIZE
 
             url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
 
-            logger.info(url)
+            logger.debug(url)
 
-            lock.acquire()
-            if file_url!=url:
-                file_url = url
-                file_size=self.update_file_size(file_url)
-            lock.release()
+            DEBRID_PROXY_URL_LOCK.acquire()
+            
+            if DEBRID_PROXY_FILE_URL != url:
+                DEBRID_PROXY_FILE_URL = url
+                DEBRID_PROXY_FILE_SIZE = self.update_file_size(DEBRID_PROXY_FILE_URL)
+            
+            DEBRID_PROXY_URL_LOCK.release()
 
             request_headers={}
 
             for h in self.headers:
                 if h != 'Host':
                     request_headers[h]=self.headers[h]
-                    logger.info('do_GET HEADER '+h+' '+self.headers[h])
+                    logger.debug('do_GET HEADER '+h+' '+self.headers[h])
 
             request = urllib.request.Request(url, headers=request_headers)
             
@@ -207,13 +359,13 @@ class DebridProxy(BaseHTTPRequestHandler):
                 if header[0] == 'Content-Range':
                     inicio = int(re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1]))
                     final = inicio + range_size - 1
-                    good_headers[header[0]]='bytes '+str(inicio)+'-'+str(final)+'/'+str(file_size)
+                    good_headers[header[0]]='bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_SIZE)
                 else:
                     good_headers[header[0]]=header[1]
 
             for h in good_headers:
                 self.send_header(h, good_headers[h])
-                logger.info('GH '+h+' '+good_headers[h])
+                logger.debug('GH '+h+' '+good_headers[h])
 
             self.end_headers()
 
@@ -222,11 +374,98 @@ class DebridProxy(BaseHTTPRequestHandler):
             except:
                 pass
 
+    def do_MULTI_GET(self):
+
+        global CHUNK_WRITER
+            
+        if self.path.startswith('/isalive'):
+            
+            self.send_response(200, "OK")
+
+            self.end_headers()
+
+        else:
+
+            global DEBRID_PROXY_FILE_URL, DEBRID_PROXY_FILE_SIZE, exit
+
+            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
+
+            logger.debug(url)
+
+            DEBRID_PROXY_URL_LOCK.acquire()
+            if DEBRID_PROXY_FILE_URL!=url:
+                DEBRID_PROXY_FILE_URL = url
+                DEBRID_PROXY_FILE_SIZE=self.update_file_size(DEBRID_PROXY_FILE_URL)
+            DEBRID_PROXY_URL_LOCK.release()
+
+            request_headers={}
+
+            for h in self.headers:
+                if h != 'Host':
+                    request_headers[h]=self.headers[h]
+                    logger.debug('do_GET HEADER '+h+' '+self.headers[h])
+
+            request = urllib.request.Request(url, headers=request_headers)
+            
+            with urllib.request.urlopen(request) as response:
+            
+                response_headers = response.getheaders()
+                
+                self.send_response(response.status)
+
+                fixed_response_headers={}
+
+                range_size=0
+
+                inicio = 0
+
+                final = DEBRID_PROXY_FILE_SIZE - 1
+
+                for header in response_headers:
+
+                    if header[0] == 'Content-Length':
+                        range_size = int(header[1])
+
+                    fixed_response_headers[header[0]]=header[1]
+                 
+                for header in response_headers:
+
+                    if header[0] == 'Content-Range':
+                        inicio = int(re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1]))
+                        final = inicio + range_size - 1
+                        fixed_response_headers['Content-Range']='bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_SIZE)
+
+                for h in fixed_response_headers:
+                    self.send_header(h, fixed_response_headers[h])
+                    logger.debug('GH '+h+' '+fixed_response_headers[h])
+
+                self.end_headers()
+
+                chunk_writer = DebridProxyChunkWriter(self.wfile, inicio, DEBRID_PROXY_FILE_SIZE-1)
+
+                CHUNK_WRITER = chunk_writer
+
+                chunk_downloaders=[]
+
+                for c in range(0,WORKERS):
+                    chunk_downloader = DebridProxyChunkDownloader(c+1, url, chunk_writer)
+                    chunk_downloaders.append(chunk_downloader)
+                    t = threading.Thread(target=chunk_downloader.run)
+                    t.daemon = True
+                    t.start()
+
+                t = threading.Thread(target=chunk_writer.run)
+                t.start()
+                t.join()
+
+                for downloader in chunk_downloaders:
+                    downloader.exit = True
+
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
     pass
 
 try:
-    proxy_server = ThreadingSimpleServer((hostName, hostPort), DebridProxy)
+    proxy_server = ThreadingSimpleServer((DEBRID_PROXY_HOST, DEBRID_PROXY_PORT), DebridProxy)
 except:
     proxy_server = None
 
@@ -270,11 +509,15 @@ def test_video_exists(page_url):
         return True, ""
 
     from megaserver import Client
+    
     c = Client(url=page_url, is_playing_fnc=platformtools.is_playing)
-    global files
-    files = c.get_files()
-    if isinstance(files, int):
-        return False, "Error codigo %s" % str(files)
+    
+    global MEGA_FILES
+    
+    MEGA_FILES = c.get_files()
+    
+    if isinstance(MEGA_FILES, int):
+        return False, "Error codigo %s" % str(MEGA_FILES)
 
     return True, ""
 
@@ -419,23 +662,28 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         return urls
 
     page_url = page_url.replace('/embed#', '/#')
+    
     logger.info("(page_url='%s')" % page_url)
+    
     video_urls = []
 
-    for f in files:
+    for f in MEGA_FILES:
         media_url = f["url"]
         video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [mega]", media_url])
 
     return video_urls
 
+
 def proxy_run():
-    logger.info(time.asctime(), "NEI DEBRID PROXY SERVER Starts - %s:%s" % (hostName, hostPort))
+    logger.info(time.asctime(), "NEI DEBRID PROXY SERVER Starts - %s:%s" % (DEBRID_PROXY_HOST, DEBRID_PROXY_PORT))
     proxy_server.serve_forever()
+
 
 def start_proxy():
     t = threading.Thread(target=proxy_run)
     t.setDaemon(True)
     t.start()
+
 
 # Returns an array of possible video url's from the page_url
 def RD_get_video_url(page_url, premium=False, user="", password="", video_password=""):
@@ -453,17 +701,17 @@ def RD_get_video_url(page_url, premium=False, user="", password="", video_passwo
             return [["Es necesario activar la cuenta. Accede al menú de ayuda", ""]]
 
     post_link = urllib.parse.urlencode([("link", page_url), ("password", video_password)])
-    headers["Authorization"] = "Bearer %s" % token_auth
+    DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
     url = "https://api.real-debrid.com/rest/1.0/unrestrict/link"
-    data = httptools.downloadpage(url, post=post_link, headers=list(headers.items())).json
+    data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
     logger.error(data)
 
     check = config.get_setting("secret", server="realdebrid")
     #Se ha usado la autentificación por urlresolver (Bad Idea)
     if "error" in data and data["error"] == "bad_token" and not check:
         token_auth = RD_authentication()
-        headers["Authorization"] = "Bearer %s" % token_auth
-        data = httptools.downloadpage(url, post=post_link, headers=list(headers.items())).json
+        DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
+        data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
 
     # Si el token es erróneo o ha caducado, se solicita uno nuevo
     elif "error" in data and data["error"] == "bad_token":
@@ -475,16 +723,16 @@ def RD_get_video_url(page_url, premium=False, user="", password="", video_passwo
         post_token = urllib.parse.urlencode({"client_id": debrid_id, "client_secret": secret, "code": refresh,
                                        "grant_type": "http://oauth.net/grant_type/device/1.0"})
         renew_token = httptools.downloadpage("https://api.real-debrid.com/oauth/v2/token", post=post_token,
-                                                headers=list(headers.items())).json
+                                                headers=list(DEFAULT_HEADERS.items())).json
         if not "error" in renew_token:
             token_auth = renew_token["access_token"]
             config.set_setting("token", token_auth, server="realdebrid")
-            headers["Authorization"] = "Bearer %s" % token_auth
-            data = httptools.downloadpage(url, post=post_link, headers=list(headers.items())).json
+            DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
+            data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
         else:
             token_auth = RD_authentication()
-            headers["Authorization"] = "Bearer %s" % token_auth
-            data = httptools.downloadpage(url, post=post_link, headers=list(headers.items())).json
+            DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
+            data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
     if "download" in data:
         return RD_get_enlaces(data)
     else:
@@ -514,14 +762,14 @@ def RD_get_enlaces(data):
             title = video_url.rsplit(".", 1)[1]
             if "quality" in link:
                 title += " (" + link["quality"] + ") [realdebrid]"
-            itemlist.append([title, 'http://localhost:'+str(hostPort)+'/proxy/'+urllib.parse.quote(video_url)])
+            itemlist.append([title, 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(video_url)])
     else:
         if not PY3:
             video_url = data["download"].encode("utf-8")
         else:
             video_url = data["download"]
         title = video_url.rsplit(".", 1)[1] + " [realdebrid]"
-        itemlist.append([title, 'http://localhost:'+str(hostPort)+'/proxy/'+urllib.parse.quote(video_url)])
+        itemlist.append([title, 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(video_url)])
 
     return itemlist
 
@@ -533,7 +781,7 @@ def RD_authentication():
 
         # Se solicita url y código de verificación para conceder permiso a la app
         url = "http://api.real-debrid.com/oauth/v2/device/code?client_id=%s&new_credentials=yes" % (client_id)
-        data = httptools.downloadpage(url, headers=list(headers.items())).json
+        data = httptools.downloadpage(url, headers=list(DEFAULT_HEADERS.items())).json
         verify_url = data["verification_url"]
         user_code = data["user_code"]
         device_code = data["device_code"]
@@ -553,7 +801,7 @@ def RD_authentication():
 
                 url = "https://api.real-debrid.com/oauth/v2/device/credentials?client_id=%s&code=%s" \
                       % (client_id, device_code)
-                data = httptools.downloadpage(url, headers=list(headers.items())).json
+                data = httptools.downloadpage(url, headers=list(DEFAULT_HEADERS.items())).json
                 if "client_secret" in data:
                     # Código introducido, salimos del bucle
                     break
@@ -572,7 +820,7 @@ def RD_authentication():
         post = urllib.parse.urlencode({"client_id": debrid_id, "client_secret": secret, "code": device_code,
                                  "grant_type": "http://oauth.net/grant_type/device/1.0"})
         data = httptools.downloadpage("https://api.real-debrid.com/oauth/v2/token", post=post,
-                                         headers=list(headers.items())).json
+                                         headers=list(DEFAULT_HEADERS.items())).json
 
         token = data["access_token"]
         refresh = data["refresh_token"]
@@ -590,7 +838,7 @@ def RD_authentication():
 
 def AD_get_video_url(page_url, premium=False, user="", password="", video_password="", retry=True):
     logger.info()
-    #page_url = correct_url(page_url)
+    
     api_key = config.get_setting("api_key", server="alldebrid")
 
     if not api_key:
@@ -605,12 +853,13 @@ def AD_get_video_url(page_url, premium=False, user="", password="", video_passwo
             return [["NEI ALL-DEBRID: es necesario activar la cuenta manualmente. Accede al menú de ayuda", ""]]
     
     page_url = urllib.parse.quote(page_url)
-    url = "%slink/unlock?agent=%s&apikey=%s&link=%s" % (AD_API, agent_id, api_key, page_url)
+    url = "%slink/unlock?agent=%s&apikey=%s&link=%s" % (AD_API, AGENT_ID, api_key, page_url)
     
     dd = httptools.downloadpage(url).json
     dd_data = dd.get('data', '')
 
     error = dd.get('error', '')
+    
     if error:
         code = error.get('code', '')
         if code == 'AUTH_BAD_APIKEY' and retry:
@@ -621,9 +870,6 @@ def AD_get_video_url(page_url, premium=False, user="", password="", video_passwo
             logger.error(dd)
             return [['[All-Debrid] %s' % msg, ""]]
 
-
-
-
     video_urls = AD_get_links(dd_data)
     
     if video_urls:
@@ -632,11 +878,6 @@ def AD_get_video_url(page_url, premium=False, user="", password="", video_passwo
         server_error = "Alldebrid: Error desconocido en la api"
         return server_error
 
-
-# def correct_url(url):
-#     if "uptostream.com" in url:
-#         url = url.replace("uptostream.com/iframe/", "uptobox.com/")
-#     return url
 
 def AD_get_links(dd_data):
     logger.info()
@@ -662,13 +903,14 @@ def AD_get_links(dd_data):
 
     return video_urls
 
+
 def AD_authentication():
     logger.info()
     api_key = ""
     try:
 
         #https://docs.alldebrid.com
-        url = "%spin/get?agent=%s" % (AD_API, agent_id)
+        url = "%spin/get?agent=%s" % (AD_API, AGENT_ID)
         data = httptools.downloadpage(url, ignore_response_code=True).json
         json_data = data.get('data','')
         if not json_data:
