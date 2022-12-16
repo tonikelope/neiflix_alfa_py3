@@ -23,9 +23,9 @@ from core import httptools, scrapertools, tmdb
 from platformcode import config, logger, platformtools
 from collections import OrderedDict
 
-CHECK_MEGA_STUFF_INTEGRITY = True
+CHECK_MEGA_STUFF_INTEGRITY = False
 
-NEIFLIX_VERSION = "2.11"
+NEIFLIX_VERSION = "2.12"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -424,7 +424,7 @@ def clean_cache(item):
     conta_files = 0
 
     for file in os.listdir(KODI_TEMP_PATH):
-        if file.startswith("kodi_nei_") and not file.startswith('kodi_nei_debrid_') and file != 'kodi_nei_history':
+        if file.startswith("kodi_nei_") and not file.startswith('kodi_nei_debrid_') and not file.startswith('kodi_nei_multi_') and file != 'kodi_nei_history':
             os.remove(KODI_TEMP_PATH + file)
             conta_files = conta_files + 1
 
@@ -977,6 +977,10 @@ def get_video_mega_links_group(item):
 
         i=1
 
+        multi_url=[]
+
+        multi_url_name = None
+
         for title, url in matches:
 
             url_split = url.split('/!')
@@ -1012,27 +1016,55 @@ def get_video_mega_links_group(item):
 
             else:
 
-                title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
+                m = re.compile("\.part([0-9]+)-([0-9]+)$", re.DOTALL).search(name)
 
-                if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                    title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+                if m:
 
-                url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+                    multi_url_name = re.sub(r'\.part([0-9]+)-([0-9]+)$', '', name)
 
-                infoLabels=item.infoLabels
+                    url = url + '#' + multi_url_name + '#' + str(size) + '#' + key + '#' + noexpire
 
-                if item.mode == "tvshow":
-                    episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
-                    
-                    if episode:
-                        infoLabels['episode'] = int(episode.group(1))
-                    else:
-                        infoLabels['episode'] = i
+                    multi_url.append((url + '#' + MC_REVERSE_DATA + '#' + mega_sid, size))
 
-                itemlist.append(
-                    Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
+                else:
+                    title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
+
+                    if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
+                        title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+
+                    url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+
+                    infoLabels=item.infoLabels
+
+                    if item.mode == "tvshow":
+                        episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                        
+                        if episode:
+                            infoLabels['episode'] = int(episode.group(1))
+                        else:
+                            infoLabels['episode'] = i
+
+                    itemlist.append(
+                        Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
 
             i=i+1
+
+        if len(multi_url)>0:
+
+            murl = "*"
+
+            size=0
+
+            for url in multi_url:
+                murl+='#'+base64.b64encode(url[0].encode('utf-8')).decode('utf-8')
+                size+=url[1]
+
+            title = "[COLOR lightpink][B][MEGA MULTI-"+str(len(multi_url))+"] " + multi_url_name + ' [' + str(format_bytes(size)) + '][/B][/COLOR]'
+
+            infoLabels=item.infoLabels
+
+            itemlist.append(
+                        Item(channel=item.channel, action="play", server='nei', title=title, url=murl, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
 
     else:
         patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
@@ -1051,6 +1083,7 @@ def get_video_mega_links_group(item):
                     k = (key[0] ^ key[4], key[1] ^ key[5], key[2] ^ key[6], key[3] ^ key[7])
                     attributes = crypto.base64_url_decode(file['at'])
                     attributes = crypto.decrypt_attr(attributes, k)
+                    size=file['s']
                     title = "[MEGA] " + attributes['n'] + ' [' + str(format_bytes(file['s'])) + ']'
                 else:
                     title = url
@@ -1071,17 +1104,17 @@ def get_video_mega_links_group(item):
                     if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
                         title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
                         
-                        infoLabels=item.infoLabels
+                    infoLabels=item.infoLabels
 
-                        if item.mode == "tvshow":
-                            episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
-                            
-                            if episode:
-                                infoLabels['episode'] = int(episode.group(1))
-                            else:
-                                infoLabels['episode'] = i
+                    if item.mode == "tvshow":
+                        episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                        
+                        if episode:
+                            infoLabels['episode'] = int(episode.group(1))
+                        else:
+                            infoLabels['episode'] = i
 
-                        itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
+                    itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url+'@'+str(size), mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
 
                 i=i+1
 
