@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Versión modificada del conector de MEGA para Noestasinvitado.com
-# Soporte (experimental) para usar MegaCrypter con RealDebrid / Alldebrid
-# Incluye proxy para parchear al vuelo cabeceras Content-Range defectuosas 
-# aleatorias de RealDebrid y poder saltar en el vídeo hacia delante/atrás
+# Versión modificada del conector de MEGA para noestasinvitado.com
+# Soporte para usar MegaCrypter con RealDebrid / Alldebrid
+# Soporte para streaming de vídeo de ficheros grandes troceados con MegaBasterd
+# y subidos en diferentes cuentas de MEGA
 
 
 import sys
@@ -200,7 +200,7 @@ class DebridProxyChunkWriter():
 
                     self.output.write(current_chunk)
 
-                    logger.debug('CHUNKWRITER -> '+str(self.bytes_written)+'-'+str(self.bytes_written+len(current_chunk)-1)+' ('+str(len(current_chunk))+' bytes) SENT!')
+                    #logger.debug('CHUNKWRITER -> '+str(self.bytes_written)+'-'+str(self.bytes_written+len(current_chunk)-1)+' ('+str(len(current_chunk))+' bytes) SENT!')
 
                     self.bytes_written+=len(current_chunk)
 
@@ -209,7 +209,7 @@ class DebridProxyChunkWriter():
 
                 if not self.exit and self.bytes_written < self.end_offset:
 
-                    logger.debug("CHUNKWRITER me duermo hasta que llegue el offset -> "+str(self.bytes_written))
+                    #logger.debug("CHUNKWRITER me duermo hasta que llegue el offset -> "+str(self.bytes_written))
 
                     with self.cv_new_element:
                         self.cv_new_element.wait(1)
@@ -270,7 +270,7 @@ class DebridProxyChunkDownloader():
                 logger.info(partial_ranges)
 
                 while not self.chunk_writer.exit and not self.exit and len(self.chunk_writer.queue) >= MAX_CHUNKS_IN_QUEUE and offset!=self.chunk_writer.bytes_written:
-                    logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
+                    #logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
                     with self.chunk_writer.cv_queue_full:
                         self.chunk_writer.cv_queue_full.wait(1)
 
@@ -291,7 +291,7 @@ class DebridProxyChunkDownloader():
 
                             url = partial_range[2]
 
-                            request_headers = {'Range': 'bytes='+str(p_inicio)+'-'+str(p_final+5)} #Pedimos 5 bytes de más porque a veces RealDebrid devuelve menos
+                            request_headers = {'Range': 'bytes='+str(p_inicio)+'-'+str(p_final+5)} #Pedimos 5 bytes de más porque a veces RealDebrid devuelve 1 menos
 
                             error = True
 
@@ -308,7 +308,7 @@ class DebridProxyChunkDownloader():
 
                                         if len(chunk) == required_chunk_size:
                                             full_chunk+=chunk
-                                            logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(p_inicio)+'-'+str(p_final)+' ('+str(len(chunk))+' bytes) DOWNLOADED PARTIAL CHUNK!')
+                                            #logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(p_inicio)+'-'+str(p_final)+' ('+str(len(chunk))+' bytes) DOWNLOADED PARTIAL CHUNK!')
                                             error = False
                                         else:
                                             logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(p_inicio)+'-'+str(p_final)+' ('+str(len(chunk))+' bytes) PARTIAL CHUNK SIZE ERROR!')
@@ -329,7 +329,7 @@ class DebridProxyChunkDownloader():
 
                                 self.chunk_writer.chunk_queue_lock.release()
 
-                                logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' ('+str(len(full_chunk))+' bytes) DOWNLOADED FULL CHUNK!')
+                                #logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' ('+str(len(full_chunk))+' bytes) DOWNLOADED FULL CHUNK!')
                             
                                 with self.chunk_writer.cv_new_element:
                                     self.chunk_writer.cv_new_element.notify_all()
@@ -358,19 +358,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         else:
 
-            global DEBRID_PROXY_FILE_URL
-
-            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
-
-            logger.debug(url)
-
-            DEBRID_PROXY_URL_LOCK.acquire()
-            
-            if not DEBRID_PROXY_FILE_URL or DEBRID_PROXY_FILE_URL.url != url:
-                
-                DEBRID_PROXY_FILE_URL = neiURL(url)
-            
-            DEBRID_PROXY_URL_LOCK.release()
+            self.updateURL()
 
             if DEBRID_PROXY_FILE_URL.size < 0:
                 
@@ -379,130 +367,10 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             else:
 
-                request_headers={}
+                self.sendResponseHeaders()
 
-                for h in self.headers:
-                    if h != 'Host':
-                        request_headers[h]=self.headers[h]
-                        logger.debug('do_HEAD HEADER '+h+' '+self.headers[h])
-
-                request = urllib.request.Request(url, headers=request_headers, method='HEAD')
-                
-                with urllib.request.urlopen(request) as response:
-                
-                    response_headers = response.getheaders()
-                    
-                    self.send_response(response.status)
-
-                    fixed_response_headers={}
-
-                    for header in response_headers:
-                        if header[0] == 'Content-Length':
-                            fixed_response_headers[header[0]]=DEBRID_PROXY_FILE_URL.size
-                        else:
-                            fixed_response_headers[header[0]]=header[1]
-
-                    for h in fixed_response_headers:
-                        self.send_header(h, fixed_response_headers[h])
-                        logger.debug('GH-HEAD '+h+' '+fixed_response_headers[h])
-
-                    self.end_headers()
-
-                    try:
-                        shutil.copyfileobj(response, self.wfile)
-                    except:
-                        pass
-
-
+    
     def do_GET(self):
-
-        multi = config.get_setting("neiflix_debrid_proxy_multi", "neiflix")
-
-        if multi:
-            return self.do_MULTI_GET()
-        else:
-            return self.do_NORMAL_GET()
-
-
-    def do_NORMAL_GET(self):
-        if self.path.startswith('/isalive'):
-            
-            self.send_response(200, "OK")
-
-            self.end_headers()
-
-        else:
-
-            global DEBRID_PROXY_FILE_URL
-
-            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
-
-            logger.debug(url)
-
-            DEBRID_PROXY_URL_LOCK.acquire()
-            
-            if not DEBRID_PROXY_FILE_URL or DEBRID_PROXY_FILE_URL.url != url:
-                
-                DEBRID_PROXY_FILE_URL = neiURL(url)
-            
-            DEBRID_PROXY_URL_LOCK.release()
-
-            if DEBRID_PROXY_FILE_URL.multi_urls:
-                return self.do_MULTI_GET()
-
-            if DEBRID_PROXY_FILE_URL.size < 0:
-                
-                self.send_response(503)
-                self.end_headers()
-
-            else:
-
-                request_headers={}
-
-                for h in self.headers:
-                    if h != 'Host':
-                        request_headers[h]=self.headers[h]
-                        logger.debug('do_GET HEADER '+h+' '+self.headers[h])
-
-                request = urllib.request.Request(url, headers=request_headers)
-                
-                response = urllib.request.urlopen(request)
-                
-                headers = response.getheaders()
-                
-                self.send_response(response.status)
-
-                good_headers={}
-
-                range_size=0
-
-                for header in headers:
-
-                    if header[0] == 'Content-Length':
-                        range_size = int(header[1])
-                        good_headers[header[0]]=header[1]
-                 
-                for header in headers:
-
-                    if header[0] == 'Content-Range':
-                        inicio = int(re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1]))
-                        final = inicio + range_size - 1
-                        good_headers[header[0]]='bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_URL.size)
-                    else:
-                        good_headers[header[0]]=header[1]
-
-                for h in good_headers:
-                    self.send_header(h, good_headers[h])
-                    logger.debug('GH-GET '+h+' '+good_headers[h])
-
-                self.end_headers()
-
-                try:
-                    shutil.copyfileobj(response, self.wfile)
-                except:
-                    pass
-
-    def do_MULTI_GET(self):
             
         if self.path.startswith('/isalive'):
             
@@ -512,19 +380,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         else:
 
-            global DEBRID_PROXY_FILE_URL
-
-            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
-
-            logger.debug(url)
-
-            DEBRID_PROXY_URL_LOCK.acquire()
-            
-            if not DEBRID_PROXY_FILE_URL or DEBRID_PROXY_FILE_URL.url!=url:
-                
-                DEBRID_PROXY_FILE_URL = neiURL(url)
-            
-            DEBRID_PROXY_URL_LOCK.release()
+            self.updateURL()
 
             if DEBRID_PROXY_FILE_URL.size < 0:
                 
@@ -533,66 +389,102 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             else:
 
-                request_headers={}
-
-                for h in self.headers:
-                    if h != 'Host':
-                        request_headers[h]=self.headers[h]
-                        logger.debug('do_GET HEADER '+h+' '+self.headers[h])
-
-                request = urllib.request.Request(url, headers=request_headers)
+                range_request = self.sendResponseHeaders()
                 
-                with urllib.request.urlopen(request) as response:
-                
-                    response_headers = response.getheaders()
-                    
-                    self.send_response(response.status)
+                chunk_writer = DebridProxyChunkWriter(self.wfile, int(range_request[0]) if range_request else 0, int(range_request[1]) if (range_request and range_request[1]) else int(DEBRID_PROXY_FILE_URL.size -1))
 
-                    fixed_response_headers={}
+                chunk_downloaders=[]
 
-                    range_size=0
-
-                    inicio = 0
-
-                    final = DEBRID_PROXY_FILE_URL.size - 1
-
-                    for header in response_headers:
-
-                        if header[0] == 'Content-Length':
-                            range_size = int(header[1])
-
-                        fixed_response_headers[header[0]]=header[1]
-                     
-                    for header in response_headers:
-
-                        if header[0] == 'Content-Range':
-                            inicio = int(re.sub(r'^.*?bytes *?([0-9]+).+$', r'\1', header[1]))
-                            fixed_response_headers['Content-Range']='bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_URL.size)
-                            fixed_response_headers['Content-Length']=str(final-inicio+1)
-
-                    for h in fixed_response_headers:
-                        self.send_header(h, fixed_response_headers[h])
-                        logger.debug('GH '+h+' '+fixed_response_headers[h])
-
-                    self.end_headers()
-
-                    chunk_writer = DebridProxyChunkWriter(self.wfile, inicio, final)
-
-                    chunk_downloaders=[]
-
-                    for c in range(0,WORKERS):
-                        chunk_downloader = DebridProxyChunkDownloader(c+1, chunk_writer)
-                        chunk_downloaders.append(chunk_downloader)
-                        t = threading.Thread(target=chunk_downloader.run)
-                        t.daemon = True
-                        t.start()
-
-                    t = threading.Thread(target=chunk_writer.run)
+                for c in range(0,WORKERS):
+                    chunk_downloader = DebridProxyChunkDownloader(c+1, chunk_writer)
+                    chunk_downloaders.append(chunk_downloader)
+                    t = threading.Thread(target=chunk_downloader.run)
+                    t.daemon = True
                     t.start()
-                    t.join()
 
-                    for downloader in chunk_downloaders:
-                        downloader.exit = True
+                t = threading.Thread(target=chunk_writer.run)
+                t.start()
+                t.join()
+
+                for downloader in chunk_downloaders:
+                    downloader.exit = True
+
+    
+    def updateURL(self):
+        global DEBRID_PROXY_FILE_URL
+
+        url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', self.path))
+
+        logger.debug(url)
+
+        DEBRID_PROXY_URL_LOCK.acquire()
+        
+        if not DEBRID_PROXY_FILE_URL or DEBRID_PROXY_FILE_URL.url != url:
+            
+            DEBRID_PROXY_FILE_URL = neiURL(url)
+        
+        DEBRID_PROXY_URL_LOCK.release()
+
+
+    def sendResponseHeaders(self):
+        range_request = self.parseRequestRanges()
+
+        if not range_request:
+            self.sendCompleteResponseHeaders(DEBRID_PROXY_FILE_URL.size)
+            return range_request
+        else:
+
+            inicio = int(range_request[0])
+
+            final = int(range_request[1]) if range_request[1] else int(DEBRID_PROXY_FILE_URL.size)
+
+            self.sendPartialResponseHeaders(inicio, final, int(DEBRID_PROXY_FILE_URL.size))
+
+            return range_request
+
+    
+    def parseRequestRanges(self):
+
+        if 'Range' in self.headers:
+
+            m = re.compile("bytes=([0-9]+)-([0-9]+)?", re.DOTALL).search(self.headers['Range'])
+
+            return (m.group(1), m.group(2))
+
+        else:
+
+            return None
+
+    
+    def sendPartialResponseHeaders(self, inicio, final, total):
+
+        headers = {'Server':'Neiflix', 'Accept-Ranges':'bytes', 'Content-Length': str(int(final)-int(inicio)+1), 'Content-Range': 'bytes '+str(inicio)+'-'+str(final)+'/'+str(total), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
+
+        self.send_response(206)
+
+        logger.debug('NEIFLIX RESPONSE 206')
+
+        for h in headers:
+            self.send_header(h, headers[h])
+            logger.debug('NEIFLIX RESPONSE HEADER '+h+' '+headers[h])
+
+        self.end_headers()
+
+    
+    def sendCompleteResponseHeaders(self, total):
+        headers = {'Server':'Neiflix', 'Accept-Ranges':'bytes', 'Content-Length': str(total), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
+
+        self.send_response(200)
+
+        logger.debug('NEIFLIX RESPONSE 200')
+
+        for h in headers:
+            self.send_header(h, headers[h])
+            logger.debug('NEIFLIX RESPONSE HEADER '+h+' '+headers[h])
+
+        self.end_headers()
+
+
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
     pass
@@ -664,16 +556,22 @@ def check_debrid_urls(itemlist):
             request = urllib.request.Request(url, method='HEAD')
             response = urllib.request.urlopen(request)
 
-            if response.status != 200:
+            if response.status != 200 or 'Content-Length' not in response.headers:
                 return True
+            else:
+                request2 = urllib.request.Request(url, headers={'Range': 'bytes='+str(int(response.headers['Content-Length'])-1)+'-'+str(int(response.headers['Content-Length'])-1)})
+                response2 = urllib.request.urlopen(request2)
+
+                if response2.status != 206:
+                    return True
     except:
         return True
 
     return False
 
 
-def pageURL2DEBRID(page_url, clean=True):
 
+def pageURL2DEBRIDCheckCache(page_url):
     if 'megacrypter.noestasinvitado' in page_url:
 
         fid_hash = megacrypter2debridHASH(page_url)
@@ -688,22 +586,9 @@ def pageURL2DEBRID(page_url, clean=True):
                 except:
                     urls = None
 
-            if urls==None or check_debrid_urls(urls):
-                os.remove(filename_hash)
-
-        if not os.path.isfile(filename_hash):
-            with open(filename_hash, "wb") as file:
-
-                response = megacrypter2debrid(page_url, clean)
-
-                if not response:
-                    return [["NEI DEBRID: revisa los datos de tu cuenta auxiliar de MEGA", ""]]
-
-                page_url = response[0]
-
-                urls = RD_get_video_url(page_url) if NEIFLIX_REALDEBRID else AD_get_video_url(page_url)
-
-                pickle.dump(urls, file)
+            return not urls or check_debrid_urls(urls)
+        else:
+            return True
     else:
 
         fid = re.subr(r'^.*?#F?!(.*?)!.*$', r'\1', page_url)
@@ -719,11 +604,64 @@ def pageURL2DEBRID(page_url, clean=True):
                     logger.info('DEBRID USANDO CACHE -> '+fid_hash)
                 except:
                     urls = None
+
+            return not urls or check_debrid_urls(urls)
+        else:
+            return True
+
+
+def pageURL2DEBRID(page_url, clean=True, cache=True):
+
+    if 'megacrypter.noestasinvitado' in page_url:
+
+        fid_hash = megacrypter2debridHASH(page_url)
+
+        filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+
+        if cache and os.path.isfile(filename_hash):
+            with open(filename_hash, "rb") as file:
+                try:
+                    urls = pickle.load(file)
+                    logger.info('DEBRID USANDO CACHE -> '+fid_hash)
+                except:
+                    urls = None
+
+            if urls==None or check_debrid_urls(urls):
+                os.remove(filename_hash)
+
+        if not cache or not os.path.isfile(filename_hash):
+            with open(filename_hash, "wb") as file:
+
+                response = megacrypter2debrid(page_url, clean)
+
+                if not response:
+                    return [["NEI DEBRID: ERROR AL TRADUCIR ENLACE MEGACRYPTER a DEBRID (revisa los datos de tu cuenta auxiliar de MEGA, que haya espacio suficiente y/o espera un poco)", ""]]
+
+                page_url = response[0]
+
+                urls = RD_get_video_url(page_url) if NEIFLIX_REALDEBRID else AD_get_video_url(page_url)
+
+                pickle.dump(urls, file)
+    else:
+
+        fid = re.subr(r'^.*?#F?!(.*?)!.*$', r'\1', page_url)
+
+        fid_hash = hashlib.sha256(fid).hexdigest()
+
+        filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+
+        if cache and os.path.isfile(filename_hash):
+            with open(filename_hash, "rb") as file:
+                try:
+                    urls = pickle.load(file)
+                    logger.info('DEBRID USANDO CACHE -> '+fid_hash)
+                except:
+                    urls = None
        
             if urls==None or check_debrid_urls(urls):
                 os.remove(filename_hash)
 
-        if os.path.isfile(filename_hash):
+        if not cache or not os.path.isfile(filename_hash):
             with open(filename_hash, "wb") as file:
                 
                 urls = RD_get_video_url(page_url) if NEIFLIX_REALDEBRID else AD_get_video_url(page_url)
@@ -741,21 +679,34 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         start_proxy()
 
     if page_url[0]=='*':
-        #ENLACE MULTI 
+        #ENLACE MULTI (vídeo troceado con MegaBasterd) 
 
         logger.info(page_url)
 
-        if NEIFLIX_REALDEBRID:
+        if NEIFLIX_REALDEBRID or NEIFLIX_ALLDEBRID:
 
             multi_video_urls=[]
+
+            video_sizes=[]
 
             page_urls = page_url.split('#')
 
             i = 1
 
-            video_sizes=[]
+            cache_error=False
 
-            while i<len(page_urls):
+            while i<len(page_urls) and not cache_error:
+                url = base64.b64decode(page_urls[i].encode('utf-8')).decode('utf-8')
+                cache_error = pageURL2DEBRIDCheckCache(url)
+                i+=1
+
+            i = 1
+
+            use_cache = not cache_error
+
+            megacrypter2debrid_error = False
+
+            while i<len(page_urls) and not megacrypter2debrid_error:
                 url = base64.b64decode(page_urls[i].encode('utf-8')).decode('utf-8')
                 logger.info(url)
 
@@ -767,36 +718,44 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                     video_sizes.append(int(url_parts[1]))
 
                 clean = True if i==1 else False
-                
-                multi_video_urls.append(pageURL2DEBRID(url, clean=clean))
+
+                debrid_url = pageURL2DEBRID(url, clean=clean, cache=use_cache)
+
+                if not debrid_url[0][1] or debrid_url[0][1]=="":
+                    megacrypter2debrid_error = True
+                else:
+                    multi_video_urls.append(debrid_url)
                 
                 i+=1
 
-            logger.info(multi_video_urls)
+            if not megacrypter2debrid_error:
+                logger.info(multi_video_urls)
 
-            multi_urls_ranges=[]
+                multi_urls_ranges=[]
 
-            s=0
+                s=0
 
-            i=0
+                i=0
 
-            for murl in multi_video_urls:
-                multi_urls_ranges.append((s,s+video_sizes[i]-1,urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', murl[0][1]))))
-                s+=video_sizes[i]
-                i+=1
+                for murl in multi_video_urls:
+                    multi_urls_ranges.append((s,s+video_sizes[i]-1,urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', murl[0][1]))))
+                    s+=video_sizes[i]
+                    i+=1
 
-            logger.info(multi_urls_ranges)
+                logger.info(multi_urls_ranges)
 
-            hash_url = hashlib.sha256(urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', multi_video_urls[0][0][1])).encode('utf-8')).hexdigest()
+                hash_url = hashlib.sha256(urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', multi_video_urls[0][0][1])).encode('utf-8')).hexdigest()
 
-            filename_hash = KODI_TEMP_PATH + 'kodi_nei_multi_' + hash_url
+                filename_hash = KODI_TEMP_PATH + 'kodi_nei_multi_' + hash_url
 
-            with open(filename_hash, "wb") as file:
-                pickle.dump(multi_urls_ranges, file)
+                with open(filename_hash, "wb") as file:
+                    pickle.dump(multi_urls_ranges, file)
 
-            multi_video_urls[0][0] = (re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', multi_video_urls[0][0][0]), multi_video_urls[0][0][1])
+                multi_video_urls[0][0] = (re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', multi_video_urls[0][0][0]), multi_video_urls[0][0][1])
 
-            return multi_video_urls[0]
+                return multi_video_urls[0]
+            else:
+                return [["NEI DEBRID: ERROR AL TRADUCIR ENLACE MEGACRYPTER a DEBRID (revisa los datos de tu cuenta auxiliar de MEGA, que haya espacio suficiente y/o espera un poco)", ""]]
 
         else:
             return None

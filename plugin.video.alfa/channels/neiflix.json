@@ -93,14 +93,6 @@
       "visible": "!eq(-4,false)|!eq(-3,false)"
     },
     {
-      "id": "neiflix_debrid_proxy_multi",
-      "type": "bool",
-      "label": "REALDEBRID PROXY MULTI THREAD",
-      "default": true,
-      "enabled": "!eq(-5,false)|!eq(-4,false)",
-      "visible": "!eq(-5,false)|!eq(-4,false)"
-    },
-    {
       "id": "neiflix_mega_premium",
       "type": "bool",
       "label": "Usar cuenta PREMIUM de MEGA",

@@ -23,9 +23,9 @@ from core import httptools, scrapertools, tmdb
 from platformcode import config, logger, platformtools
 from collections import OrderedDict
 
-CHECK_MEGA_STUFF_INTEGRITY = False
+CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.12"
+NEIFLIX_VERSION = "2.13"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1059,12 +1059,14 @@ def get_video_mega_links_group(item):
                 murl+='#'+base64.b64encode(url[0].encode('utf-8')).decode('utf-8')
                 size+=url[1]
 
-            title = "[COLOR lightpink][B][MEGA MULTI-"+str(len(multi_url))+"] " + multi_url_name + ' [' + str(format_bytes(size)) + '][/B][/COLOR]'
+            title = "[COLOR magenta][B][MEGA MULTI-"+str(len(multi_url))+"] " + multi_url_name + ' [' + str(format_bytes(size)) + '][/B][/COLOR]'
+
+            if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
+                title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
 
             infoLabels=item.infoLabels
 
-            itemlist.append(
-                        Item(channel=item.channel, action="play", server='nei', title=title, url=murl, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
+            itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=murl, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
 
     else:
         patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
