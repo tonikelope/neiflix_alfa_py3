@@ -61,7 +61,7 @@ def update_favourites():
         favourite['fanart'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['fanart'])
         favourite['thumbnail'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
         neiflix = ET.Element('favourite', {'name': 'NEIFLIX', 'thumb': xbmc.translatePath(
-            'special://home/addons/plugin.video.alfa/resources/media/channels/thumb/neiflix2_t.png')})
+            'special://home/addons/plugin.video.alfa/resources/media/channels/thumb/neiflix.gif')})
         neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)'
         favourites_xml.getroot().append(neiflix)
         favourites_xml.write(xbmc.translatePath('special://userdata/favourites.xml'))
