@@ -751,9 +751,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 with open(filename_hash, "wb") as file:
                     pickle.dump(multi_urls_ranges, file)
 
-                multi_video_urls[0][0] = (re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', multi_video_urls[0][0][0]), multi_video_urls[0][0][1])
+                video_urls = multi_video_urls[0]
 
-                return multi_video_urls[0]
+                video_urls=[[re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', video_urls[0][0]), 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', video_urls[0][1])))]]
+
+                return video_urls
             else:
                 return [["NEI DEBRID: ERROR AL TRADUCIR ENLACE MEGACRYPTER a DEBRID (revisa los datos de tu cuenta auxiliar de MEGA, que haya espacio suficiente y/o espera un poco)", ""]]
 
