@@ -265,9 +265,9 @@ class DebridProxyChunkDownloader():
 
                 partial_ranges = self.url.getPartialRanges(inicio, final)
 
-                logger.info("CHUNKDOWNLOADER RANGOS PARCIALES")
+                #logger.debug("CHUNKDOWNLOADER RANGOS PARCIALES")
 
-                logger.info(partial_ranges)
+                #logger.debug(partial_ranges)
 
                 while not self.chunk_writer.exit and not self.exit and len(self.chunk_writer.queue) >= MAX_CHUNKS_IN_QUEUE and offset!=self.chunk_writer.bytes_written:
                     #logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
