@@ -19,7 +19,7 @@ KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
 
 FILES = ['channels/neiflix.py', 'channels/neiflix.json', 'servers/nei.py', 'servers/nei.json',
-         'resources/media/channels/banner/neiflix2_b.png', 'resources/media/channels/thumb/neiflix2_t.png']
+         'resources/media/channels/banner/neiflix2_b.png', 'resources/media/channels/thumb/neiflix.gif']
 
 if not os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.neiflix/installed')):
     xbmc.executebuiltin('RunAddon(plugin.video.neiflix)')
@@ -60,18 +60,18 @@ if CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY and updated:
         urlretrieve(ALFA_URL + f, ALFA_PATH + f)
 
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX actualizado!',
-                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.gif'), 5000)
 
 elif CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY and broken:
     for f in FILES:
         urlretrieve(ALFA_URL + f, ALFA_PATH + f)
 
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX instalado/reparado!',
-                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.gif'), 5000)
     
 elif CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY is False:
     xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX ALTERADO PERO NO REPARADO!',
-                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'), 5000)
+                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.gif'), 5000)
 
 
 # MONITORS SOME NEIFLIX FILE IS DELETED AND RE-DOWNLOAD IT
@@ -88,5 +88,5 @@ while True:
 
     if updated:
         xbmcgui.Dialog().notification('NEIFLIX', '¡Canal NEIFLIX reparado!',
-                                      os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.png'),
+                                      os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'icon.gif'),
                                       5000)

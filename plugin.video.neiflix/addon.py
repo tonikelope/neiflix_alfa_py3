@@ -71,7 +71,7 @@ ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master
 ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
 
 FILES = ['channels/neiflix.py', 'channels/neiflix.json', 'servers/nei.py', 'servers/nei.json',
-         'resources/media/channels/banner/neiflix2_b.png', 'resources/media/channels/thumb/neiflix2_t.png',
+         'resources/media/channels/banner/neiflix2_b.png', 'resources/media/channels/thumb/neiflix.gif',
          'resources/media/channels/fanart/neiflix2_f.png']
 
 if not os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.neiflix/installed')):
