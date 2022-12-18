@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.17"
+NEIFLIX_VERSION = "2.18"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -424,7 +424,7 @@ def clean_cache(item):
     conta_files = 0
 
     for file in os.listdir(KODI_TEMP_PATH):
-        if file.startswith("kodi_nei_") and not file.startswith('kodi_nei_debrid_') and not file.startswith('kodi_nei_multi_') and file != 'kodi_nei_history':
+        if file.startswith("kodi_nei_") and file != 'kodi_nei_history':
             os.remove(KODI_TEMP_PATH + file)
             conta_files = conta_files + 1
 

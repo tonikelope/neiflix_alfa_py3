@@ -648,7 +648,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True):
                 response = megacrypter2debrid(page_url, clean)
 
                 if not response:
-                    return [["NEI DEBRID: ERROR AL TRADUCIR ENLACE MEGACRYPTER a DEBRID (revisa los datos de tu cuenta auxiliar de MEGA, que haya espacio suficiente y/o espera un poco)", ""]]
+                    return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
                 page_url = response[0]
 
@@ -770,7 +770,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 return video_urls
             else:
-                return [["NEI DEBRID: ERROR AL TRADUCIR ENLACE MEGACRYPTER a DEBRID (revisa los datos de tu cuenta auxiliar de MEGA, que haya espacio suficiente y/o espera un poco)", ""]]
+                return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
         elif NEIFLIX_ALLDEBRID:
             return [["NO SOPORTADO EN ALLDEBRID", ""]]
