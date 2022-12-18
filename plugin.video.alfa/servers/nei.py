@@ -34,6 +34,7 @@ import xbmc
 import os
 import pickle
 import shutil
+import json
 
 KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
@@ -77,6 +78,7 @@ DEBRID_PROXY_PORT = int(config.get_setting("neiflix_debrid_proxy_port", "neiflix
 NEIFLIX_REALDEBRID = config.get_setting("neiflix_realdebrid", "neiflix")
 NEIFLIX_ALLDEBRID = config.get_setting("neiflix_alldebrid", "neiflix")
 
+MEGACRYPTER2DEBRID_ENDPOINT='https://noestasinvitado.com/megacrypter2debrid.php'
 MEGACRYPTER2DEBRID_TIMEOUT=120 #Cuando aumente la demanda habrá que implementar en el server de NEI un sistema de polling asíncrono
 DEBRID_PROXY_FILE_URL=None
 DEBRID_PROXY_URL_LOCK = threading.Lock()
@@ -436,7 +438,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             inicio = int(range_request[0])
 
-            final = int(range_request[1]) if range_request[1] else int(DEBRID_PROXY_FILE_URL.size)
+            final = int(range_request[1]) if range_request[1] else (int(DEBRID_PROXY_FILE_URL.size) - 1)
 
             self.sendPartialResponseHeaders(inicio, final, int(DEBRID_PROXY_FILE_URL.size))
 
@@ -505,15 +507,19 @@ def megacrypter2debrid(link, clean=True):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    logger.info('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''))
+    mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?c='+('1' if clean else '0')+'&l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''), timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 
-    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?c='+('1' if clean else '0')+'&l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''), timeout=MEGACRYPTER2DEBRID_TIMEOUT)
+    json_response = mega_link_response.json
 
-    mega_link = re.sub(r'^.*?(http.+)$', r'\1', mega_link_response.data)
+    if 'error' in json_response:
+        logger.debug(json_response['error'])
+        return None
 
-    fid_hash = re.sub(r'^.*?@(.*?)#.*$', r'\1', mega_link_response.data)
+    mega_link = json_response['link']
 
-    return (mega_link.strip(), fid_hash.strip()) if 'httpERROR' not in mega_link else None
+    fid_hash = json_response['fid_hash']
+
+    return (mega_link, fid_hash)
 
 
 def megacrypter2debridHASH(link):
@@ -521,11 +527,17 @@ def megacrypter2debridHASH(link):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    mega_link_response = httptools.downloadpage('https://noestasinvitado.com/megacrypter2debrid.php?l='+link_data, timeout=MEGACRYPTER2DEBRID_TIMEOUT)
+    mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?l='+link_data, timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 
-    fid_hash = re.sub(r'^.*?@(.*?)#.*$', r'\1', mega_link_response.data)
+    json_response = mega_link_response.json
 
-    return fid_hash.strip() if 'hashERROR' not in fid_hash else None
+    if 'error' in json_response:
+        logger.debug(json_response['error'])
+        return None
+
+    fid_hash = json_response['fid_hash']
+
+    return fid_hash
 
 
 def test_video_exists(page_url):
@@ -558,8 +570,9 @@ def check_debrid_urls(itemlist):
 
             if response.status != 200 or 'Content-Length' not in response.headers:
                 return True
-            else:
-                request2 = urllib.request.Request(url, headers={'Range': 'bytes='+str(int(response.headers['Content-Length'])-1)+'-'+str(int(response.headers['Content-Length'])-1)})
+            elif 'Accept-Ranges' in response.headers and response.headers['Accept-Ranges']!='none':
+                size = int(response.headers['Content-Length'])
+                request2 = urllib.request.Request(url, headers={'Range': 'bytes='+str(size-1)+'-'+str(size-1)})
                 response2 = urllib.request.urlopen(request2)
 
                 if response2.status != 206:
@@ -683,7 +696,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
         logger.info(page_url)
 
-        if NEIFLIX_REALDEBRID or NEIFLIX_ALLDEBRID:
+        if NEIFLIX_REALDEBRID:
 
             multi_video_urls=[]
 
@@ -759,8 +772,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             else:
                 return [["NEI DEBRID: ERROR AL TRADUCIR ENLACE MEGACRYPTER a DEBRID (revisa los datos de tu cuenta auxiliar de MEGA, que haya espacio suficiente y/o espera un poco)", ""]]
 
-        else:
-            return None
+        elif NEIFLIX_ALLDEBRID:
+            return [["NO SOPORTADO EN ALLDEBRID", ""]]
 
     else:
 

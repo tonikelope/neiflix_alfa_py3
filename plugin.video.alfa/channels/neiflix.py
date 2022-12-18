@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.16"
+NEIFLIX_VERSION = "2.17"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -341,16 +341,16 @@ def improve_streaming(item):
         network = settings_xml.findall("network")
         network = ET.Element('network')
         curlclienttimeout = ET.Element('curlclienttimeout')
-        curlclienttimeout.text = '60'
+        curlclienttimeout.text = '120'
         network.append(curlclienttimeout)
         curllowspeedtime = ET.Element('curllowspeedtime')
-        curllowspeedtime.text = '60'
+        curllowspeedtime.text = '120'
         network.append(curllowspeedtime)
         settings_xml.getroot().append(network)
 
         playlisttimeout = settings_xml.findall('playlisttimeout')
         playlisttimeout = ET.Element('playlisttimeout')
-        playlisttimeout.text = '60'
+        playlisttimeout.text = '120'
         settings_xml.getroot().append(playlisttimeout)
 
         settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
@@ -1055,6 +1055,7 @@ def get_video_mega_links_group(item):
 
             size=0
 
+            #OJO AQUI->SUPONEMOS QUE MEGACRYPTER DEVUELVE LA LISTA DE PARTES ORDENADA CON NATSORT
             for url in multi_url:
                 murl+='#'+base64.b64encode(url[0].encode('utf-8')).decode('utf-8')
                 size+=url[1]
@@ -1582,19 +1583,22 @@ def mega_api_req(req, get=""):
 def format_bytes(bytes, precision=2):
     units = ['B', 'KB', 'MB', 'GB', 'TB']
 
-    bytes = max(bytes, 0)
+    if bytes:
+        bytes = max(bytes, 0)
 
-    pow = min(
-        math.floor(
-            math.log(
-                bytes if bytes else 0,
-                1024)),
-        len(units) -
-        1)
+        pow = min(
+            math.floor(
+                math.log(
+                    bytes if bytes else 0,
+                    1024)),
+            len(units) -
+            1)
 
-    bytes = float(bytes) / (1 << int(10 * pow))
+        bytes = float(bytes) / (1 << int(10 * pow))
 
-    return str(round(bytes, precision)) + ' ' + units[int(pow)]
+        return str(round(bytes, precision)) + ' ' + units[int(pow)]
+    else:
+        return "SIZE-ERROR"
 
 
 def extract_title(title):

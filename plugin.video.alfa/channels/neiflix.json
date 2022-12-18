@@ -87,7 +87,7 @@
     {
       "id": "neiflix_debrid_proxy_port",
       "type": "text",
-      "label": "Puerto para REALDEBRID proxy:",
+      "label": "Puerto para DEBRID proxy:",
       "default": "21447",
       "enabled": "!eq(-4,false)|!eq(-3,false)",
       "visible": "!eq(-4,false)|!eq(-3,false)"
