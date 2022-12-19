@@ -508,6 +508,10 @@ def megacrypter2debrid(link, clean=True):
 
     mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?c='+('1' if clean else '0')+'&l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''), timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 
+    logger.info(MEGACRYPTER2DEBRID_ENDPOINT+'?c='+('1' if clean else '0')+'&l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''))
+
+    logger.info(mega_link_response.data)
+
     json_response = mega_link_response.json
 
     if 'error' in json_response:
@@ -528,6 +532,10 @@ def megacrypter2debridHASH(link):
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
     mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?l='+link_data, timeout=MEGACRYPTER2DEBRID_TIMEOUT)
+
+    logger.info(MEGACRYPTER2DEBRID_ENDPOINT+'?l='+link_data)
+
+    logger.info(mega_link_response.data)
 
     json_response = mega_link_response.json
 
