@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.22"
+NEIFLIX_VERSION = "2.23"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -302,7 +302,7 @@ def mainlist(item):
     return itemlist
 
 
-def update_favourites():
+def update_favourites(item):
 
     ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), '¿SEGURO?')
 
