@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.23"
+NEIFLIX_VERSION = "2.24"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -317,7 +317,8 @@ def update_favourites(item):
             neiflix = favourites_xml.findall("favourite[@name='NEIFLIX']")
 
             if neiflix:
-                favourites_xml.getroot().remove(neiflix)
+                for e in neiflix:
+                    favourites_xml.getroot().remove(e)
 
             with open(xbmc.translatePath('special://home/addons/plugin.video.neiflix/favourite.json'), 'r') as f:
                 favourite = json.loads(f.read())
@@ -326,7 +327,7 @@ def update_favourites(item):
             favourite['thumbnail'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
             neiflix = ET.Element('favourite', {'name': 'NEIFLIX', 'thumb': xbmc.translatePath(
                 'special://home/addons/plugin.video.alfa/resources/media/channels/thumb/neiflix.gif')})
-            neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + urlib.parse.quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)'
+            neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + urllib.parse.quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)'
             favourites_xml.getroot().append(neiflix)
             favourites_xml.write(xbmc.translatePath('special://userdata/favourites.xml'))
 
@@ -1743,12 +1744,6 @@ def get_filmaffinity_data_advanced(title, year, genre):
     return fa_data
 
 
-def check_neiflix_resources():
-    if not os.path.exists(NEIFLIX_PATH+"resources/akantor.gif"):
-        opener = urllib.request.URLopener()
-        opener.addheader('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36')
-        filename, headers = opener.retrieve(NEIFLIX_RESOURCES_URL + "akantor.gif", NEIFLIX_PATH+"resources/akantor.gif")
-
 # NEIFLIX uses a modified version of Alfa's MEGA LIB with support for MEGACRYPTER and multi thread
 def check_mega_lib_integrity():
     update_url = ALFA_URL + 'lib/megaserver/'
@@ -1853,9 +1848,6 @@ def check_nei_connector_integrity():
                 modified = True
 
     return modified
-
-
-check_neiflix_resources()
 
 if CHECK_MEGA_STUFF_INTEGRITY and check_mega_lib_integrity():
     xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')',

@@ -635,6 +635,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True):
         fid_hash = megacrypter2debridHASH(page_url)
 
         if not fid_hash:
+            xbmcgui.Dialog().notification('NEIFLIX', "ERROR: POSIBLE ENLACE MEGACRYPTER CADUCADO", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
             return [["NEI DEBRID ERROR (posible enlace de MegaCrypter caducado (sal y vuelve a entrar en la carpeta))", ""]]
 
         filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
@@ -656,6 +657,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True):
                 response = megacrypter2debrid(page_url, clean)
 
                 if not response:
+                    xbmcgui.Dialog().notification('NEIFLIX', "ERROR: REVISA TU CUENTA DE MEGA AUXILIAR", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
                     return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
                 page_url = response[0]
@@ -702,8 +704,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if page_url[0]=='*':
         #ENLACE MULTI (vídeo troceado con MegaBasterd) 
 
-        xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace MULTI-BASTERD, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
-
         logger.info(page_url)
 
         if NEIFLIX_REALDEBRID:
@@ -713,6 +713,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             video_sizes=[]
 
             page_urls = page_url.split('#')
+
+            xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace MULTI-BASTERD ("+str(len(page_urls-1))+"), por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
             i = 1
 
@@ -780,10 +782,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 return video_urls
             else:
+                xbmcgui.Dialog().notification('NEIFLIX', "ERROR: REVISA TU CUENTA DE MEGA AUXILIAR", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
                 return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
-        elif NEIFLIX_ALLDEBRID:
-            return [["NO SOPORTADO EN ALLDEBRID", ""]]
+        else:
+            xbmcgui.Dialog().notification('NEIFLIX', "ERROR: ENLACES MULTI NO SOPORTADOS", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+            return [["NO SOPORTADO", ""]]
 
     else:
 
