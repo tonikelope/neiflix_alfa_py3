@@ -628,13 +628,20 @@ def pageURL2DEBRIDCheckCache(page_url):
             return True
 
 
-def pageURL2DEBRID(page_url, clean=True, cache=True):
+def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
+    if progress_bar:
+        pdialog = xbmcgui.DialogProgressBG()   
+        pdialog.create('NEIFLIX DEBRID', 'Preparando enlace DEBRID...')
+    
     if 'megacrypter.noestasinvitado' in page_url:
 
         fid_hash = megacrypter2debridHASH(page_url)
 
         if not fid_hash:
+            if progress_bar:
+                pdialog.update(100)
+                pdialog.close()
             xbmcgui.Dialog().notification('NEIFLIX', "ERROR: POSIBLE ENLACE MEGACRYPTER CADUCADO", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
             return [["NEI DEBRID ERROR (posible enlace de MegaCrypter caducado (sal y vuelve a entrar en la carpeta))", ""]]
 
@@ -657,6 +664,9 @@ def pageURL2DEBRID(page_url, clean=True, cache=True):
                 response = megacrypter2debrid(page_url, clean)
 
                 if not response:
+                    if progress_bar:
+                        pdialog.update(100)
+                        pdialog.close()
                     xbmcgui.Dialog().notification('NEIFLIX', "ERROR: REVISA TU CUENTA DE MEGA AUXILIAR", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
                     return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
@@ -691,6 +701,10 @@ def pageURL2DEBRID(page_url, clean=True, cache=True):
                 
                 pickle.dump(urls, file)
 
+    if progress_bar:
+        pdialog.update(100)
+        pdialog.close()
+    
     return urls
 
 
@@ -714,7 +728,15 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             page_urls = page_url.split('#')
 
-            xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace MULTI-BASTERD ("+str(len(page_urls)-1)+"), por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+            pdialog = xbmcgui.DialogProgressBG()
+
+            pdialog.create('NEIFLIX MULTI', 'Preparando enlace MULTI-BASTERD('+str(len(page_urls)-1)+')...')
+
+            pdialog_increment = round(100/(len(page_urls)-1))
+
+            pdialog_tot = 100
+
+            pdialog_counter = 0
 
             i = 1
 
@@ -744,14 +766,20 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 clean = True if i==1 else False
 
-                debrid_url = pageURL2DEBRID(url, clean=clean, cache=use_cache)
+                debrid_url = pageURL2DEBRID(url, clean=clean, cache=use_cache, progress_bar=False)
 
                 if not debrid_url[0][1] or debrid_url[0][1]=="":
                     megacrypter2debrid_error = True
                 else:
                     multi_video_urls.append(debrid_url)
+
+                pdialog_counter+=min(pdialog_increment, 100-pdialog_counter)
                 
+                pdialog.update(pdialog_counter)
+
                 i+=1
+
+            pdialog.close()
 
             if not megacrypter2debrid_error:
                 logger.info(multi_video_urls)
@@ -792,8 +820,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     else:
 
         if NEIFLIX_REALDEBRID or NEIFLIX_ALLDEBRID:
-            xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace DEBRID, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
-
             return pageURL2DEBRID(page_url)
 
         page_url = page_url.replace('/embed#', '/#')

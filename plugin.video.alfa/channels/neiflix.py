@@ -23,9 +23,9 @@ from core import httptools, scrapertools, tmdb
 from platformcode import config, logger, platformtools
 from collections import OrderedDict
 
-CHECK_MEGA_STUFF_INTEGRITY = True
+CHECK_STUFF_INTEGRITY = False
 
-NEIFLIX_VERSION = "2.25"
+NEIFLIX_VERSION = "2.26"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1849,13 +1849,13 @@ def check_nei_connector_integrity():
 
     return modified
 
-if CHECK_MEGA_STUFF_INTEGRITY and check_mega_lib_integrity():
+if CHECK_STUFF_INTEGRITY and check_mega_lib_integrity():
     xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')',
                                   "Librería de MEGA/MegaCrypter reparada/actualizada",
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
                                                'thumb', 'neiflix.gif'), 5000)
 
-if CHECK_MEGA_STUFF_INTEGRITY and check_nei_connector_integrity():
+if CHECK_STUFF_INTEGRITY and check_nei_connector_integrity():
     xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Conector de NEI reparado/actualizado",
                                   os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
                                                'thumb', 'neiflix.gif'), 5000)
