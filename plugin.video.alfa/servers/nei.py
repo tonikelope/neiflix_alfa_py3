@@ -714,7 +714,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             page_urls = page_url.split('#')
 
-            xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace MULTI-BASTERD ("+str(len(page_urls-1))+"), por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+            xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace MULTI-BASTERD ("+str(len(page_urls)-1)+"), por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
             i = 1
 
