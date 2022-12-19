@@ -702,7 +702,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if page_url[0]=='*':
         #ENLACE MULTI (vídeo troceado con MegaBasterd) 
 
-        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Preparando enlace MULTI-BASTERD, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+        xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace MULTI-BASTERD, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
         logger.info(page_url)
 
@@ -788,7 +788,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     else:
 
         if NEIFLIX_REALDEBRID or NEIFLIX_ALLDEBRID:
-            xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Preparando enlace DEBRID, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+            xbmcgui.Dialog().notification('NEIFLIX', "Preparando enlace DEBRID, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
             return pageURL2DEBRID(page_url)
 
