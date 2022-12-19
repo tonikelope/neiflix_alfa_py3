@@ -23,9 +23,9 @@ from core import httptools, scrapertools, tmdb
 from platformcode import config, logger, platformtools
 from collections import OrderedDict
 
-CHECK_STUFF_INTEGRITY = False
+CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.30"
+NEIFLIX_VERSION = "2.31"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 

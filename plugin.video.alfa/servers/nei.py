@@ -548,8 +548,7 @@ def megacrypter2debridHASH(link):
         return None
 
     if 'fid_hash' in json_response:
-        fid_hash = json_response['fid_hash']
-        return fid_hash
+        return json_response['fid_hash']
     else:
         return None
 
