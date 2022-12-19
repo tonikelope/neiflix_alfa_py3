@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = False
 
-NEIFLIX_VERSION = "2.29"
+NEIFLIX_VERSION = "2.30"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 

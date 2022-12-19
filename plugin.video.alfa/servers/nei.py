@@ -512,7 +512,7 @@ def megacrypter2debrid(link, clean=True):
 
     logger.info(mega_link_response.data)
 
-    json_response = json.loads(mega_link_response.data.decode('utf-8-sig'))
+    json_response = json.loads(mega_link_response.data.encode().decode('utf-8-sig'))
 
     logger.info(json_response)
 
@@ -539,7 +539,7 @@ def megacrypter2debridHASH(link):
 
     logger.info(mega_link_response.data)
 
-    json_response = json.loads(mega_link_response.data.decode('utf-8-sig'))
+    json_response = json.loads(mega_link_response.data.encode().decode('utf-8-sig'))
 
     logger.info(json_response)
 
