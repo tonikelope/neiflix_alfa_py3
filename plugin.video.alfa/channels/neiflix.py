@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_MEGA_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.21"
+NEIFLIX_VERSION = "2.22"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -257,6 +257,12 @@ def mainlist(item):
             itemlist.append(
                 Item(
                     channel=item.channel,
+                    title="Regenerar icono de FAVORITOS",
+                    action="update_favourites", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
                     title="Regenerar fichero de ajustes avanzados",
                     action="improve_streaming", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
@@ -294,6 +300,45 @@ def mainlist(item):
                      action="settings_nei", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
     return itemlist
+
+
+def update_favourites():
+
+    ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), '¿SEGURO?')
+
+    if ret:
+
+        try:
+            if os.path.exists(xbmc.translatePath('special://userdata/favourites.xml')):
+                favourites_xml = ET.parse(xbmc.translatePath('special://userdata/favourites.xml'))
+            else:
+                favourites_xml = ET.ElementTree(ET.Element('favourites'))
+
+            neiflix = favourites_xml.findall("favourite[@name='NEIFLIX']")
+
+            if neiflix:
+                favourites_xml.getroot().remove(neiflix)
+
+            with open(xbmc.translatePath('special://home/addons/plugin.video.neiflix/favourite.json'), 'r') as f:
+                favourite = json.loads(f.read())
+
+            favourite['fanart'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['fanart'])
+            favourite['thumbnail'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
+            neiflix = ET.Element('favourite', {'name': 'NEIFLIX', 'thumb': xbmc.translatePath(
+                'special://home/addons/plugin.video.alfa/resources/media/channels/thumb/neiflix.gif')})
+            neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + urlib.parse.quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)'
+            favourites_xml.getroot().append(neiflix)
+            favourites_xml.write(xbmc.translatePath('special://userdata/favourites.xml'))
+
+            xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'Icono de favoritos regenerado', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+
+            ret = xbmcgui.Dialog().yesno(xbmcaddon.Addon().getAddonInfo('name'), 'ES NECESARIO REINICIAR KODI PARA QUE TODOS LOS CAMBIOS TENGAN EFECTO.\n\n¿Quieres reiniciar KODI ahora mismo?')
+
+            if ret:
+                xbmc.executebuiltin('RestartApp')
+
+        except Exception as e:
+            xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'ERROR al intentar regenerar el icono de favoritos', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
 
 def thumbnail_refresh(item):
