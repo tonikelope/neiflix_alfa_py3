@@ -31,10 +31,13 @@ import re
 import base64
 import hashlib
 import xbmc
+import xbmcgui
+import xbmcaddon
 import os
 import pickle
 import shutil
 import json
+
 
 KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
 
@@ -121,20 +124,16 @@ class neiURL():
             return size
 
         else:
-            return self.getSingleUrlSize(self.url)
+            return self.getUrlSize(self.url)
 
-    def getSingleUrlSize(self, url):
-        request_headers={}
-        request_headers['Range']='bytes=0-'
-        request = urllib.request.Request(url, headers=request_headers, method='HEAD')
+    def getUrlSize(self, url):
+        request = urllib.request.Request(url, method='HEAD')
         response = urllib.request.urlopen(request)
-        headers = response.getheaders()
 
-        for header in headers:
-            if header[0] == 'Content-Length':
-                return int(header[1])
-
-        return -1
+        if 'Content-Length' in response.headers:
+            return int(response.headers['Content-Length'])
+        else:
+            return -1
 
     def getPartialRanges(self, start_offset, end_offset):
         if self.multi_urls == None:
@@ -703,6 +702,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if page_url[0]=='*':
         #ENLACE MULTI (vídeo troceado con MegaBasterd) 
 
+        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Preparando enlace MULTI-BASTERD, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+
         logger.info(page_url)
 
         if NEIFLIX_REALDEBRID:
@@ -787,6 +788,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     else:
 
         if NEIFLIX_REALDEBRID or NEIFLIX_ALLDEBRID:
+            xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Preparando enlace DEBRID, por favor espera...", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+
             return pageURL2DEBRID(page_url)
 
         page_url = page_url.replace('/embed#', '/#')
