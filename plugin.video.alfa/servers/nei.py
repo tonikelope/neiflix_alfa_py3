@@ -515,11 +515,12 @@ def megacrypter2debrid(link, clean=True):
         logger.debug(json_response['error'])
         return None
 
-    mega_link = json_response['link']
-
-    fid_hash = json_response['fid_hash']
-
-    return (mega_link, fid_hash)
+    if 'link' in json_response and 'fid_hash' in json_response:
+        mega_link = json_response['link']
+        fid_hash = json_response['fid_hash']
+        return (mega_link, fid_hash)
+    else:
+        return None
 
 
 def megacrypter2debridHASH(link):
@@ -535,9 +536,11 @@ def megacrypter2debridHASH(link):
         logger.debug(json_response['error'])
         return None
 
-    fid_hash = json_response['fid_hash']
-
-    return fid_hash
+    if 'fid_hash' in json_response:
+        fid_hash = json_response['fid_hash']
+        return fid_hash
+    else:
+        return None
 
 
 def test_video_exists(page_url):
@@ -589,6 +592,9 @@ def pageURL2DEBRIDCheckCache(page_url):
 
         fid_hash = megacrypter2debridHASH(page_url)
 
+        if not fid_hash:
+            return True
+
         filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
 
         if os.path.isfile(filename_hash):
@@ -628,6 +634,9 @@ def pageURL2DEBRID(page_url, clean=True, cache=True):
     if 'megacrypter.noestasinvitado' in page_url:
 
         fid_hash = megacrypter2debridHASH(page_url)
+
+        if not fid_hash:
+            return [["NEI DEBRID ERROR (posible enlace de MegaCrypter caducado (sal y vuelve a entrar en la carpeta))", ""]]
 
         filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
 
