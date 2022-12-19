@@ -12,4 +12,5 @@ It includes a customized MEGA LIBRARY with support for:
 - Multi thread chunk download.
 - Mega PRO account.
 - Megacrypter links https://github.com/tonikelope/megacrypter
-- Multi-link file video streaming (in progress)
+- Multi-part file video streaming
+- Debrid support
