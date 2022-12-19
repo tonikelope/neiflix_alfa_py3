@@ -512,7 +512,9 @@ def megacrypter2debrid(link, clean=True):
 
     logger.info(mega_link_response.data)
 
-    json_response = mega_link_response.json
+    json_response = json.loads(mega_link_response.data)
+
+    logger.info(json_response)
 
     if 'error' in json_response:
         logger.debug(json_response['error'])
@@ -537,7 +539,9 @@ def megacrypter2debridHASH(link):
 
     logger.info(mega_link_response.data)
 
-    json_response = mega_link_response.json
+    json_response = json.loads(mega_link_response.data)
+
+    logger.info(json_response)
 
     if 'error' in json_response:
         logger.debug(json_response['error'])
