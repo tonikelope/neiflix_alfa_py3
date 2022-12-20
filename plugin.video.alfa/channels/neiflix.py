@@ -25,9 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.34"
-
-BG_PROGRESS_BAR = None
+NEIFLIX_VERSION = "2.36"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -197,8 +195,6 @@ def mega_login(verbose):
 
 def mainlist(item):
     logger.info("channels.neiflix mainlist")
-
-    close_bg_progressbar()
 
     itemlist = []
 
@@ -500,8 +496,6 @@ def clean_history(item):
 
 def bibliotaku(item):
 
-    close_bg_progressbar()
-
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
@@ -697,8 +691,6 @@ def bibliotaku_pelis_megacrypter(item):
 
 def foro(item):
     logger.info("channels.neiflix foro")
-
-    close_bg_progressbar()
 
     if item.xxx and os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
         return mainlist(item)
@@ -1023,8 +1015,6 @@ def gen_index(item):
 
 def get_video_mega_links_group(item):
 
-    close_bg_progressbar()
-
     mega_sid = mega_login(False)
 
     itemlist = []
@@ -1202,8 +1192,6 @@ def get_video_mega_links_group(item):
 
 
 def find_video_gvideo_links(item, data):
-    
-    close_bg_progressbar()
 
     msg_id = re.compile('subject_([0-9]+)', re.IGNORECASE).search(data)
 
@@ -1238,12 +1226,6 @@ def find_video_gvideo_links(item, data):
 
     return itemlist
 
-
-def close_bg_progressbar():
-    if BG_PROGRESS_BAR:
-        BG_PROGRESS_BAR.close()
-
-
 def ignore_uploader(item):
 
     if item.uploader in UPLOADERS_BLACKLIST:
@@ -1259,8 +1241,6 @@ def ignore_uploader(item):
 
 
 def find_video_mega_links(item, data):
-
-    close_bg_progressbar()
     
     msg_id = re.compile('subject_([0-9]+)', re.IGNORECASE).search(data)
 
@@ -1379,10 +1359,11 @@ def find_video_mega_links(item, data):
                         infoLabels=item.infoLabels
 
                         if item.mode == "tvshow":
-                            episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                            episode = re.search(r'^.*?([0-9])+ *?[xX] *?0*([0-9]+)', name)
                             
                             if episode:
-                                infoLabels['episode'] = int(episode.group(1))
+                                infoLabels['episode'] = int(episode.group(2))
+                                infoLabels['season'] = int(episode.group(1))
                             else:
                                 infoLabels['episode'] = i
 
@@ -1438,6 +1419,7 @@ def find_video_mega_links(item, data):
                                 
                                 if episode:
                                     infoLabels['episode'] = int(episode.group(1))
+                                    infoLabels['season'] = int(episode.group(1))
                                 else:
                                     infoLabels['episode'] = i
                             

@@ -21,7 +21,6 @@ from core import httptools
 from core import scrapertools
 from platformcode import config, logger
 from platformcode import platformtools
-from channels import neiflix
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.request
@@ -647,8 +646,8 @@ def pageURL2DEBRIDCheckCache(page_url):
 def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
     if progress_bar:
-        neiflix.BG_PROGRESS_BAR = xbmcgui.DialogProgressBG()   
-        neiflix.BG_PROGRESS_BAR.create('NEIFLIX DEBRID', 'Preparando enlace DEBRID...')
+        pbar = xbmcgui.DialogProgressBG()   
+        pbar.create('NEIFLIX DEBRID', 'Preparando enlace DEBRID...')
     
     if 'megacrypter.noestasinvitado' in page_url:
 
@@ -656,9 +655,8 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
         if not fid_hash:
             if progress_bar:
-                neiflix.BG_PROGRESS_BAR.update(100)
-                neiflix.BG_PROGRESS_BAR.close()
-                neiflix.BG_PROGRESS_BAR=None
+                pbar.update(100)
+                pbar.close()
             xbmcgui.Dialog().notification('NEIFLIX', "ERROR: POSIBLE ENLACE MEGACRYPTER CADUCADO", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
             return [["NEI DEBRID ERROR (posible enlace de MegaCrypter caducado (sal y vuelve a entrar en la carpeta))", ""]]
 
@@ -682,9 +680,8 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
                 if not response:
                     if progress_bar:
-                        neiflix.BG_PROGRESS_BAR.update(100)
-                        neiflix.BG_PROGRESS_BAR.close()
-                        neiflix.BG_PROGRESS_BAR=None
+                        pbar.update(100)
+                        pbar.close()
                     xbmcgui.Dialog().notification('NEIFLIX', "ERROR: REVISA TU CUENTA DE MEGA AUXILIAR", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
                     return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
@@ -720,9 +717,8 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
                 pickle.dump(urls, file)
 
     if progress_bar:
-        neiflix.BG_PROGRESS_BAR.update(100)
-        neiflix.BG_PROGRESS_BAR.close()
-        neiflix.BG_PROGRESS_BAR=None
+        pbar.update(100)
+        pbar.close()
     
     return urls
 
@@ -747,9 +743,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             page_urls = page_url.split('#')
 
-            neiflix.BG_PROGRESS_BAR = xbmcgui.DialogProgressBG()
+            pbar = xbmcgui.DialogProgressBG()
 
-            neiflix.BG_PROGRESS_BAR.create('NEIFLIX MULTI', 'Preparando enlace MULTI-BASTERD('+str(len(page_urls)-1)+')...')
+            pbar.create('NEIFLIX MULTI', 'Preparando enlace MULTI-BASTERD('+str(len(page_urls)-1)+')...')
 
             pdialog_increment = round(100/(len(page_urls)-1))
 
@@ -794,12 +790,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 pdialog_counter+=min(pdialog_increment, 100-pdialog_counter)
                 
-                neiflix.BG_PROGRESS_BAR.update(pdialog_counter)
+                pbar.update(pdialog_counter)
 
                 i+=1
 
-            neiflix.BG_PROGRESS_BAR.close()
-            neiflix.BG_PROGRESS_BAR=None
+            pbar.close()
 
             if not megacrypter2debrid_error:
                 logger.info(multi_video_urls)
