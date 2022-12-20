@@ -17,7 +17,7 @@
     {
       "id": "neiflix_user",
       "type": "text",
-      "label": "Usuario de NOESTASINVITADO.COM:",
+      "label": "Usuario de noestasinvitado.com:",
       "enabled": true,
       "visible": true
     },
@@ -25,7 +25,7 @@
       "id": "neiflix_password",
       "type": "text",
       "hidden": true,
-      "label": "Password de NOESTASINVITADO.COM:",
+      "label": "Password de noestasinvitado.com:",
       "enabled": "!eq(-1,'')",
       "visible": true
     },
@@ -41,14 +41,6 @@
       "id": "neiflix_blacklist_titles",
       "type": "text",
       "label": "IGNORAR TÍTULOS que contengan (separar por comas):",
-      "default": "",
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "neiflix_mega_proxy_list",
-      "type": "text",
-      "label": "Lista de proxys para MEGA (URL):",
       "default": "",
       "enabled": true,
       "visible": true
@@ -93,12 +85,20 @@
       "visible": "!eq(-4,false)|!eq(-3,false)"
     },
     {
+      "id": "neiflix_mega_proxy_list",
+      "type": "text",
+      "label": "Lista de proxys para MEGA (URL):",
+      "default": "",
+      "enabled": "!eq(-5,false)|!eq(-4,false)",
+      "visible": "!eq(-5,false)|!eq(-4,false)"
+    },
+    {
       "id": "neiflix_mega_premium",
       "type": "bool",
       "label": "Usar cuenta PREMIUM de MEGA",
       "default": false,
-      "enabled": true,
-      "visible": true
+      "enabled": "!eq(-6,false)|!eq(-5,false)",
+      "visible": "!eq(-6,false)|!eq(-5,false)"
     },
     {
       "id": "neiflix_mega_email",
