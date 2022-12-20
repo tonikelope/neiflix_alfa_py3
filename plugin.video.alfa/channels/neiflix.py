@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.36"
+NEIFLIX_VERSION = "2.37"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -1094,10 +1094,11 @@ def get_video_mega_links_group(item):
                     infoLabels=item.infoLabels
 
                     if item.mode == "tvshow":
-                        episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                        episode = re.search(r'^.*?([0-9]+) *?[xX] *?0*([0-9]+)', name)
                         
                         if episode:
-                            infoLabels['episode'] = int(episode.group(1))
+                            infoLabels['episode'] = int(episode.group(2))
+                            infoLabels['season'] = int(episode.group(1))
                         else:
                             infoLabels['episode'] = i
 
@@ -1167,10 +1168,11 @@ def get_video_mega_links_group(item):
                     infoLabels=item.infoLabels
 
                     if item.mode == "tvshow":
-                        episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                        episode = re.search(r'^.*?([0-9]+) *?[xX] *?0*([0-9]+)', name)
                         
                         if episode:
-                            infoLabels['episode'] = int(episode.group(1))
+                            infoLabels['episode'] = int(episode.group(2))
+                            infoLabels['season'] = int(episode.group(1))
                         else:
                             infoLabels['episode'] = i
 
@@ -1359,7 +1361,7 @@ def find_video_mega_links(item, data):
                         infoLabels=item.infoLabels
 
                         if item.mode == "tvshow":
-                            episode = re.search(r'^.*?([0-9])+ *?[xX] *?0*([0-9]+)', name)
+                            episode = re.search(r'^.*?([0-9]+) *?[xX] *?0*([0-9]+)', name)
                             
                             if episode:
                                 infoLabels['episode'] = int(episode.group(2))
@@ -1415,10 +1417,10 @@ def find_video_mega_links(item, data):
                             infoLabels=item.infoLabels
 
                             if item.mode == "tvshow":
-                                episode = re.search(r'^.*?[0-9]+ *?[xX] *?0*([0-9]+)', name)
+                                episode = re.search(r'^.*?([0-9]+) *?[xX] *?0*([0-9]+)', name)
                                 
                                 if episode:
-                                    infoLabels['episode'] = int(episode.group(1))
+                                    infoLabels['episode'] = int(episode.group(2))
                                     infoLabels['season'] = int(episode.group(1))
                                 else:
                                     infoLabels['episode'] = i
