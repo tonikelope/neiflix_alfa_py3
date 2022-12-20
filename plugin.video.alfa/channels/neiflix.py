@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.38"
+NEIFLIX_VERSION = "2.39"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -53,7 +53,7 @@ ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
 
 NEIFLIX_PATH = xbmc.translatePath('special://home/addons/plugin.video.neiflix/');
 
-DOWNLOAD_PAGE_TIMEOUT = 30
+DOWNLOAD_PAGE_TIMEOUT = 60 #Para no pillarnos los dedos al generar enlaces Megacrypter
 
 try:
     HISTORY = [line.rstrip('\n') for line in open(KODI_TEMP_PATH + 'kodi_nei_history')]
