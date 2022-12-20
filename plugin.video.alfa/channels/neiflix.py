@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.37"
+NEIFLIX_VERSION = "2.38"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -52,6 +52,8 @@ ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master
 ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
 
 NEIFLIX_PATH = xbmc.translatePath('special://home/addons/plugin.video.neiflix/');
+
+DOWNLOAD_PAGE_TIMEOUT = 30
 
 try:
     HISTORY = [line.rstrip('\n') for line in open(KODI_TEMP_PATH + 'kodi_nei_history')]
@@ -103,7 +105,7 @@ def get_neiflix_resource_path(resource):
 def login():
     logger.info("channels.neiflix login")
 
-    httptools.downloadpage("https://noestasinvitado.com/login/")
+    httptools.downloadpage("https://noestasinvitado.com/login/", timeout=DOWNLOAD_PAGE_TIMEOUT)
 
     if NEIFLIX_LOGIN and NEIFLIX_PASSWORD:
 
@@ -111,7 +113,7 @@ def login():
                NEIFLIX_PASSWORD + "&cookielength=-1"
 
         data = httptools.downloadpage(
-            "https://noestasinvitado.com/login2/", post=post).data
+            "https://noestasinvitado.com/login2/", post=post, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
         return data.find(NEIFLIX_LOGIN) != -1
 
@@ -507,7 +509,7 @@ def bibliotaku(item):
 
 def bibliotaku_series(item):
     
-    json_response = json.loads(httptools.downloadpage(item.url).data.encode().decode('utf-8-sig'))
+    json_response = json.loads(httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data.encode().decode('utf-8-sig'))
 
     if 'error' in json_response or not 'body' in json_response:
         return None
@@ -627,7 +629,7 @@ def bibliotaku_series_megacrypter(item):
 
 def bibliotaku_pelis(item):
 
-    json_response = json.loads(httptools.downloadpage(item.url).data.encode().decode('utf-8-sig'))
+    json_response = json.loads(httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data.encode().decode('utf-8-sig'))
 
     if 'error' in json_response or not 'body' in json_response:
         return None
@@ -697,7 +699,7 @@ def foro(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     video_links = False
 
@@ -840,13 +842,13 @@ def search(item, texto):
                                           "1%5D=91&brd%5B90%5D=90&brd%5B92%5D=92&brd%5B88%5D=88&brd%5B84%5D" \
                                           "=84&brd%5B212%5D=212&brd%5B94%5D=94&brd%5B23%5D=23&submit=Buscar"
 
-    data = httptools.downloadpage("https://noestasinvitado.com/search2/", post=post).data
+    data = httptools.downloadpage("https://noestasinvitado.com/search2/", post=post, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     return search_parse(data, item)
 
 
 def search_pag(item):
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     return search_parse(data, item)
 
@@ -1022,7 +1024,7 @@ def get_video_mega_links_group(item):
     id = item.mc_group_id
 
     data = httptools.downloadpage(
-        "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1").data
+        "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1", timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     patron = '(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
 
@@ -1205,8 +1207,8 @@ def find_video_gvideo_links(item, data):
             re.IGNORECASE).search(data)
 
         if thanks_match:
-            httptools.downloadpage(item.url + thanks_match.group(0))
-            data=httptools.downloadpage(item.url).data
+            httptools.downloadpage(item.url + thanks_match.group(0), timeout=DOWNLOAD_PAGE_TIMEOUT)
+            data=httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     itemlist = []
 
@@ -1254,8 +1256,8 @@ def find_video_mega_links(item, data):
             re.IGNORECASE).search(data)
 
         if thanks_match:
-            httptools.downloadpage(item.url + thanks_match.group(0))
-            data=httptools.downloadpage(item.url).data
+            httptools.downloadpage(item.url + thanks_match.group(0), timeout=DOWNLOAD_PAGE_TIMEOUT)
+            data=httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
 
     itemlist = []
@@ -1473,7 +1475,7 @@ def leer_criticas_fa(item):
 
         criticas_url = "https://www.filmaffinity.com/es/reviews2/1/"+film_id+".html"
 
-        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": criticas_url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": criticas_url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
         criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
 
@@ -1519,7 +1521,7 @@ def clean_html_tags(data):
     return no_tags
 
 def cargar_critica(item):
-    data = httptools.downloadpage(item.url, ignore_response_code=True, headers={"Referer": item.url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+    data = httptools.downloadpage(item.url, ignore_response_code=True, headers={"Referer": item.url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     critica_pattern = "\"review-text1\" *?>(.*?)< *?/ *?div"
 
@@ -1531,7 +1533,7 @@ def cargar_critica(item):
 def indice_links(item):
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     patron = '<tr class="windowbg2">[^<>]*<td[^<>]*>[^<>]*<img[^<>]*>[^<>]' \
              '*</td>[^<>]*<td>[^<>]*<a href="([^"]+)">(.*?)</a>[^<>]*</td>[^<>]*<td[^<>]*>[^<>]*<a[^<>]*>([^<>]+)'
@@ -1740,7 +1742,7 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     logger.info(url)
 
-    data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}).data
+    data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
     res = re.compile("title=\"([^\"]+)\"[^<>]+href=\"https://www.filmaffinity.com/es/film([0-9]+)\.html\".*?(https://pics\.filmaffinity\.com/[^\"]+-msmall\.jpg).*?\"avgrat-box\" *?> *?([0-9,]+).*?", re.DOTALL).findall(data)
 
