@@ -89,16 +89,16 @@
       "type": "text",
       "label": "Lista de proxys para MEGA (URL):",
       "default": "",
-      "enabled": "!eq(-5,false)|!eq(-4,false)",
-      "visible": "!eq(-5,false)|!eq(-4,false)"
+      "enabled": "eq(-5,false)+eq(-4,false)",
+      "visible": "eq(-5,false)+eq(-4,false)"
     },
     {
       "id": "neiflix_mega_premium",
       "type": "bool",
       "label": "Usar cuenta PREMIUM de MEGA",
       "default": false,
-      "enabled": "!eq(-6,false)|!eq(-5,false)",
-      "visible": "!eq(-6,false)|!eq(-5,false)"
+      "enabled": "eq(-6,false)+eq(-5,false)",
+      "visible": "eq(-6,false)+eq(-5,false)"
     },
     {
       "id": "neiflix_mega_email",
