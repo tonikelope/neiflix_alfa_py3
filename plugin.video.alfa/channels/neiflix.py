@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.39"
+NEIFLIX_VERSION = "2.40"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -524,7 +524,7 @@ def bibliotaku_series(item):
 
     data = re.sub(' AC3', ' ', data)
 
-    patron = '\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
+    patron = r'\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
 
     itemlist = []
 
@@ -636,7 +636,7 @@ def bibliotaku_pelis(item):
 
     data = json_response['body']
 
-    patron = '\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
+    patron = r'\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
 
     itemlist = []
 
@@ -709,10 +709,10 @@ def foro(item):
 
     if '<h3 class="catbg">Subforos</h3>' in data:
         # HAY SUBFOROS
-        patron = '< *?a +class *?= *?"subje(.*?)t" +href *?= *?"([^"]+)" +name *?= *?"[^"]+" *?>([^<]+)< *?/ *?a *?(>)'
+        patron = r'< *?a +class *?= *?"subje(.*?)t" +href *?= *?"([^"]+)" +name *?= *?"[^"]+" *?>([^<]+)< *?/ *?a *?(>)'
         action = "foro"
     elif '"subject windowbg4"' in data:
-        patron = '< *?td +class *?= *?"subject windowbg4" *?>.*?< *?div *?>.*?< *?span +id *?= *?"([^"]+)" ?>.*?< *?a +href *?= *?"([^"]+)" *?>([^<]+)< *?/ *?a *?> *?< *?/ *?span *?>.*?"Ver +perfil +de +([^"]+)"'
+        patron = r'< *?td +class *?= *?"subject windowbg4" *?>.*?< *?div *?>.*?< *?span +id *?= *?"([^"]+)" ?>.*?< *?a +href *?= *?"([^"]+)" *?>([^<]+)< *?/ *?a *?> *?< *?/ *?span *?>.*?"Ver +perfil +de +([^"]+)"'
         final_item = True
         action = "foro"
     else:
@@ -789,14 +789,14 @@ def foro(item):
 
                     info_labels = []
                     
-                    matches = re.compile("([^/]+)/$", re.DOTALL).search(url)
+                    matches = re.compile(r"([^/]+)/$", re.DOTALL).search(url)
 
                     if matches.group(1) not in ('hd-espanol-59', 'hd-v-o-v-o-s-61', 'hd-animacion-62', 'sd-espanol-53', 'sd-v-o-v-o-s-54', 'sd-animacion', 'seriesovas-anime-espanol', 'seriesovas-anime-v-o-v-o-s'):
                         url = url + "?sort=first_post;desc"
 
                 itemlist.append(Item(channel=item.channel, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action=action, title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
-        patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
+        patron = r'\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
         matches = re.compile(patron, re.DOTALL).search(data)
 
@@ -856,7 +856,7 @@ def search_pag(item):
 def search_parse(data, item):
     itemlist=[]
 
-    patron = '<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
+    patron = r'<h5>[^<>]*<a[^<>]+>.*?</a>[^<>]*?<a +href="([^"]+)">(.*?)</a>[^<>]*</h5>[^<>]*<sp' \
              'an[^<>]*>.*?<a[^<>]*"Ver +perfil +de +([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -922,7 +922,7 @@ def search_parse(data, item):
 
         itemlist.append(Item(channel=item.channel, mode=content_type, thumbnail=thumbnail, section=item.section, action="foro", title=title, url=url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader=uploader))
 
-    patron = '\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
+    patron = r'\[<strong>[0-9]+</strong>\][^<>]*<a class="navPages" href="([^"]+)">'
 
     matches = re.compile(patron, re.DOTALL).search(data)
 
@@ -1026,11 +1026,11 @@ def get_video_mega_links_group(item):
     data = httptools.downloadpage(
         "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1", timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
-    patron = '(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
+    patron = r'(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
 
     matches = re.compile(patron).findall(data)
 
-    compress_pattern = re.compile('\.(zip|rar|rev)$', re.IGNORECASE)
+    compress_pattern = re.compile(r'\.(zip|rar|rev)$', re.IGNORECASE)
 
     if matches:
 
@@ -1075,7 +1075,7 @@ def get_video_mega_links_group(item):
 
             else:
 
-                m = re.compile("\.part([0-9]+)-([0-9]+)$", re.DOTALL).search(name)
+                m = re.compile(r"\.part([0-9]+)-([0-9]+)$", re.DOTALL).search(name)
 
                 if m:
 
@@ -1130,7 +1130,7 @@ def get_video_mega_links_group(item):
             itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=murl, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
 
     else:
-        patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
+        patron_mega = r'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
 
         matches = re.compile(patron_mega).findall(data)
 
@@ -1197,12 +1197,12 @@ def get_video_mega_links_group(item):
 
 def find_video_gvideo_links(item, data):
 
-    msg_id = re.compile('subject_([0-9]+)', re.IGNORECASE).search(data)
+    msg_id = re.compile(r'subject_([0-9]+)', re.IGNORECASE).search(data)
 
     if msg_id:
 
         thanks_match = re.compile(
-            '/\?action=thankyou;msg=' +
+            r'/\?action=thankyou;msg=' +
             msg_id.group(1),
             re.IGNORECASE).search(data)
 
@@ -1212,7 +1212,7 @@ def find_video_gvideo_links(item, data):
 
     itemlist = []
 
-    patron = "(?:https|http)://(?:docs|drive).google.com/file/d/[^/]+/(?:preview|edit|view)"  # Hay más variantes de enlaces
+    patron = r"(?:https|http)://(?:docs|drive).google.com/file/d/[^/]+/(?:preview|edit|view)"  # Hay más variantes de enlaces
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -1246,12 +1246,12 @@ def ignore_uploader(item):
 
 def find_video_mega_links(item, data):
     
-    msg_id = re.compile('subject_([0-9]+)', re.IGNORECASE).search(data)
+    msg_id = re.compile(r'subject_([0-9]+)', re.IGNORECASE).search(data)
 
     if msg_id:
 
         thanks_match = re.compile(
-            '/\?action=thankyou;msg=' +
+            r'/\?action=thankyou;msg=' +
             msg_id.group(1),
             re.IGNORECASE).search(data)
 
@@ -1262,7 +1262,7 @@ def find_video_mega_links(item, data):
 
     itemlist = []
 
-    patron = 'id="mc_link_.*?".*?data-id="(.*?)"'
+    patron = r'id="mc_link_.*?".*?data-id="(.*?)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -1306,12 +1306,12 @@ def find_video_mega_links(item, data):
 
         urls = []
 
-        patron_mc = 'https://megacrypter\.noestasinvitado\.com/[!0-9a-zA-Z_/-]+'
+        patron_mc = r'https://megacrypter\.noestasinvitado\.com/[!0-9a-zA-Z_/-]+'
 
         matches = re.compile(patron_mc).findall(data)
 
         compress_pattern = re.compile(
-            '\.(zip|rar|rev)$', re.IGNORECASE)
+            r'\.(zip|rar|rev)$', re.IGNORECASE)
 
         if matches:
 
@@ -1378,7 +1378,7 @@ def find_video_mega_links(item, data):
                     i=i+1
 
         else:
-            patron_mega = 'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
+            patron_mega = r'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
 
             matches = re.compile(patron_mega).findall(data)
 
@@ -1477,7 +1477,7 @@ def leer_criticas_fa(item):
 
         data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers={"Referer": criticas_url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
-        criticas_pattern = "revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
+        criticas_pattern = r"revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
 
         res = re.compile(criticas_pattern, re.DOTALL).findall(data)
             
@@ -1523,7 +1523,7 @@ def clean_html_tags(data):
 def cargar_critica(item):
     data = httptools.downloadpage(item.url, ignore_response_code=True, headers={"Referer": item.url, "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
-    critica_pattern = "\"review-text1\" *?>(.*?)< *?/ *?div"
+    critica_pattern = r"\"review-text1\" *?>(.*?)< *?/ *?div"
 
     res = re.compile(critica_pattern, re.DOTALL).search(data)
 
@@ -1535,7 +1535,7 @@ def indice_links(item):
 
     data = httptools.downloadpage(item.url, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
-    patron = '<tr class="windowbg2">[^<>]*<td[^<>]*>[^<>]*<img[^<>]*>[^<>]' \
+    patron = r'<tr class="windowbg2">[^<>]*<td[^<>]*>[^<>]*<img[^<>]*>[^<>]' \
              '*</td>[^<>]*<td>[^<>]*<a href="([^"]+)">(.*?)</a>[^<>]*</td>[^<>]*<td[^<>]*>[^<>]*<a[^<>]*>([^<>]+)'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -1664,7 +1664,7 @@ def format_bytes(bytes, precision=2):
 
 
 def extract_title(title):
-    pattern = re.compile('^[^\[\]()]+', re.IGNORECASE)
+    pattern = re.compile(r'^[^\[\]()]+', re.IGNORECASE)
 
     res = pattern.search(title)
 
@@ -1677,7 +1677,7 @@ def extract_title(title):
         return ""
 
 def extract_quality(title):
-    patterns = [{'p': '\[[^\[\]()]*(UHD|2160)', 'q': 'UHD'}, {'p': '\[[^\[\]()]*(microHD|720|1080)', 'q': 'HD'}, {'p': '\[[^\[\]()]*(HDrip|DVD)', 'q': 'SD'}]
+    patterns = [{'p': r'\[[^\[\]()]*(UHD|2160)', 'q': 'UHD'}, {'p': r'\[[^\[\]()]*(microHD|720|1080)', 'q': 'HD'}, {'p': r'\[[^\[\]()]*(HDrip|DVD)', 'q': 'SD'}]
     
     for p in patterns:
         pattern = re.compile(p['p'], re.IGNORECASE)
@@ -1707,7 +1707,7 @@ def play(item):
 
 
 def extract_year(title):
-    pattern = re.compile('([0-9]{4})[^p]', re.IGNORECASE)
+    pattern = re.compile(r'([0-9]{4})[^p]', re.IGNORECASE)
 
     res = pattern.search(title)
 
@@ -1744,7 +1744,7 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     data = httptools.downloadpage(url, ignore_response_code=True, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}, timeout=DOWNLOAD_PAGE_TIMEOUT).data
 
-    res = re.compile("title=\"([^\"]+)\"[^<>]+href=\"https://www.filmaffinity.com/es/film([0-9]+)\.html\".*?(https://pics\.filmaffinity\.com/[^\"]+-msmall\.jpg).*?\"avgrat-box\" *?> *?([0-9,]+).*?", re.DOTALL).findall(data)
+    res = re.compile(r"title=\"([^\"]+)\"[^<>]+href=\"https://www.filmaffinity.com/es/film([0-9]+)\.html\".*?(https://pics\.filmaffinity\.com/[^\"]+-msmall\.jpg).*?\"avgrat-box\" *?> *?([0-9,]+).*?", re.DOTALL).findall(data)
 
     fa_data=[]
 
