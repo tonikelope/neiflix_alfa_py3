@@ -25,7 +25,9 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.32"
+NEIFLIX_VERSION = "2.33"
+
+BG_PROGRESS_BAR = None
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -195,6 +197,9 @@ def mega_login(verbose):
 
 def mainlist(item):
     logger.info("channels.neiflix mainlist")
+
+    if BG_PROGRESS_BAR:
+        BG_PROGRESS_BAR.close()
 
     itemlist = []
 
