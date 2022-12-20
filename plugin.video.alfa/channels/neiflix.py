@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.31"
+NEIFLIX_VERSION = "2.32"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -506,7 +506,13 @@ def bibliotaku(item):
 
 
 def bibliotaku_series(item):
-    data = httptools.downloadpage(item.url).data
+    
+    json_response = json.loads(httptools.downloadpage(item.url).data.encode().decode('utf-8-sig'))
+
+    if 'error' in json_response or not 'body' in json_response:
+        return None
+
+    data = json_response['body']
 
     data = re.sub('[–—]', '-', html.unescape(data))
 
@@ -621,7 +627,12 @@ def bibliotaku_series_megacrypter(item):
 
 def bibliotaku_pelis(item):
 
-    data = httptools.downloadpage(item.url).data
+    json_response = json.loads(httptools.downloadpage(item.url).data.encode().decode('utf-8-sig'))
+
+    if 'error' in json_response or not 'body' in json_response:
+        return None
+
+    data = json_response['body']
 
     patron = '\[b\](.*?)\[\/b\].*?LINKS\[.*?\[url_mc\]([0-9]+)'
 
