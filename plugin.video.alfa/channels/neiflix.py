@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.41"
+NEIFLIX_VERSION = "2.42"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -495,6 +495,8 @@ def clean_history(item):
         except:
             pass
 
+def isVideoFilename(filename):
+    return re.compile(r'\.(mp4|mkv|wmv|m4v|mov|avi|flv|webm|flac|mka|m4a|aac|ogg)(\.part[0-9]+-[0-9]+)?$', re.IGNORECASE).search(filename.strip())
 
 def bibliotaku(item):
 
@@ -1056,58 +1058,60 @@ def get_video_mega_links_group(item):
 
             name = mc_info_res['name'].replace('#', '')
 
-            size = mc_info_res['size']
+            if isVideoFilename(name):
 
-            key = mc_info_res['key']
+                size = mc_info_res['size']
 
-            noexpire = mc_info_res['expire'].split('#')[1]
+                key = mc_info_res['key']
 
-            compress = compress_pattern.search(name)
+                noexpire = mc_info_res['expire'].split('#')[1]
 
-            if compress:
+                compress = compress_pattern.search(name)
 
-                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-                
-                if item.uploader:
-                    itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                if compress:
 
-                break
+                    itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                    
+                    if item.uploader:
+                        itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
-            else:
-
-                m = re.compile(r"\.part([0-9]+)-([0-9]+)$", re.DOTALL).search(name)
-
-                if m:
-
-                    multi_url_name = re.sub(r'\.part([0-9]+)-([0-9]+)$', '', name)
-
-                    url = url + '#' + multi_url_name + '#' + str(size) + '#' + key + '#' + noexpire
-
-                    multi_url.append((url + '#' + MC_REVERSE_DATA + '#' + mega_sid, size))
+                    break
 
                 else:
-                    title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
 
-                    if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                        title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+                    m = re.compile(r"\.part([0-9]+)-([0-9]+)$", re.DOTALL).search(name)
 
-                    url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+                    if m:
 
-                    infoLabels=item.infoLabels
+                        multi_url_name = re.sub(r'\.part([0-9]+)-([0-9]+)$', '', name)
 
-                    if item.mode == "tvshow":
-                        episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
-                        
-                        if episode:
-                            infoLabels['episode'] = int(episode.group(2))
-                            infoLabels['season'] = int(episode.group(1))
-                        else:
-                            infoLabels['episode'] = i
+                        url = url + '#' + multi_url_name + '#' + str(size) + '#' + key + '#' + noexpire
 
-                    itemlist.append(
-                        Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
+                        multi_url.append((url + '#' + MC_REVERSE_DATA + '#' + mega_sid, size))
 
-            i=i+1
+                    else:
+                        title = "[MEGA] " + name + ' [' + str(format_bytes(size)) + ']'
+
+                        if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
+                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+
+                        url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+
+                        infoLabels=item.infoLabels
+
+                        if item.mode == "tvshow":
+                            episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
+                            
+                            if episode:
+                                infoLabels['episode'] = int(episode.group(2))
+                                infoLabels['season'] = int(episode.group(1))
+                            else:
+                                infoLabels['episode'] = i
+
+                        itemlist.append(
+                            Item(channel=item.channel, action="play", server='nei', title=title, url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
+
+                i=i+1
 
         if len(multi_url)>0:
 
@@ -1151,36 +1155,38 @@ def get_video_mega_links_group(item):
                 else:
                     title = url
 
-                compress = compress_pattern.search(attributes['n'])
+                if isVideoFilename(attributes['n']):
 
-                if compress:
+                    compress = compress_pattern.search(attributes['n'])
 
-                    itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-                    
-                    if item.uploader:
-                        itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                    if compress:
 
-                    break
-
-                else:
-
-                    if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
-                        title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                         
-                    infoLabels=item.infoLabels
+                        if item.uploader:
+                            itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
-                    if item.mode == "tvshow":
-                        episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
-                        
-                        if episode:
-                            infoLabels['episode'] = int(episode.group(2))
-                            infoLabels['season'] = int(episode.group(1))
-                        else:
-                            infoLabels['episode'] = i
+                        break
 
-                    itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url+'@'+str(size), mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
+                    else:
 
-                i=i+1
+                        if hashlib.sha1(title.encode('utf-8')).hexdigest() in HISTORY:
+                            title = "[COLOR lightgreen][B](VISTO)[/B][/COLOR] " + title
+                            
+                        infoLabels=item.infoLabels
+
+                        if item.mode == "tvshow":
+                            episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
+                            
+                            if episode:
+                                infoLabels['episode'] = int(episode.group(2))
+                                infoLabels['season'] = int(episode.group(1))
+                            else:
+                                infoLabels['episode'] = i
+
+                        itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=url+'@'+str(size), mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
+
+                    i=i+1
 
     if len(itemlist)>0:
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
@@ -1337,45 +1343,47 @@ def find_video_mega_links(item, data):
 
                     name = mc_info_res['name'].replace('#', '')
 
-                    size = mc_info_res['size']
+                    if isVideoFilename(name):
 
-                    key = mc_info_res['key']
+                        size = mc_info_res['size']
 
-                    if mc_info_res['expire']:
-                        noexpire = mc_info_res['expire'].split('#')[1]
-                    else:
-                        noexpire = ''
+                        key = mc_info_res['key']
 
-                    compress = compress_pattern.search(name)
+                        if mc_info_res['expire']:
+                            noexpire = mc_info_res['expire'].split('#')[1]
+                        else:
+                            noexpire = ''
 
-                    if compress:
+                        compress = compress_pattern.search(name)
 
-                        itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-                        
-                        if item.uploader:
-                            itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                        if compress:
 
-                        break
-                    else:
-                        title = name + ' [' + str(format_bytes(size)) + ']'
-                        url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
-                        
-                        infoLabels=item.infoLabels
-
-                        if item.mode == "tvshow":
-                            episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
+                            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                             
-                            if episode:
-                                infoLabels['episode'] = int(episode.group(2))
-                                infoLabels['season'] = int(episode.group(1))
-                            else:
-                                infoLabels['episode'] = i
+                            if item.uploader:
+                                itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
-                        itemlist.append(
-                            Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
-                                 url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
+                            break
+                        else:
+                            title = name + ' [' + str(format_bytes(size)) + ']'
+                            url = url + '#' + name + '#' + str(size) + '#' + key + '#' + noexpire
+                            
+                            infoLabels=item.infoLabels
 
-                    i=i+1
+                            if item.mode == "tvshow":
+                                episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
+                                
+                                if episode:
+                                    infoLabels['episode'] = int(episode.group(2))
+                                    infoLabels['season'] = int(episode.group(1))
+                                else:
+                                    infoLabels['episode'] = i
+
+                            itemlist.append(
+                                Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title,
+                                     url=url + '#' + MC_REVERSE_DATA + '#' + mega_sid, mode=item.mode, thumbnail=get_neiflix_resource_path("megacrypter.png"), infoLabels=infoLabels))
+
+                        i=i+1
 
         else:
             patron_mega = r'https://mega(?:\.co)?\.nz/#[!0-9a-zA-Z_-]+|https://mega(?:\.co)?\.nz/file/[^#]+#[0-9a-zA-Z_-]+'
@@ -1406,30 +1414,32 @@ def find_video_mega_links(item, data):
                         else:
                             title = url
 
-                        compress = compress_pattern.search(attributes['n'])
+                        if isVideoFilename(attributes['n']):
 
-                        if compress:
-                            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
-                            
-                            if item.uploader:
-                                itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+                            compress = compress_pattern.search(attributes['n'])
 
-                            break
-                        else:
-                            infoLabels=item.infoLabels
-
-                            if item.mode == "tvshow":
-                                episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
+                            if compress:
+                                itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                                 
-                                if episode:
-                                    infoLabels['episode'] = int(episode.group(2))
-                                    infoLabels['season'] = int(episode.group(1))
-                                else:
-                                    infoLabels['episode'] = i
-                            
-                            itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
-                    
-                        i = i+1
+                                if item.uploader:
+                                    itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+
+                                break
+                            else:
+                                infoLabels=item.infoLabels
+
+                                if item.mode == "tvshow":
+                                    episode = re.search(r'^.*?([0-9]+) *?[xXeE] *?0*([0-9]+)', name)
+                                    
+                                    if episode:
+                                        infoLabels['episode'] = int(episode.group(2))
+                                        infoLabels['season'] = int(episode.group(1))
+                                    else:
+                                        infoLabels['episode'] = i
+                                
+                                itemlist.append(Item(channel=item.channel, action="play", server='nei', title="[MEGA] " + title, url=url, mode=item.mode, thumbnail=get_neiflix_resource_path("mega.png"), infoLabels=infoLabels))
+                        
+                            i = i+1
 
         if len(itemlist)>0:
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))

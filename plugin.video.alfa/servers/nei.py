@@ -92,11 +92,10 @@ MAX_CHUNKS_IN_QUEUE = 20 #Si sobra la RAM se puede aumentar (este buffer se suma
 
 #multi_urls es una lista de tuplas [(absolute_start_offset, absolute_end_offset, url1), (absolute_start_offset, absolute_end_offset, url2)...]
 class neiURL():
-    def __init__(self, url, accept_ranges):
+    def __init__(self, url):
         self.url = url
-        self.accept_ranges = accept_ranges
         self.multi_urls = self.updateMulti()
-        self.size = self.updateSize()
+        self.updateSizeAndRanges()
         
     def updateMulti(self):
         hash_url = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
@@ -113,28 +112,34 @@ class neiURL():
 
         return None
 
-    def updateSize(self):
+    def updateSizeAndRanges(self):
 
         if self.multi_urls:
 
-            size = 0
+            self.accept_ranges = True
+            self.size = 0
 
             for url in self.multi_urls:
-                size+=url[1]-url[0]+1
+                data = self.getUrlSizeAndRanges(url[2])
+                self.size+=data[0]
 
-            return size
+                if self.accept_ranges:
+                    self.accept_ranges = data[1]
 
         else:
-            return self.getUrlSize(self.url)
+            self.size, self.accept_ranges = self.getUrlSizeAndRanges(self.url)
 
-    def getUrlSize(self, url):
+        if not self.accept_ranges:
+            xbmcgui.Dialog().notification('NEIFLIX', "ESTE VÍDEO NO PERMITE AVANZAR/RETROCEDER", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+
+    def getUrlSizeAndRanges(self, url):
         request = urllib.request.Request(url, method='HEAD')
         response = urllib.request.urlopen(request)
 
         if 'Content-Length' in response.headers:
-            return int(response.headers['Content-Length'])
+            return (int(response.headers['Content-Length']), ('Accept-Ranges' in response.headers and response.headers['Accept-Ranges']!='none'))
         else:
-            return -1
+            return (-1, False)
 
     def getPartialRanges(self, start_offset, end_offset):
         if self.multi_urls == None:
@@ -428,11 +433,9 @@ class DebridProxy(BaseHTTPRequestHandler):
     def updateURL(self):
         global DEBRID_PROXY_FILE_URL
 
-        m = re.compile(r'^.*?/(proxy2?)/(.+)', re.DOTALL).search(self.path)
+        m = re.compile(r'^.*?/proxy/(.+)', re.DOTALL).search(self.path)
 
-        url = urllib.parse.unquote(m.group(2))
-
-        accept_ranges = (m.group(1) == 'proxy')
+        url = urllib.parse.unquote(m.group(1))
 
         logger.debug(url)
 
@@ -440,7 +443,7 @@ class DebridProxy(BaseHTTPRequestHandler):
         
         if not DEBRID_PROXY_FILE_URL or DEBRID_PROXY_FILE_URL.url != url:
             
-            DEBRID_PROXY_FILE_URL = neiURL(url, accept_ranges)
+            DEBRID_PROXY_FILE_URL = neiURL(url)
         
         DEBRID_PROXY_URL_LOCK.release()
 
@@ -448,8 +451,8 @@ class DebridProxy(BaseHTTPRequestHandler):
     def sendResponseHeaders(self):
         range_request = self.parseRequestRanges()
 
-        if not range_request:
-            self.sendCompleteResponseHeaders(DEBRID_PROXY_FILE_URL.size, DEBRID_PROXY_FILE_URL.accept_ranges)
+        if not range_request or not DEBRID_PROXY_FILE_URL.accept_ranges:
+            self.sendCompleteResponseHeaders()
             return range_request
         else:
 
@@ -457,7 +460,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
             final = int(range_request[1]) if range_request[1] else (int(DEBRID_PROXY_FILE_URL.size) - 1)
 
-            self.sendPartialResponseHeaders(inicio, final, int(DEBRID_PROXY_FILE_URL.size))
+            self.sendPartialResponseHeaders(inicio, final)
 
             return range_request
 
@@ -475,9 +478,9 @@ class DebridProxy(BaseHTTPRequestHandler):
             return None
 
     
-    def sendPartialResponseHeaders(self, inicio, final, total):
+    def sendPartialResponseHeaders(self, inicio, final):
 
-        headers = {'Server':'Neiflix', 'Accept-Ranges':'bytes', 'Content-Length': str(int(final)-int(inicio)+1), 'Content-Range': 'bytes '+str(inicio)+'-'+str(final)+'/'+str(total), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
+        headers = {'Accept-Ranges':'bytes', 'Content-Length': str(int(final)-int(inicio)+1), 'Content-Range': 'bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_URL.size), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
 
         self.send_response(206)
 
@@ -490,8 +493,8 @@ class DebridProxy(BaseHTTPRequestHandler):
         self.end_headers()
 
     
-    def sendCompleteResponseHeaders(self, total, accept_ranges):
-        headers = {'Server':'Neiflix', 'Accept-Ranges':'bytes' if accept_ranges else 'none', 'Content-Length': str(total), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
+    def sendCompleteResponseHeaders(self):
+        headers = {'Accept-Ranges':'bytes' if DEBRID_PROXY_FILE_URL.accept_ranges else 'none', 'Content-Length': str(DEBRID_PROXY_FILE_URL.size), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
 
         self.send_response(200)
 
@@ -598,7 +601,7 @@ def check_debrid_urls(itemlist):
 
     try:
         for i in itemlist:
-            url = urllib.parse.unquote(re.sub(r'^.*?/proxy2?/', '', i[1]))
+            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', i[1]))
             logger.info(url)
             request = urllib.request.Request(url, method='HEAD')
             response = urllib.request.urlopen(request)
@@ -740,15 +743,6 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
     
     return urls
 
-
-def url_accept_ranges(url):
-    request = urllib.request.Request(url, method='HEAD')
-    
-    response = urllib.request.urlopen(request)
-
-    return ('Accept-Ranges' in response.headers and response.headers['Accept-Ranges']!='none')
-
-
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
 
     logger.info(page_url)
@@ -832,15 +826,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 i=0
 
                 for murl in multi_video_urls:
-                    multi_urls_ranges.append((s,s+video_sizes[i]-1,urllib.parse.unquote(re.sub(r'^.*?/proxy2?/', '', murl[0][1]))))
+                    multi_urls_ranges.append((s,s+video_sizes[i]-1,urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', murl[0][1]))))
                     s+=video_sizes[i]
                     i+=1
 
                 logger.info(multi_urls_ranges)
 
-                first_multi_url = urllib.parse.unquote(re.sub(r'^.*?/proxy2?/', '', multi_video_urls[0][0][1]))
-
-                multi_accept_ranges = url_accept_ranges(first_multi_url)
+                first_multi_url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', multi_video_urls[0][0][1]))
 
                 hash_url = hashlib.sha256(first_multi_url.encode('utf-8')).hexdigest()
 
@@ -851,7 +843,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 video_urls = multi_video_urls[0]
 
-                video_urls=[[re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', video_urls[0][0]), 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy'+('' if multi_accept_ranges else '2')+'/'+urllib.parse.quote(urllib.parse.unquote(re.sub(r'^.*?/proxy2?/', '', video_urls[0][1])))]]
+                video_urls=[[re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', video_urls[0][0]), 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', video_urls[0][1])))]]
 
                 return video_urls
             else:
