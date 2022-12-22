@@ -841,6 +841,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 first_multi_url = proxy2DebridURL(multi_video_urls[0][0][1])
 
+                first_multi_url_title = multi_video_urls[0][0][0]
+
                 hash_url = hashlib.sha256(first_multi_url.encode('utf-8')).hexdigest()
 
                 filename_hash = KODI_TEMP_PATH + 'kodi_nei_multi_' + hash_url
@@ -848,17 +850,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 with open(filename_hash, "wb") as file:
                     pickle.dump(multi_urls_ranges, file)
 
-                video_urls = multi_video_urls[0]
-
-                video_urls=[[re.sub(r'VIDEO', 'VIDEO MULTI-BASTERD', video_urls[0][0]), debrid2proxyURL(proxy2DebridURL(video_urls[0][1]))]]
-
-                return video_urls
+                return [[first_multi_url_title.replace('VIDEO', 'VIDEO MULTI-BASTERD'), debrid2proxyURL(first_multi_url)]]
             else:
                 xbmcgui.Dialog().notification('NEIFLIX', "ERROR: REVISA TU CUENTA DE MEGA AUXILIAR", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
                 return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
         else:
-            xbmcgui.Dialog().notification('NEIFLIX', "ERROR: ENLACES MULTI NO SOPORTADOS", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+            #PENDIENTE DE IMPLEMENTAR ENLACES MULTI-BASTERD CONECTANDO A MEGA DIRECTAMENTE (SIN DEBRID)
+            xbmcgui.Dialog().notification('NEIFLIX', "ERROR: ENLACES MULTI-BASTERD NO SOPORTADOS (DE MOMENTO)", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
             return [["NO SOPORTADO", ""]]
 
     else:
