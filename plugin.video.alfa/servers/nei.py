@@ -419,15 +419,14 @@ class DebridProxy(BaseHTTPRequestHandler):
                 else:
 
                     if DEBRID_PROXY_FILE_URL.multi_urls:
-
                         for murl in DEBRID_PROXY_FILE_URL.multi_urls:
                             request = urllib.request.Request(murl[2])
-                            response = urllib.request.urlopen(request)
-                            shutil.copyfileobj(response, self.wfile)
+                            with urllib.request.urlopen(request) as response:
+                                shutil.copyfileobj(response, self.wfile)
                     else:
                         request = urllib.request.Request(DEBRID_PROXY_FILE_URL.url)
-                        response = urllib.request.urlopen(request)
-                        shutil.copyfileobj(response, self.wfile)
+                        with urllib.request.urlopen(request) as response:
+                            shutil.copyfileobj(response, self.wfile)
 
     
     def updateURL(self):
@@ -453,7 +452,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         if not range_request or not DEBRID_PROXY_FILE_URL.accept_ranges:
             self.sendCompleteResponseHeaders()
-            return range_request
+            return False
         else:
 
             inicio = int(range_request[0])
@@ -480,7 +479,7 @@ class DebridProxy(BaseHTTPRequestHandler):
     
     def sendPartialResponseHeaders(self, inicio, final):
 
-        headers = {'Accept-Ranges':'bytes', 'Content-Length': str(int(final)-int(inicio)+1), 'Content-Range': 'bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_URL.size), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
+        headers = {'Accept-Ranges':'bytes', 'Content-Length': str(int(final)-int(inicio)+1), 'Content-Range': 'bytes '+str(inicio)+'-'+str(final)+'/'+str(DEBRID_PROXY_FILE_URL.size), 'Content-Disposition':'attachment', 'Content-Type':'application/octet-stream', 'Connection':'close'}
 
         self.send_response(206)
 
@@ -494,7 +493,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
     
     def sendCompleteResponseHeaders(self):
-        headers = {'Accept-Ranges':'bytes' if DEBRID_PROXY_FILE_URL.accept_ranges else 'none', 'Content-Length': str(DEBRID_PROXY_FILE_URL.size), 'Content-Disposition':'attachment', 'Content-Type':'application/force-download', 'Connection':'close'}
+        headers = {'Accept-Ranges':'bytes' if DEBRID_PROXY_FILE_URL.accept_ranges else 'none', 'Content-Length': str(DEBRID_PROXY_FILE_URL.size), 'Content-Disposition':'attachment', 'Content-Type':'application/octet-stream', 'Connection':'close'}
 
         self.send_response(200)
 
@@ -623,6 +622,7 @@ def check_debrid_urls(itemlist):
 
 
 def pageURL2DEBRIDCheckCache(page_url):
+
     if 'megacrypter.noestasinvitado' in page_url:
 
         fid_hash = megacrypter2debridHASH(page_url)
@@ -630,7 +630,7 @@ def pageURL2DEBRIDCheckCache(page_url):
         if not fid_hash:
             return True
 
-        filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+        filename_hash = KODI_TEMP_PATH + 'kodi_nei_'+getDebridServiceString()+'_' + fid_hash
 
         if os.path.isfile(filename_hash):
             with open(filename_hash, "rb") as file:
@@ -649,7 +649,7 @@ def pageURL2DEBRIDCheckCache(page_url):
 
         fid_hash = hashlib.sha256(fid).hexdigest()
 
-        filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+        filename_hash = KODI_TEMP_PATH + 'kodi_nei_'+getDebridServiceString()+'_' + fid_hash
 
         if os.path.isfile(filename_hash):
             with open(filename_hash, "rb") as file:
@@ -662,6 +662,15 @@ def pageURL2DEBRIDCheckCache(page_url):
             return not urls or check_debrid_urls(urls)
         else:
             return True
+
+
+def getDebridServiceString():
+    if NEIFLIX_REALDEBRID:
+        return 'realdebrid'
+    elif NEIFLIX_ALLDEBRID:
+        return 'alldebrid'
+    else:
+        return None
 
 
 def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
@@ -681,7 +690,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
             xbmcgui.Dialog().notification('NEIFLIX', "ERROR: POSIBLE ENLACE MEGACRYPTER CADUCADO", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
             return [["NEI DEBRID ERROR (posible enlace de MegaCrypter caducado (sal y vuelve a entrar en la carpeta))", ""]]
 
-        filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+        filename_hash = KODI_TEMP_PATH + 'kodi_nei_'+getDebridServiceString()+'_' + fid_hash
 
         if cache and os.path.isfile(filename_hash):
             with open(filename_hash, "rb") as file:
@@ -717,7 +726,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
         fid_hash = hashlib.sha256(fid).hexdigest()
 
-        filename_hash = KODI_TEMP_PATH + 'kodi_nei_debrid_' + fid_hash
+        filename_hash = KODI_TEMP_PATH + 'kodi_nei_'+getDebridServiceString()+'_' + fid_hash
 
         if cache and os.path.isfile(filename_hash):
             with open(filename_hash, "rb") as file:
