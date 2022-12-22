@@ -76,7 +76,7 @@ AD_ERRORS = {
 
 MEGA_FILES = None
 
-DEBRID_PROXY_HOST = "localhost"
+DEBRID_PROXY_HOST = 'localhost'
 DEBRID_PROXY_PORT = int(config.get_setting("neiflix_debrid_proxy_port", "neiflix").strip())
 NEIFLIX_REALDEBRID = config.get_setting("neiflix_realdebrid", "neiflix")
 NEIFLIX_ALLDEBRID = config.get_setting("neiflix_alldebrid", "neiflix")
@@ -852,7 +852,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 video_urls = multi_video_urls[0]
 
-                video_urls=[[re.sub(r'part[0-9]+-[0-9]+', 'MEGA MULTI ', video_urls[0][0]), 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', video_urls[0][1])))]]
+                video_urls=[[re.sub(r'VIDEO', 'VIDEO MULTI-BASTERD', video_urls[0][0]), debrid2proxyURL(proxy2DebridURL(video_urls[0][1]))]]
 
                 return video_urls
             else:
@@ -890,6 +890,14 @@ def start_proxy():
     t = threading.Thread(target=proxy_run)
     t.setDaemon(True)
     t.start()
+
+
+def debrid2proxyURL(url):
+    return 'http://'+DEBRID_PROXY_HOST+':'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(url)
+    
+
+def proxy2DebridURL(url):
+    return urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', url))
 
 
 # Returns an array of possible video url's from the page_url
@@ -966,17 +974,17 @@ def RD_get_enlaces(data):
                 video_url = link["download"].encode("utf-8")
             else:
                 video_url = link["download"]
-            title = video_url.rsplit(".", 1)[1]
+            title = "VIDEO"
             if "quality" in link:
                 title += " (" + link["quality"] + ") [realdebrid]"
-            itemlist.append([title, 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(video_url)])
+            itemlist.append([title, debrid2proxyURL(video_url)])
     else:
         if not PY3:
             video_url = data["download"].encode("utf-8")
         else:
             video_url = data["download"]
-        title = video_url.rsplit(".", 1)[1] + " [realdebrid]"
-        itemlist.append([title, 'http://localhost:'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(video_url)])
+        title = "VIDEO [realdebrid]"
+        itemlist.append([title, debrid2proxyURL(video_url)])
 
     return itemlist
 
@@ -1096,8 +1104,7 @@ def AD_get_links(dd_data):
     streams = dd_data.get('streams', '')
     
     if link:
-        extension = dd_data['filename'][-4:]
-        video_urls.append(['%s [Original][All-Debrid]' % extension, link])
+        video_urls.append(['VIDEO [Original][All-Debrid]', debrid2proxyURL(link)])
     
     if streams:
         for info in streams:
@@ -1106,7 +1113,7 @@ def AD_get_links(dd_data):
                 quality += 'p'
             ext = info.get('ext', '')
             link = info.get('link', '')
-            video_urls.append(['%s %s [All-Debrid]' % (extension, quality), link])
+            video_urls.append(['%s %s [All-Debrid]' % (ext, quality), debrid2proxyURL(link)])
 
     return video_urls
 
