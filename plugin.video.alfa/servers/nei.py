@@ -432,9 +432,7 @@ class DebridProxy(BaseHTTPRequestHandler):
     def updateURL(self):
         global DEBRID_PROXY_FILE_URL
 
-        m = re.compile(r'^.*?/proxy/(.+)', re.DOTALL).search(self.path)
-
-        url = urllib.parse.unquote(m.group(1))
+        url = proxy2DebridURL(self.path)
 
         logger.debug(url)
 
@@ -600,7 +598,7 @@ def check_debrid_urls(itemlist):
 
     try:
         for i in itemlist:
-            url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', i[1]))
+            url = proxy2DebridURL(i[1])
             logger.info(url)
             request = urllib.request.Request(url, method='HEAD')
             response = urllib.request.urlopen(request)
@@ -835,13 +833,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 i=0
 
                 for murl in multi_video_urls:
-                    multi_urls_ranges.append((s,s+video_sizes[i]-1,urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', murl[0][1]))))
+                    multi_urls_ranges.append((s,s+video_sizes[i]-1,proxy2DebridURL(murl[0][1])))
                     s+=video_sizes[i]
                     i+=1
 
                 logger.info(multi_urls_ranges)
 
-                first_multi_url = urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', multi_video_urls[0][0][1]))
+                first_multi_url = proxy2DebridURL(multi_video_urls[0][0][1])
 
                 hash_url = hashlib.sha256(first_multi_url.encode('utf-8')).hexdigest()
 
