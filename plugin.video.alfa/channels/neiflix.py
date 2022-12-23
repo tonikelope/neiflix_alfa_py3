@@ -23,10 +23,11 @@ from core.item import Item
 from core import httptools, scrapertools, tmdb
 from platformcode import config, logger, platformtools
 from collections import OrderedDict
+from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.53"
+NEIFLIX_VERSION = "2.54"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -45,6 +46,8 @@ KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
 KODI_USERDATA_PATH = xbmcvfs.translatePath('special://userdata/')
 
 NEIFLIX_RESOURCES_URL = "https://noestasinvitado.com/neiflix_resources/"
+
+NEIFLIX_MENSAJES_FORO_URL = 'https://noestasinvitado.com/neiflix_foro.php?idtopic='
 
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/"
 
@@ -698,6 +701,32 @@ def bibliotaku_pelis_megacrypter(item):
     return itemlist
 
 
+def leerMensajesHiloForo(item):
+    
+    json_response = json.loads(httptools.downloadpage(NEIFLIX_MENSAJES_FORO_URL+str(item.id_topic), timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
+
+    logger.info(NEIFLIX_MENSAJES_FORO_URL+str(item.id_topic))
+
+    logger.info(json_response)
+
+    itemlist = []
+    
+    i=0
+    
+    for msg in json_response:
+        if i>0:
+            itemlist.append(Item(channel=item.channel, thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR darkorange][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
+
+        i+=1
+
+    return itemlist
+
+
+def cargarMensajeForo(item):
+    fecha_mensaje = datetime.fromtimestamp(int(item.msg['time'])).strftime('%d/%m/%y %H:%M')
+    xbmcgui.Dialog().textviewer('[B][I]'+item.msg['nick']+'[/I][/B] ('+fecha_mensaje+')', html.unescape(clean_html_tags(item.msg['body'].replace('<br>', "\n"))))
+
+
 def foro(item):
     logger.info("channels.neiflix foro")
 
@@ -724,6 +753,13 @@ def foro(item):
         action = "foro"
     else:
         video_links = True
+
+        m = re.compile(r'noestasinvitado\.com[^"]+tid *?= *?([0-9]+)').search(data)
+
+        id_topic = m.group(1)
+
+        item.id_topic = id_topic
+
         itemlist = find_video_mega_links(item, data) + find_video_gvideo_links(item, data)
 
     if not video_links:
@@ -1204,6 +1240,7 @@ def get_video_mega_links_group(item):
 
     if len(itemlist)>0:
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+        itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, title="[B]LEER MENSAJES DEL FORO[/B]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
     else:
         itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
         
@@ -1299,7 +1336,7 @@ def find_video_mega_links(item, data):
                 if item.mode == "tvshow":
                     infoLabels['season']=i
                 
-                itemlist.append(Item(channel=item.channel, action="get_video_mega_links_group",
+                itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, action="get_video_mega_links_group",
                                      title='[' + str(i) + '/' + str(len(matches)) + '] ' + item.title, url=item.url,
                                      mc_group_id=id, infoLabels=infoLabels, mode=item.mode))
 
@@ -1307,6 +1344,7 @@ def find_video_mega_links(item, data):
 
             if len(itemlist)>0:
                 itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+                itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, title="[B]LEER MENSAJES DEL FORO[/B]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
             else:
                 itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                 
@@ -1319,7 +1357,7 @@ def find_video_mega_links(item, data):
             if item.mode == "tvshow":
                 infoLabels['season'] = 1
             
-            itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=matches[0], infoLabels=infoLabels))
+            itemlist = get_video_mega_links_group(Item(channel=item.channel, id_topic=item.id_topic, mode=item.mode, action='', title='', url=item.url, mc_group_id=matches[0], infoLabels=infoLabels))
     else:
 
         mega_sid = mega_login(False)
@@ -1457,6 +1495,7 @@ def find_video_mega_links(item, data):
 
         if len(itemlist)>0:
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+            itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, title="[B]LEER MENSAJES DEL FORO[/B]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
         else:
             itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
             
