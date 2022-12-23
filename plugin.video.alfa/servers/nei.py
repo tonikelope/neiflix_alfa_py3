@@ -3,26 +3,13 @@
 # Versión modificada del conector de MEGA para noestasinvitado.com
 # Soporte para usar MegaCrypter con RealDebrid / Alldebrid
 # Soporte para streaming de vídeo de ficheros grandes troceados con MegaBasterd
-# y subidos en diferentes cuentas de MEGA
-
-
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-    import urllib.parse
-else:
-    import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
 from core import httptools
 from core import scrapertools
 from platformcode import config, logger
 from platformcode import platformtools
-
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
 import urllib.request
 import time
 from socketserver import ThreadingMixIn
@@ -33,13 +20,14 @@ import hashlib
 import xbmc
 import xbmcgui
 import xbmcaddon
+import xbmcvfs
 import os
 import pickle
 import shutil
 import json
 
 
-KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
+KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
 
 DEFAULT_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:65.0) Gecko/20100101 Firefox/65.0'}
 

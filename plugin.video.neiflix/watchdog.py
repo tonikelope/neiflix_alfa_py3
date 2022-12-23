@@ -7,6 +7,7 @@ from urllib.request import urlretrieve
 import xbmc
 import xbmcaddon
 import xbmcgui
+import xbmcvfs
 
 CHECK_NEIFLIX_ALFA_STUFF_INTEGRITY = True
 
@@ -14,14 +15,14 @@ MONITOR_TIME = 15
 
 ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.alfa/"
 
-KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
+KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
 
-ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
+ALFA_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa/')
 
 FILES = ['channels/neiflix.py', 'channels/neiflix.json', 'servers/nei.py', 'servers/nei.json',
          'resources/media/channels/banner/neiflix2_b.png', 'resources/media/channels/thumb/neiflix.gif']
 
-if not os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.neiflix/installed')):
+if not os.path.exists(xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix/installed')):
     xbmc.executebuiltin('RunAddon(plugin.video.neiflix)')
 
 # CHECK NEIFLIX CHANNEL UPDATES

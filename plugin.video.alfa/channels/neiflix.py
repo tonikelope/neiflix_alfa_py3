@@ -15,6 +15,7 @@ import urllib.request, urllib.error, urllib.parse
 import xbmc
 import xbmcaddon
 import xbmcgui
+import xbmcvfs
 import html
 import time
 import shutil
@@ -25,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.46"
+NEIFLIX_VERSION = "2.47"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -39,9 +40,9 @@ MEGA_PASSWORD = config.get_setting("neiflix_mega_password", "neiflix")
 
 USE_MC_REVERSE = config.get_setting("neiflix_use_mc_reverse", "neiflix")
 
-KODI_TEMP_PATH = xbmc.translatePath('special://temp/')
+KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
 
-KODI_USERDATA_PATH = xbmc.translatePath('special://userdata/')
+KODI_USERDATA_PATH = xbmcvfs.translatePath('special://userdata/')
 
 NEIFLIX_RESOURCES_URL = "https://noestasinvitado.com/neiflix_resources/"
 
@@ -49,9 +50,9 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3
 
 ALFA_URL = "https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.alfa/"
 
-ALFA_PATH = xbmc.translatePath('special://home/addons/plugin.video.alfa/')
+ALFA_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa/')
 
-NEIFLIX_PATH = xbmc.translatePath('special://home/addons/plugin.video.neiflix/');
+NEIFLIX_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix/');
 
 DFAULT_HTTP_TIMEOUT = 60 #Para no pillarnos los dedos al generar enlaces Megacrypter
 
@@ -99,7 +100,7 @@ TITLES_BLACKLIST = [
 
 def get_neiflix_resource_path(resource):
 
-    if os.path.exists(xbmc.translatePath("special://home/addons/plugin.video.neiflix/resources/"+resource)):
+    if os.path.exists(xbmcvfs.translatePath("special://home/addons/plugin.video.neiflix/resources/"+resource)):
         return "special://home/addons/plugin.video.neiflix/resources/"+resource
     else:
         return NEIFLIX_RESOURCES_URL+resource
@@ -313,8 +314,8 @@ def update_favourites(item):
     if ret:
 
         try:
-            if os.path.exists(xbmc.translatePath('special://userdata/favourites.xml')):
-                favourites_xml = ET.parse(xbmc.translatePath('special://userdata/favourites.xml'))
+            if os.path.exists(xbmcvfs.translatePath('special://userdata/favourites.xml')):
+                favourites_xml = ET.parse(xbmcvfs.translatePath('special://userdata/favourites.xml'))
             else:
                 favourites_xml = ET.ElementTree(ET.Element('favourites'))
 
@@ -324,16 +325,16 @@ def update_favourites(item):
                 for e in neiflix:
                     favourites_xml.getroot().remove(e)
 
-            with open(xbmc.translatePath('special://home/addons/plugin.video.neiflix/favourite.json'), 'r') as f:
+            with open(xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix/favourite.json'), 'r') as f:
                 favourite = json.loads(f.read())
 
-            favourite['fanart'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['fanart'])
-            favourite['thumbnail'] = xbmc.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
-            neiflix = ET.Element('favourite', {'name': 'NEIFLIX', 'thumb': xbmc.translatePath(
+            favourite['fanart'] = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa' + favourite['fanart'])
+            favourite['thumbnail'] = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
+            neiflix = ET.Element('favourite', {'name': 'NEIFLIX', 'thumb': xbmcvfs.translatePath(
                 'special://home/addons/plugin.video.alfa/resources/media/channels/thumb/neiflix.gif')})
             neiflix.text = 'ActivateWindow(10025,"plugin://plugin.video.alfa/?' + urllib.parse.quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)'
             favourites_xml.getroot().append(neiflix)
-            favourites_xml.write(xbmc.translatePath('special://userdata/favourites.xml'))
+            favourites_xml.write(xbmcvfs.translatePath('special://userdata/favourites.xml'))
 
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'Icono de favoritos regenerado', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
@@ -353,9 +354,9 @@ def thumbnail_refresh(item):
     if ret:
 
         try:
-            os.remove(xbmc.translatePath('special://userdata/Database/Textures13.db'));
+            os.remove(xbmcvfs.translatePath('special://userdata/Database/Textures13.db'));
 
-            shutil.rmtree(xbmc.translatePath('special://userdata/Thumbnails'))
+            shutil.rmtree(xbmcvfs.translatePath('special://userdata/Thumbnails'))
 
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'Miniaturas regeneradas', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
@@ -373,8 +374,8 @@ def improve_streaming(item):
 
     if ret:
     
-        if os.path.exists(xbmc.translatePath('special://userdata/advancedsettings.xml')):
-            os.rename(xbmc.translatePath('special://userdata/advancedsettings.xml'), xbmc.translatePath('special://userdata/advancedsettings.xml')+"."+str(int(time.time()))+".bak")
+        if os.path.exists(xbmcvfs.translatePath('special://userdata/advancedsettings.xml')):
+            os.rename(xbmcvfs.translatePath('special://userdata/advancedsettings.xml'), xbmcvfs.translatePath('special://userdata/advancedsettings.xml')+"."+str(int(time.time()))+".bak")
         
         settings_xml = ET.ElementTree(ET.Element('advancedsettings'))
 
@@ -403,7 +404,7 @@ def improve_streaming(item):
         playlisttimeout.text = '120'
         settings_xml.getroot().append(playlisttimeout)
 
-        settings_xml.write(xbmc.translatePath('special://userdata/advancedsettings.xml'))
+        settings_xml.write(xbmcvfs.translatePath('special://userdata/advancedsettings.xml'))
 
         xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Ajustes avanzados regenerados", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
