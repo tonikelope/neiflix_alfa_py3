@@ -70,7 +70,7 @@ NEIFLIX_REALDEBRID = config.get_setting("neiflix_realdebrid", "neiflix")
 NEIFLIX_ALLDEBRID = config.get_setting("neiflix_alldebrid", "neiflix")
 
 MEGACRYPTER2DEBRID_ENDPOINT='https://noestasinvitado.com/megacrypter2debrid.php'
-MEGACRYPTER2DEBRID_TIMEOUT=120 #Cuando aumente la demanda habrá que implementar en el server de NEI un sistema de polling asíncrono
+MEGACRYPTER2DEBRID_TIMEOUT=90 #Cuando aumente la demanda habrá que implementar en el server de NEI un sistema de polling asíncrono
 DEBRID_PROXY_FILE_URL=None
 DEBRID_PROXY_URL_LOCK = threading.Lock()
 

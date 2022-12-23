@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.48"
+NEIFLIX_VERSION = "2.49"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -54,7 +54,7 @@ ALFA_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa/')
 
 NEIFLIX_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix/');
 
-DFAULT_HTTP_TIMEOUT = 60 #Para no pillarnos los dedos al generar enlaces Megacrypter
+DEFAULT_HTTP_TIMEOUT = 60 #Para no pillarnos los dedos al generar enlaces Megacrypter
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}
 
@@ -108,7 +108,7 @@ def get_neiflix_resource_path(resource):
 def login():
     logger.info("channels.neiflix login")
 
-    httptools.downloadpage("https://noestasinvitado.com/login/", timeout=DFAULT_HTTP_TIMEOUT)
+    httptools.downloadpage("https://noestasinvitado.com/login/", timeout=DEFAULT_HTTP_TIMEOUT)
 
     if NEIFLIX_LOGIN and NEIFLIX_PASSWORD:
 
@@ -116,7 +116,7 @@ def login():
                NEIFLIX_PASSWORD + "&cookielength=-1"
 
         data = httptools.downloadpage(
-            "https://noestasinvitado.com/login2/", post=post, timeout=DFAULT_HTTP_TIMEOUT).data
+            "https://noestasinvitado.com/login2/", post=post, timeout=DEFAULT_HTTP_TIMEOUT).data
 
         return data.find(NEIFLIX_LOGIN) != -1
 
@@ -514,7 +514,7 @@ def bibliotaku(item):
 
 def bibliotaku_series(item):
     
-    json_response = json.loads(httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
+    json_response = json.loads(httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
 
     if 'error' in json_response or not 'body' in json_response:
         return None
@@ -634,7 +634,7 @@ def bibliotaku_series_megacrypter(item):
 
 def bibliotaku_pelis(item):
 
-    json_response = json.loads(httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
+    json_response = json.loads(httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
 
     if 'error' in json_response or not 'body' in json_response:
         return None
@@ -704,7 +704,7 @@ def foro(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data
+    data = httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     video_links = False
 
@@ -847,13 +847,13 @@ def search(item, texto):
                                           "1%5D=91&brd%5B90%5D=90&brd%5B92%5D=92&brd%5B88%5D=88&brd%5B84%5D" \
                                           "=84&brd%5B212%5D=212&brd%5B94%5D=94&brd%5B23%5D=23&submit=Buscar"
 
-    data = httptools.downloadpage("https://noestasinvitado.com/search2/", post=post, timeout=DFAULT_HTTP_TIMEOUT).data
+    data = httptools.downloadpage("https://noestasinvitado.com/search2/", post=post, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     return search_parse(data, item)
 
 
 def search_pag(item):
-    data = httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data
+    data = httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     return search_parse(data, item)
 
@@ -1029,7 +1029,7 @@ def get_video_mega_links_group(item):
     id = item.mc_group_id
 
     data = httptools.downloadpage(
-        "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1", timeout=DFAULT_HTTP_TIMEOUT).data
+        "https://noestasinvitado.com/gen_mc.php?id=" + id + "&raw=1", timeout=DEFAULT_HTTP_TIMEOUT).data
 
     patron = r'(.*? *?\[[0-9.]+ *?.*?\]) *?(https://megacrypter\.noestasinvitado\.com/.+)'
 
@@ -1225,8 +1225,8 @@ def find_video_gvideo_links(item, data):
             re.IGNORECASE).search(data)
 
         if thanks_match:
-            httptools.downloadpage(item.url + thanks_match.group(0), timeout=DFAULT_HTTP_TIMEOUT)
-            data=httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data
+            httptools.downloadpage(item.url + thanks_match.group(0), timeout=DEFAULT_HTTP_TIMEOUT)
+            data=httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     itemlist = []
 
@@ -1274,8 +1274,8 @@ def find_video_mega_links(item, data):
             re.IGNORECASE).search(data)
 
         if thanks_match:
-            httptools.downloadpage(item.url + thanks_match.group(0), timeout=DFAULT_HTTP_TIMEOUT)
-            data=httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data
+            httptools.downloadpage(item.url + thanks_match.group(0), timeout=DEFAULT_HTTP_TIMEOUT)
+            data=httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
 
     itemlist = []
@@ -1501,7 +1501,7 @@ def leer_criticas_fa(item):
 
         headers["Referer"] = criticas_url
 
-        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers=headers, timeout=DFAULT_HTTP_TIMEOUT).data
+        data = httptools.downloadpage(criticas_url, ignore_response_code=True, headers=headers, timeout=DEFAULT_HTTP_TIMEOUT).data
 
         criticas_pattern = r"revrat\" *?> *?([0-9]+).*?\"rwtitle\".*?href=\"([^\"]+)\" *?>([^<>]+).*?\"revuser\".*?href=\"[^\"]+\" *?>([^<>]+)"
 
@@ -1552,7 +1552,7 @@ def cargar_critica(item):
 
     headers["Referer"] = item.url
 
-    data = httptools.downloadpage(item.url, ignore_response_code=True, headers=headers, timeout=DFAULT_HTTP_TIMEOUT).data
+    data = httptools.downloadpage(item.url, ignore_response_code=True, headers=headers, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     critica_pattern = r"\"review-text1\" *?>(.*?)< *?/ *?div"
 
@@ -1564,7 +1564,7 @@ def cargar_critica(item):
 def indice_links(item):
     itemlist = []
 
-    data = httptools.downloadpage(item.url, timeout=DFAULT_HTTP_TIMEOUT).data
+    data = httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     patron = r'<tr class="windowbg2">[^<>]*<td[^<>]*>[^<>]*<img[^<>]*>[^<>]' \
              '*</td>[^<>]*<td>[^<>]*<a href="([^"]+)">(.*?)</a>[^<>]*</td>[^<>]*<td[^<>]*>[^<>]*<a[^<>]*>([^<>]+)'
@@ -1643,7 +1643,7 @@ def mc_api_req(api_url, req):
 
     request = urllib.request.Request(api_url, data=json.dumps(req).encode("utf-8"), headers=DEFAULT_HEADERS)
 
-    response = urllib.request.urlopen(request, timeout=DFAULT_HTTP_TIMEOUT).read()
+    response = urllib.request.urlopen(request, timeout=DEFAULT_HTTP_TIMEOUT).read()
 
     return json.loads(response)
 
@@ -1655,7 +1655,7 @@ def mega_api_req(req, get=""):
     
     request = urllib.request.Request(api_url, data=json.dumps([req]).encode("utf-8"), headers=DEFAULT_HEADERS)
 
-    response = urllib.request.urlopen(request, timeout=DFAULT_HTTP_TIMEOUT).read()
+    response = urllib.request.urlopen(request, timeout=DEFAULT_HTTP_TIMEOUT).read()
 
     return json.loads(response)[0]
 
@@ -1762,7 +1762,7 @@ def get_filmaffinity_data_advanced(title, year, genre):
 
     headers = DEFAULT_HEADERS
 
-    data = httptools.downloadpage(url, ignore_response_code=True, headers=headers, timeout=DFAULT_HTTP_TIMEOUT).data
+    data = httptools.downloadpage(url, ignore_response_code=True, headers=headers, timeout=DEFAULT_HTTP_TIMEOUT).data
 
     res = re.compile(r"title=\"([^\"]+)\"[^<>]+href=\"https://www.filmaffinity.com/es/film([0-9]+)\.html\".*?(https://pics\.filmaffinity\.com/[^\"]+-msmall\.jpg).*?\"avgrat-box\" *?> *?([0-9,]+).*?", re.DOTALL).findall(data)
 
