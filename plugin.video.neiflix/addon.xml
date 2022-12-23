@@ -9,7 +9,7 @@
     <extension point="xbmc.addon.metadata">
         <summary lang="es">NOESTASINVITADO.COM</summary>
         <description lang="es">Navega por NOESTASINVITADO.COM con Kodi</description>
-        <disclaimer lang="es">[COLOR red]Los propietarios y distribuidores de este addon no proveen ni distribuyen ningún contenido mostrado por el addon ni tienen affiliación alguna con los proveedores del contenido.[/COLOR]</disclaimer>
+        <disclaimer lang="es">[COLOR red]Los propietarios y distribuidores de este addon no proveen ni distribuyen ningún contenido mostrado por el addon ni tienen afiliación alguna con los proveedores del contenido.[/COLOR]</disclaimer>
         <language>es</language> <!-- the language of the videos or other content the plugin provides, may be omitted in case the addon does not provide any content -->
         <platform>all</platform>
         <license>GNU GPL v3</license>
