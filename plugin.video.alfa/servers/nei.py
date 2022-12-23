@@ -937,10 +937,7 @@ def RD_get_video_url(page_url, premium=False, user="", password="", video_passwo
         return RD_get_enlaces(data)
     else:
         if "error" in data:
-            if not PY3:
-                msg = data["error"].decode("utf-8", "ignore")
-            else:
-                msg = data["error"]
+            msg = data["error"]
             msg = msg.replace("hoster_unavailable", "Servidor no disponible") \
                 .replace("unavailable_file", "Archivo no disponible") \
                 .replace("hoster_not_free", "Servidor no gratuito") \
@@ -955,19 +952,13 @@ def RD_get_enlaces(data):
     itemlist = []
     if "alternative" in data:
         for link in data["alternative"]:
-            if not PY3:
-                video_url = link["download"].encode("utf-8")
-            else:
-                video_url = link["download"]
+            video_url = link["download"]
             title = "VIDEO"
             if "quality" in link:
                 title += " (" + link["quality"] + ") [realdebrid]"
             itemlist.append([title, debrid2proxyURL(video_url)])
     else:
-        if not PY3:
-            video_url = data["download"].encode("utf-8")
-        else:
-            video_url = data["download"]
+        video_url = data["download"]
         title = "VIDEO [realdebrid]"
         itemlist.append([title, debrid2proxyURL(video_url)])
 
