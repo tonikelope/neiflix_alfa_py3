@@ -101,9 +101,4 @@ if not os.path.exists(xbmcvfs.translatePath('special://home/addons/plugin.video.
     if ret:
         xbmc.executebuiltin('RestartApp')
 else:
-    with open(xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix/favourite.json'), 'r') as f:
-        favourite = json.loads(f.read())
-
-    favourite['fanart'] = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa' + favourite['fanart'])
-    favourite['thumbnail'] = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa' + favourite['thumbnail'])
-    xbmc.executebuiltin('ActivateWindow(10025,"plugin://plugin.video.alfa/?' + urllib.parse.quote(base64.b64encode(json.dumps(favourite).encode('utf-8')))  + '",return)')
+    xbmcgui.Dialog().ok('NEIFLIX', 'PARA ENTRAR EN NEIFLIX UTILIZA EL ICONO DE FAVORITOS (el de la estrella) O BIEN BUSCA NEIFLIX EN LA LISTA DE CANALES DE ALFA')
