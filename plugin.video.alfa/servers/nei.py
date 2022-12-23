@@ -806,7 +806,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                     debrid_url = pageURL2DEBRID(url, clean=clean, cache=use_cache, progress_bar=False)
 
                     if debrid_url[0][1] and debrid_url[0][1].strip():
-                        error = False
+                        megacrypter2debrid_error = False
                     else:
                         retry+=1
 
