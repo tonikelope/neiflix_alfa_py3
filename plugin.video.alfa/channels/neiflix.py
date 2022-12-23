@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.50"
+NEIFLIX_VERSION = "2.51"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -54,7 +54,9 @@ ALFA_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.alfa/')
 
 NEIFLIX_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix/');
 
-DEFAULT_HTTP_TIMEOUT = 60 #Para no pillarnos los dedos al generar enlaces Megacrypter
+DEFAULT_HTTP_TIMEOUT = 90 #Para no pillarnos los dedos al generar enlaces Megacrypter
+
+ADVANCED_SETTINGS_TIMEOUT = 120
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}
 
@@ -392,16 +394,16 @@ def improve_streaming(item):
         network = settings_xml.findall("network")
         network = ET.Element('network')
         curlclienttimeout = ET.Element('curlclienttimeout')
-        curlclienttimeout.text = '120'
+        curlclienttimeout.text = str(ADVANCED_SETTINGS_TIMEOUT)
         network.append(curlclienttimeout)
         curllowspeedtime = ET.Element('curllowspeedtime')
-        curllowspeedtime.text = '120'
+        curllowspeedtime.text = str(ADVANCED_SETTINGS_TIMEOUT)
         network.append(curllowspeedtime)
         settings_xml.getroot().append(network)
 
         playlisttimeout = settings_xml.findall('playlisttimeout')
         playlisttimeout = ET.Element('playlisttimeout')
-        playlisttimeout.text = '120'
+        playlisttimeout.text = str(ADVANCED_SETTINGS_TIMEOUT)
         settings_xml.getroot().append(playlisttimeout)
 
         settings_xml.write(xbmcvfs.translatePath('special://userdata/advancedsettings.xml'))
