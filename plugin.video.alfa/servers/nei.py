@@ -71,6 +71,7 @@ NEIFLIX_ALLDEBRID = config.get_setting("neiflix_alldebrid", "neiflix")
 
 MEGACRYPTER2DEBRID_ENDPOINT='https://noestasinvitado.com/megacrypter2debrid.php'
 MEGACRYPTER2DEBRID_TIMEOUT=120 #Cuando aumente la demanda habrá que implementar en el server de NEI un sistema de polling asíncrono
+MEGACRYPTER2DEBRID_MULTI_RETRY=3
 DEBRID_PROXY_FILE_URL=None
 DEBRID_PROXY_URL_LOCK = threading.Lock()
 
@@ -796,11 +797,20 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 clean = True if i==1 else False
 
-                debrid_url = pageURL2DEBRID(url, clean=clean, cache=use_cache, progress_bar=False)
+                retry = 0
 
-                if not debrid_url[0][1] or debrid_url[0][1]=="":
-                    megacrypter2debrid_error = True
-                else:
+                megacrypter2debrid_error = True
+
+                while megacrypter2debrid_error and retry<MEGACRYPTER2DEBRID_MULTI_RETRY:
+
+                    debrid_url = pageURL2DEBRID(url, clean=clean, cache=use_cache, progress_bar=False)
+
+                    if debrid_url[0][1] and debrid_url[0][1].strip():
+                        error = False
+                    else:
+                        retry+=1
+
+                if not megacrypter2debrid_error:
                     multi_video_urls.append(debrid_url)
 
                 pbar_counter+=min(pbar_increment, 100-pbar_counter)
@@ -840,7 +850,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
                 return [[first_multi_url_title.replace('VIDEO', 'VIDEO MULTI-BASTERD'), debrid2proxyURL(first_multi_url)]]
             else:
-                xbmcgui.Dialog().notification('NEIFLIX', "ERROR: REVISA TU CUENTA DE MEGA AUXILIAR", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+                xbmcgui.Dialog().notification('NEIFLIX', "ERROR: FALLO AL GENERAR ENLACES DEBRID", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
                 return [["NEI DEBRID ERROR (revisa que haya espacio suficiente en tu cuenta de MEGA auxiliar)", ""]]
 
         else:
