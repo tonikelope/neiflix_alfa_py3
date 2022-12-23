@@ -663,7 +663,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
     if progress_bar:
         pbar = xbmcgui.DialogProgressBG()   
-        pbar.create('NEIFLIX DEBRID', 'Preparando enlace DEBRID...')
+        pbar.create('NEIFLIX', 'Preparando enlace DEBRID...')
     
     if 'megacrypter.noestasinvitado' in page_url:
 
@@ -760,13 +760,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
             pbar = xbmcgui.DialogProgressBG()
 
-            pbar.create('NEIFLIX MULTI', 'Preparando enlace MULTI-BASTERD('+str(len(page_urls)-1)+')...')
+            pbar.create('NEIFLIX', 'Preparando enlace MULTI-BASTERD('+str(len(page_urls)-1)+')...')
 
-            pdialog_increment = round(100/(len(page_urls)-1))
+            pbar_increment = round(100/(len(page_urls)-1))
 
-            pdialog_tot = 100
+            pbar_tot = 100
 
-            pdialog_counter = 0
+            pbar_counter = 0
 
             i = 1
 
@@ -803,9 +803,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 else:
                     multi_video_urls.append(debrid_url)
 
-                pdialog_counter+=min(pdialog_increment, 100-pdialog_counter)
+                pbar_counter+=min(pbar_increment, 100-pbar_counter)
                 
-                pbar.update(pdialog_counter)
+                pbar.update(pbar_counter)
 
                 i+=1
 
