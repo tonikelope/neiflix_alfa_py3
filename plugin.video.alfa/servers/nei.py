@@ -77,7 +77,7 @@ DEBRID_PROXY_URL_LOCK = threading.Lock()
 
 CHUNK_SIZE = 5*1024*1024 #COMPROMISO
 WORKERS = 4 #Lo mismo, no subir mucho porque PETA
-MAX_CHUNKS_IN_QUEUE = 20 #Si sobra la RAM se puede aumentar (este buffer se suma al propio buffer de KODI)
+MAX_CHUNKS_IN_QUEUE = 30 #Si sobra la RAM se puede aumentar (este buffer se suma al propio buffer de KODI)
 
 #multi_urls es una lista de tuplas [(absolute_start_offset, absolute_end_offset, url1), (absolute_start_offset, absolute_end_offset, url2)...]
 class neiURL():
