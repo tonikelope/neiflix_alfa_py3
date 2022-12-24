@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.56"
+NEIFLIX_VERSION = "2.57"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -707,7 +707,7 @@ def escribirMensajeHiloForo(item):
 
         httptools.downloadpage(res_post_url, post=res_post_data, timeout=DEFAULT_HTTP_TIMEOUT)
 
-        xbmc.executebuiltin('Container.Refresh()')
+        return leerMensajesHiloForo(item)
 
 
 def leerMensajesHiloForo(item):
