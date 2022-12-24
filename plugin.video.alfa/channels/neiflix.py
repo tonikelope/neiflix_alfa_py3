@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.54"
+NEIFLIX_VERSION = "2.55"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -420,22 +420,8 @@ def improve_streaming(item):
 
 def settings_nei(item):
     platformtools.show_channel_settings()
-
-    global NEIFLIX_LOGIN, NEIFLIX_PASSWORD, USE_MEGA_PREMIUM, MEGA_EMAIL, MEGA_PASSWORD, USE_MC_REVERSE
-
-    NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
-
-    NEIFLIX_PASSWORD = config.get_setting("neiflix_password", "neiflix")
-
-    USE_MEGA_PREMIUM = config.get_setting("neiflix_mega_premium", "neiflix")
-
-    MEGA_EMAIL = config.get_setting("neiflix_mega_email", "neiflix")
-
-    MEGA_PASSWORD = config.get_setting("neiflix_mega_password", "neiflix")
-
-    USE_MC_REVERSE = config.get_setting("neiflix_use_mc_reverse", "neiflix")
-
-    return mainlist(item)
+    xbmc.executebuiltin('Container.Refresh()')
+    return True
 
 
 def xxx_off(item):
@@ -452,9 +438,11 @@ def xxx_off(item):
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Porno desactivado",
                                           os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
                                                        'channels', 'thumb', 'neiflix.gif'), 5000)
-            return mainlist(item)
+            xbmc.executebuiltin('Container.Refresh()')
+            return True
     else:
-        return mainlist(item)
+        xbmc.executebuiltin('Container.Refresh()')
+        return True
 
 
 def xxx_on(item):
@@ -469,11 +457,13 @@ def xxx_on(item):
             if hashlib.md5(password.encode('utf-8')).hexdigest() == file_pass:
                 os.remove(KODI_USERDATA_PATH + 'neiflix_xxx')
                 xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Porno reactivado", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
-                return mainlist(item)
+                xbmc.executebuiltin('Container.Refresh()')
+                return True
             else:
                 xbmcgui.Dialog().ok('NEIFLIX: reactivar contenido adulto', 'Contraseña incorrecta')
     else:
-        return mainlist(item)
+        xbmc.executebuiltin('Container.Refresh()')
+        return True
 
 
 def clean_cache(item):
@@ -701,6 +691,23 @@ def bibliotaku_pelis_megacrypter(item):
     return itemlist
 
 
+def escribirMensajeHiloForo(item):
+
+    mensaje = xbmcgui.Dialog().input(item.contentPlot)
+
+    if mensaje:
+
+        data = httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
+
+        m = re.compile(r'action="(http[^"]+action=post2)".*?input.*?"topic".*?"(.*?)".*?"last_msg".*?"(.*?)".*?name.*?"(.*?)".*?"(.*?)".*?"seqnum".*?"(.*?)"', re.DOTALL).search(data)
+
+        res_post_url = m.group(1)
+
+        res_post_data="topic="+m.group(2)+"&subject=RESPUESTA_NEIFLIX&icon=xx&from_qr=1&notify=0&not_approved=&goback=1&last_msg="+m.group(3)+"&"+m.group(4)+"="+m.group(5)+"&seqnum="+m.group(6)+"&message="+urllib.parse.quote(mensaje)+"&post=Publicar"
+
+        httptools.downloadpage(res_post_url, post=res_post_data, timeout=DEFAULT_HTTP_TIMEOUT)
+
+
 def leerMensajesHiloForo(item):
     
     json_response = json.loads(httptools.downloadpage(NEIFLIX_MENSAJES_FORO_URL+str(item.id_topic), timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
@@ -715,9 +722,11 @@ def leerMensajesHiloForo(item):
     
     for msg in json_response:
         if i>0:
-            itemlist.append(Item(channel=item.channel, thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR darkorange][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
+            itemlist.append(Item(channel=item.channel, contentPlot=item.contentPlot, thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR darkorange][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
 
         i+=1
+
+    itemlist.append(Item(channel=item.channel, contentPlot=item.contentPlot, url=item.url, thumbnail='https://noestasinvitado.com/logonegro2.png', action='escribirMensajeHiloForo', title='[B]ESCRIBIR UN MENSAJE[/B]'))
 
     return itemlist
 
@@ -754,7 +763,7 @@ def foro(item):
     else:
         video_links = True
 
-        m = re.compile(r'noestasinvitado\.com[^"]+tid *?= *?([0-9]+)').search(data)
+        m = re.compile(r'action="http[^"]+action=post2".*?input.*?"topic".*?"(.*?)"', re.DOTALL).search(data)
 
         id_topic = m.group(1)
 
@@ -1240,7 +1249,7 @@ def get_video_mega_links_group(item):
 
     if len(itemlist)>0:
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
-        itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, title="[B]LEER MENSAJES DEL FORO[/B]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+        itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B]MENSAJES DEL FORO[/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
     else:
         itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
         
@@ -1344,7 +1353,7 @@ def find_video_mega_links(item, data):
 
             if len(itemlist)>0:
                 itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
-                itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, title="[B]LEER MENSAJES DEL FORO[/B]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+                itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B]MENSAJES DEL FORO[/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
             else:
                 itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                 
@@ -1495,7 +1504,7 @@ def find_video_mega_links(item, data):
 
         if len(itemlist)>0:
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
-            itemlist.append(Item(channel=item.channel, id_topic=item.id_topic, title="[B]LEER MENSAJES DEL FORO[/B]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+            itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B]MENSAJES DEL FORO[/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
         else:
             itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
             
