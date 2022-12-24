@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.55"
+NEIFLIX_VERSION = "2.56"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -706,6 +706,8 @@ def escribirMensajeHiloForo(item):
         res_post_data="topic="+m.group(2)+"&subject=RESPUESTA_NEIFLIX&icon=xx&from_qr=1&notify=0&not_approved=&goback=1&last_msg="+m.group(3)+"&"+m.group(4)+"="+m.group(5)+"&seqnum="+m.group(6)+"&message="+urllib.parse.quote(mensaje)+"&post=Publicar"
 
         httptools.downloadpage(res_post_url, post=res_post_data, timeout=DEFAULT_HTTP_TIMEOUT)
+
+        xbmc.executebuiltin('Container.Refresh()')
 
 
 def leerMensajesHiloForo(item):
