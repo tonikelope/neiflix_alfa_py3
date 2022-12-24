@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.60"
+NEIFLIX_VERSION = "2.61"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -46,6 +46,8 @@ KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
 KODI_USERDATA_PATH = xbmcvfs.translatePath('special://userdata/')
 
 BIBLIOTAKU_TOPIC_ID='35243'
+
+BIBLIOTAKU_URL='https://noestasinvitado.com/recopilatorios/la-bibliotaku/'
 
 NEIFLIX_RESOURCES_URL = "https://noestasinvitado.com/neiflix_resources/"
 
@@ -502,9 +504,9 @@ def bibliotaku(item):
 
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
+    itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
                                  url="https://noestasinvitado.com/msg.php?m=114128", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
-    itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (SERIES)", section="SERIES", mode="tvshow", action="bibliotaku_series",
+    itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (SERIES)", section="SERIES", mode="tvshow", action="bibliotaku_series",
                          url="https://noestasinvitado.com/msg.php?m=114127", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
     return itemlist
 
@@ -559,7 +561,7 @@ def bibliotaku_series(item):
 
             title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-            itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+            itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -603,7 +605,7 @@ def bibliotaku_series_temporadas(item):
 
             infoLabels['season']=i
             
-            itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, action="bibliotaku_series_megacrypter",
+            itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, action="bibliotaku_series_megacrypter",
                                  title='[' + str(i) + '/' + str(len(item.mc_group_id)) + '] ' + item.title, url=item.url,
                                  mc_group_id=mc_id, infoLabels=infoLabels, mode=item.mode))
 
@@ -625,7 +627,7 @@ def bibliotaku_series_temporadas(item):
 
 def bibliotaku_series_megacrypter(item):
 
-    itemlist = get_video_mega_links_group(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -665,7 +667,7 @@ def bibliotaku_pelis(item):
 
         title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-        itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+        itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -689,7 +691,7 @@ def bibliotaku_pelis(item):
 def bibliotaku_pelis_megacrypter(item):
     infoLabels=item.infoLabels
             
-    itemlist = get_video_mega_links_group(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -702,7 +704,9 @@ def escribirMensajeHiloForo(item):
 
     if mensaje:
 
-        data = httptools.downloadpage(item.url, timeout=DEFAULT_HTTP_TIMEOUT).data
+        url = item.url_orig if 'url_orig' in item else item.url
+
+        data = httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
         m = re.compile(r'action="(http[^"]+action=post2)".*?input.*?"topic".*?"(.*?)".*?"last_msg".*?"(.*?)".*?name.*?"(.*?)".*?"(.*?)".*?"seqnum".*?"(.*?)"', re.DOTALL).search(data)
 
