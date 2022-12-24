@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.59"
+NEIFLIX_VERSION = "2.60"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -44,6 +44,8 @@ USE_MC_REVERSE = config.get_setting("neiflix_use_mc_reverse", "neiflix")
 KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
 
 KODI_USERDATA_PATH = xbmcvfs.translatePath('special://userdata/')
+
+BIBLIOTAKU_TOPIC_ID='35243'
 
 NEIFLIX_RESOURCES_URL = "https://noestasinvitado.com/neiflix_resources/"
 
@@ -500,9 +502,9 @@ def bibliotaku(item):
 
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
+    itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
                                  url="https://noestasinvitado.com/msg.php?m=114128", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
-    itemlist.append(Item(channel=item.channel, title="Bibliotaku (SERIES)", section="SERIES", mode="tvshow", action="bibliotaku_series",
+    itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (SERIES)", section="SERIES", mode="tvshow", action="bibliotaku_series",
                          url="https://noestasinvitado.com/msg.php?m=114127", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
     return itemlist
 
@@ -557,7 +559,7 @@ def bibliotaku_series(item):
 
             title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-            itemlist.append(Item(channel=item.channel, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+            itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -601,7 +603,7 @@ def bibliotaku_series_temporadas(item):
 
             infoLabels['season']=i
             
-            itemlist.append(Item(channel=item.channel, action="bibliotaku_series_megacrypter",
+            itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, action="bibliotaku_series_megacrypter",
                                  title='[' + str(i) + '/' + str(len(item.mc_group_id)) + '] ' + item.title, url=item.url,
                                  mc_group_id=mc_id, infoLabels=infoLabels, mode=item.mode))
 
@@ -609,6 +611,9 @@ def bibliotaku_series_temporadas(item):
 
         if len(itemlist)>0:
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
+
+            if item.id_topic:
+                itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B]MENSAJES DEL FORO[/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
         else:
             itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES (habla con el UPLOADER para que suba el vídeo (SIN COMPRIMIR) a MEGA[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
             
@@ -620,7 +625,7 @@ def bibliotaku_series_temporadas(item):
 
 def bibliotaku_series_megacrypter(item):
 
-    itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -660,7 +665,7 @@ def bibliotaku_pelis(item):
 
         title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-        itemlist.append(Item(channel=item.channel, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+        itemlist.append(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -684,7 +689,7 @@ def bibliotaku_pelis(item):
 def bibliotaku_pelis_megacrypter(item):
     infoLabels=item.infoLabels
             
-    itemlist = get_video_mega_links_group(Item(channel=item.channel, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -707,7 +712,7 @@ def escribirMensajeHiloForo(item):
 
         httptools.downloadpage(res_post_url, post=res_post_data, timeout=DEFAULT_HTTP_TIMEOUT)
 
-        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'MENSAJE ENVIADO OK (es posible que tengas que refrescar la lista para verlo)', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', '¡MENSAJE ENVIADO! (es posible que tengas que refrescar la lista para verlo)', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
         xbmc.executebuiltin('Container.Refresh()')
 
@@ -739,7 +744,7 @@ def leerMensajesHiloForo(item):
 
 def cargarMensajeForo(item):
     fecha_mensaje = datetime.fromtimestamp(int(item.msg['time'])).strftime('%d/%m/%y %H:%M')
-    xbmcgui.Dialog().textviewer('[B][I]'+item.msg['nick']+'[/I][/B] ('+fecha_mensaje+')', html.unescape(clean_html_tags(item.msg['body'].replace('<br>', "\n"))))
+    xbmcgui.Dialog().textviewer('[B][I]'+item.msg['nick']+'[/I][/B]   ('+fecha_mensaje+')', html.unescape(clean_html_tags(item.msg['body'].replace('<br>', "\n"))))
 
 
 def foro(item):
@@ -1194,8 +1199,8 @@ def get_video_mega_links_group(item):
 
             itemlist.append(Item(channel=item.channel, action="play", server='nei', title=title, url=murl, thumbnail=get_neiflix_resource_path("megacrypter.png"), mode=item.mode, infoLabels=infoLabels))
         
-        elif len(multi_url)!=tot_multi_url:
-            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]HA HABIDO ALGÚN PROBLEMA AL GENERAR EL ENLACE MULTI (¿ESTÁN TODAS LAS PARTES DISPONIBLES?)[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+        elif len(multi_url)>0 and len(multi_url) != tot_multi_url:
+            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]ERROR AL GENERAR EL ENLACE MULTI (¿TODAS LAS PARTES DISPONIBLES?)[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
 
     else:
