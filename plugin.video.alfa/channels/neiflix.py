@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.61"
+NEIFLIX_VERSION = "2.62"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -704,7 +704,9 @@ def escribirMensajeHiloForo(item):
 
     if mensaje:
 
-        url = item.url_orig if 'url_orig' in item else item.url
+        url = item.url_orig if item.url_orig else item.url
+
+        asunto = 'RESPUESTA_NEIFLIX' if item.id_topic != BIBLIOTAKU_TOPIC_ID else 'RESPUESTA_NEIFLIX_BIBLIOTAKU_'+item.contentPlot
 
         data = httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
@@ -712,7 +714,7 @@ def escribirMensajeHiloForo(item):
 
         res_post_url = m.group(1)
 
-        res_post_data="topic="+m.group(2)+"&subject=RESPUESTA_NEIFLIX&icon=xx&from_qr=1&notify=0&not_approved=&goback=1&last_msg="+m.group(3)+"&"+m.group(4)+"="+m.group(5)+"&seqnum="+m.group(6)+"&message="+urllib.parse.quote(mensaje)+"&post=Publicar"
+        res_post_data="topic="+m.group(2)+"&subject="+urllib.parse.quote(asunto)+"&icon=xx&from_qr=1&notify=0&not_approved=&goback=1&last_msg="+m.group(3)+"&"+m.group(4)+"="+m.group(5)+"&seqnum="+m.group(6)+"&message="+urllib.parse.quote(mensaje)+"&post=Publicar"
 
         httptools.downloadpage(res_post_url, post=res_post_data, timeout=DEFAULT_HTTP_TIMEOUT)
 
@@ -741,7 +743,7 @@ def leerMensajesHiloForo(item):
 
         i+=1
 
-    itemlist.append(Item(channel=item.channel, contentPlot=item.contentPlot, url=item.url, thumbnail='https://noestasinvitado.com/logonegro2.png', action='escribirMensajeHiloForo', title='[B]ESCRIBIR UN MENSAJE[/B]'))
+    itemlist.append(Item(channel=item.channel, url_orig=(item.url_orig if 'url_orig' in item else None), id_topic=item.id_topic, contentPlot=item.contentPlot, url=item.url, thumbnail='https://noestasinvitado.com/logonegro2.png', action='escribirMensajeHiloForo', title='[B]ESCRIBIR UN MENSAJE[/B]'))
 
     return itemlist
 
