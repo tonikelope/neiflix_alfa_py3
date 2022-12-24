@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.57"
+NEIFLIX_VERSION = "2.58"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -707,7 +707,11 @@ def escribirMensajeHiloForo(item):
 
         httptools.downloadpage(res_post_url, post=res_post_data, timeout=DEFAULT_HTTP_TIMEOUT)
 
-        return leerMensajesHiloForo(item)
+        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'MENSAJE ENVIADO OK (es posible que tengas que refrescar la lista para verlo)', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+
+        xbmc.executebuiltin('Container.Refresh()')
+
+        return True
 
 
 def leerMensajesHiloForo(item):
