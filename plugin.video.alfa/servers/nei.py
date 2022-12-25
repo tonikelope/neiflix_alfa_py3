@@ -513,7 +513,7 @@ def megacrypter2debrid(link, clean=True):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    noexpire = megacrypter_link[4]
+    noexpire = urllib.parse.quote(megacrypter_link[4])
 
     mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?noexpire='+noexpire+'&c='+('1' if clean else '0')+'&l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''), timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 
@@ -542,7 +542,7 @@ def megacrypter2debridHASH(link):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    noexpire = megacrypter_link[4]
+    noexpire = urllib.parse.quote(megacrypter_link[4])
 
     mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?noexpire='+noexpire+'&l='+link_data, timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 

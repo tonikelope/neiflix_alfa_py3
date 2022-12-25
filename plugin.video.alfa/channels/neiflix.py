@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.62"
+NEIFLIX_VERSION = "2.63"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
