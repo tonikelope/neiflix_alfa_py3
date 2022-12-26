@@ -9,6 +9,7 @@ from core import scrapertools
 from platformcode import config, logger
 from platformcode import platformtools
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from servers.debriders import realdebrid, alldebrid
 import urllib.parse
 import urllib.request
 import time
@@ -28,40 +29,6 @@ import json
 
 
 KODI_TEMP_PATH = xbmcvfs.translatePath('special://temp/')
-
-DEFAULT_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:65.0) Gecko/20100101 Firefox/65.0'}
-
-AD_API = 'https://api.alldebrid.com/v4/'
-
-AGENT_ID = "AlfaAddon"
-
-AD_ERRORS = {  
-        'GENERIC': 'Ha ocurrido un error',
-        '404': "Error en la url de la api",
-        'AUTH_MISSING_APIKEY': 'La Api-Key no fue enviada',
-        'AUTH_BAD_APIKEY': 'Autentificación/Api-Key no válida',
-        'AUTH_BLOCKED': 'Api-Key con geobloqueo (Deshabilitelo en su cuenta)\n o ip bloqueada',
-        'AUTH_USER_BANNED': 'Esta cuenta ha sido baneada',
-
-        'LINK_IS_MISSING': 'No se ha enviadado ningún link',
-        'LINK_HOST_NOT_SUPPORTED': 'Servidor o link no soportados',
-        'LINK_DOWN': 'Link caido, no disponible',
-        'LINK_PASS_PROTECTED': 'Link con contraseña',
-        'LINK_HOST_UNAVAILABLE': 'Servidor en mantenimiento o no disponible',
-        'LINK_TOO_MANY_DOWNLOADS': 'Demasiadas descargas simultaneas para este Servidor',
-        'LINK_HOST_FULL': 'Nuestros servidores están temporalmente ocupados, intentelo más tarde',
-        'LINK_HOST_LIMIT_REACHED': "Ha excedido el limite de descarga para este Servidor",
-        'LINK_ERROR': 'No se puede convertir este link',
-
-        'FREE_TRIAL_LIMIT_REACHED': 'Ha superado el limite para cuenta de prueba (7 dias // 25GB descargados\n o Servidor inaccesible para cuentas de prueba)',
-        'MUST_BE_PREMIUM': "Debe tener cuenta Premium para procesar este link",
-
-        'PIN_ALREADY_AUTHED': "Ya tiene una Api-Key autentificada",
-        'PIN_EXPIRED': "El código introducido expiró",
-        'PIN_INVALID': "El código introducido no es válido",
-
-        'NO_SERVER': "Los servidores no tienen permitido usar esta opción. \nVisite https://alldebrid.com/vpn si está usando una VPN."}
-
 MEGA_FILES = None
 
 DEBRID_PROXY_HOST = 'localhost'
@@ -78,12 +45,13 @@ DEBRID_PROXY_URL_LOCK = threading.Lock()
 CHUNK_SIZE = 5*1024*1024 #COMPROMISO
 WORKERS = 4 #Lo mismo, no subir mucho porque PETA
 MAX_CHUNKS_IN_QUEUE = 30 #Si sobra la RAM se puede aumentar (este buffer se suma al propio buffer de KODI)
+CHUNK_ERROR_SLEEP = 5 #segundos
 
-#multi_urls es una lista de tuplas [(absolute_start_offset, absolute_end_offset, url1), (absolute_start_offset, absolute_end_offset, url2)...]
-class neiURL():
+
+class multiPartVideoURL():
     def __init__(self, url):
         self.url = url
-        self.multi_urls = self.updateMulti()
+        self.multi_urls = self.updateMulti() #multi_urls es una lista de tuplas [(absolute_start_offset, absolute_end_offset, url1), (absolute_start_offset, absolute_end_offset, url2)...]
         self.updateSizeAndRanges()
         
     def updateMulti(self):
@@ -196,16 +164,12 @@ class DebridProxyChunkWriter():
 
                     self.output.write(current_chunk)
 
-                    #logger.debug('CHUNKWRITER -> '+str(self.bytes_written)+'-'+str(self.bytes_written+len(current_chunk)-1)+' ('+str(len(current_chunk))+' bytes) SENT!')
-
                     self.bytes_written+=len(current_chunk)
 
                     with self.cv_queue_full:
                         self.cv_queue_full.notify_all()
 
                 if not self.exit and self.bytes_written < self.end_offset:
-
-                    #logger.debug("CHUNKWRITER me duermo hasta que llegue el offset -> "+str(self.bytes_written))
 
                     with self.cv_new_element:
                         self.cv_new_element.wait(1)
@@ -261,12 +225,7 @@ class DebridProxyChunkDownloader():
 
                 partial_ranges = self.url.getPartialRanges(inicio, final)
 
-                #logger.debug("CHUNKDOWNLOADER RANGOS PARCIALES")
-
-                #logger.debug(partial_ranges)
-
                 while not self.chunk_writer.exit and not self.exit and len(self.chunk_writer.queue) >= MAX_CHUNKS_IN_QUEUE and offset!=self.chunk_writer.bytes_written:
-                    #logger.debug("CHUNKDOWNLOADER %d me duermo porque la cola está llena!" % self.id)
                     with self.chunk_writer.cv_queue_full:
                         self.chunk_writer.cv_queue_full.wait(1)
 
@@ -287,7 +246,7 @@ class DebridProxyChunkDownloader():
 
                             url = partial_range[2]
 
-                            request_headers = {'Range': 'bytes='+str(p_inicio)+'-'+str(p_final+5)} #Pedimos 5 bytes de más porque a veces RealDebrid devuelve 1 menos
+                            request_headers = {'Range': 'bytes='+str(p_inicio)+'-'+str(p_final+5)} #Pedimos unos bytes extra porque a veces RealDebrid devuelve alguno menos
 
                             error = True
 
@@ -304,15 +263,14 @@ class DebridProxyChunkDownloader():
 
                                         if len(chunk) == required_chunk_size:
                                             full_chunk+=chunk
-                                            #logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(p_inicio)+'-'+str(p_final)+' ('+str(len(chunk))+' bytes) DOWNLOADED PARTIAL CHUNK!')
                                             error = False
                                         else:
                                             logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(p_inicio)+'-'+str(p_final)+' ('+str(len(chunk))+' bytes) PARTIAL CHUNK SIZE ERROR!')
-                                            time.sleep(5)
+                                            time.sleep(CHUNK_ERROR_SLEEP)
 
                                 except Exception as ex:
                                     logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' HTTP ERROR!')
-                                    time.sleep(5)
+                                    time.sleep(CHUNK_ERROR_SLEEP)
 
                         if not self.exit and not self.chunk_writer.exit:
 
@@ -325,15 +283,13 @@ class DebridProxyChunkDownloader():
 
                                 self.chunk_writer.chunk_queue_lock.release()
 
-                                #logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' ('+str(len(full_chunk))+' bytes) DOWNLOADED FULL CHUNK!')
-                            
                                 with self.chunk_writer.cv_new_element:
                                     self.chunk_writer.cv_new_element.notify_all()
 
                                 full_chunk_error = False
                             else:
                                 logger.debug('CHUNKDOWNLOADER '+str(self.id)+' -> '+str(inicio)+'-'+str(final)+' ('+str(len(full_chunk))+' bytes) CHUNK SIZE ERROR!')
-                                time.sleep(5)
+                                time.sleep(CHUNK_ERROR_SLEEP)
 
             else:
                 self.exit = True
@@ -348,7 +304,7 @@ class DebridProxy(BaseHTTPRequestHandler):
 
         if self.path.startswith('/isalive'):
             
-            self.send_response(200, "OK")
+            self.send_response(200)
 
             self.end_headers()
 
@@ -370,7 +326,7 @@ class DebridProxy(BaseHTTPRequestHandler):
             
         if self.path.startswith('/isalive'):
             
-            self.send_response(200, "OK")
+            self.send_response(200)
 
             self.end_headers()
 
@@ -429,7 +385,7 @@ class DebridProxy(BaseHTTPRequestHandler):
         
         if not DEBRID_PROXY_FILE_URL or DEBRID_PROXY_FILE_URL.url != url:
             
-            DEBRID_PROXY_FILE_URL = neiURL(url)
+            DEBRID_PROXY_FILE_URL = multiPartVideoURL(url)
         
         DEBRID_PROXY_URL_LOCK.release()
 
@@ -513,7 +469,7 @@ def megacrypter2debrid(link, clean=True):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    noexpire = urllib.parse.quote(megacrypter_link[4])
+    noexpire = urllib.parse.quote(megacrypter_link[4]) #Hay que hacerlo así porque el noexpire está en base64 normal (no url safe)
 
     mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?noexpire='+noexpire+'&c='+('1' if clean else '0')+'&l='+link_data+'&email='+email.decode('utf-8').replace('=','')+'&password='+password.decode('utf-8').replace('=',''), timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 
@@ -542,7 +498,7 @@ def megacrypter2debridHASH(link):
 
     link_data = re.sub(r'^.*?(!.+)$', r'\1', megacrypter_link[0])
 
-    noexpire = urllib.parse.quote(megacrypter_link[4])
+    noexpire = urllib.parse.quote(megacrypter_link[4]) #Hay que hacerlo así porque el noexpire está en base64 normal (no url safe)
 
     mega_link_response = httptools.downloadpage(MEGACRYPTER2DEBRID_ENDPOINT+'?noexpire='+noexpire+'&l='+link_data, timeout=MEGACRYPTER2DEBRID_TIMEOUT)
 
@@ -704,7 +660,16 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
 
                 page_url = response[0]
 
-                urls = RD_get_video_url(page_url) if NEIFLIX_REALDEBRID else AD_get_video_url(page_url)
+                if NEIFLIX_REALDEBRID:
+                    urls = realdebrid.get_video_url(page_url)
+                elif NEIFLIX_ALLDEBRID:
+                    urls = alldebrid.get_video_url(page_url)
+                else:
+                    return None
+
+                for u in urls:
+                    u[0]='VIDEO NEIDEBRID'
+                    u[1]=debrid2proxyURL(u[1])
 
                 pickle.dump(urls, file)
     else:
@@ -729,7 +694,16 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
         if not cache or not os.path.isfile(filename_hash):
             with open(filename_hash, "wb") as file:
                 
-                urls = RD_get_video_url(page_url) if NEIFLIX_REALDEBRID else AD_get_video_url(page_url)
+                if NEIFLIX_REALDEBRID:
+                    urls = realdebrid.get_video_url(page_url)
+                elif NEIFLIX_ALLDEBRID:
+                    urls = alldebrid.get_video_url(page_url)
+                else:
+                    return None
+
+                for u in urls:
+                    u[0]='VIDEO NEIDEBRID'
+                    u[1]=debrid2proxyURL(u[1])
                 
                 pickle.dump(urls, file)
 
@@ -739,6 +713,7 @@ def pageURL2DEBRID(page_url, clean=True, cache=True, progress_bar=True):
     
     return urls
 
+
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
 
     logger.info(page_url)
@@ -747,7 +722,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         start_proxy()
 
     if page_url[0]=='*':
-        #ENLACE MULTI (vídeo troceado con MegaBasterd) 
+        #ENLACE MULTI-BASTERD (vídeo troceado con MegaBasterd) 
 
         logger.info(page_url)
 
@@ -876,6 +851,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         return video_urls
 
 
+def debrid2proxyURL(url):
+    return 'http://'+DEBRID_PROXY_HOST+':'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(url)
+    
+
+def proxy2DebridURL(url):
+    return urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', url))
+
+
 def proxy_run():
     logger.info(time.asctime(), "NEI DEBRID PROXY SERVER Starts - %s:%s" % (DEBRID_PROXY_HOST, DEBRID_PROXY_PORT))
     proxy_server.serve_forever()
@@ -885,289 +868,3 @@ def start_proxy():
     t = threading.Thread(target=proxy_run)
     t.setDaemon(True)
     t.start()
-
-
-def debrid2proxyURL(url):
-    return 'http://'+DEBRID_PROXY_HOST+':'+str(DEBRID_PROXY_PORT)+'/proxy/'+urllib.parse.quote(url)
-    
-
-def proxy2DebridURL(url):
-    return urllib.parse.unquote(re.sub(r'^.*?/proxy/', '', url))
-
-
-# Returns an array of possible video url's from the page_url
-def RD_get_video_url(page_url, premium=False, user="", password="", video_password=""):
-
-    logger.info("(page_url='%s' , video_password=%s)" % (page_url, video_password))
-    page_url = page_url.replace(".nz/embed", ".nz/")
-    # Se comprueba si existe un token guardado y sino se ejecuta el proceso de autentificación
-    token_auth = config.get_setting("token", server="realdebrid")
-    if token_auth is None or token_auth == "":
-        if config.is_xbmc():
-            token_auth = RD_authentication()
-            if token_auth == "":
-                return [["NEI REAL-DEBRID: No se ha completado el proceso de autentificación", ""]]
-        else:
-            return [["Es necesario activar la cuenta. Accede al menú de ayuda", ""]]
-
-    post_link = urllib.parse.urlencode([("link", page_url), ("password", video_password)])
-    DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
-    url = "https://api.real-debrid.com/rest/1.0/unrestrict/link"
-    data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
-    logger.error(data)
-
-    check = config.get_setting("secret", server="realdebrid")
-    #Se ha usado la autentificación por urlresolver (Bad Idea)
-    if "error" in data and data["error"] == "bad_token" and not check:
-        token_auth = RD_authentication()
-        DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
-        data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
-
-    # Si el token es erróneo o ha caducado, se solicita uno nuevo
-    elif "error" in data and data["error"] == "bad_token":
-        
-        debrid_id = config.get_setting("id", server="realdebrid")
-        secret = config.get_setting("secret", server="realdebrid")
-        refresh = config.get_setting("refresh", server="realdebrid")
-
-        post_token = urllib.parse.urlencode({"client_id": debrid_id, "client_secret": secret, "code": refresh,
-                                       "grant_type": "http://oauth.net/grant_type/device/1.0"})
-        renew_token = httptools.downloadpage("https://api.real-debrid.com/oauth/v2/token", post=post_token,
-                                                headers=list(DEFAULT_HEADERS.items())).json
-        if not "error" in renew_token:
-            token_auth = renew_token["access_token"]
-            config.set_setting("token", token_auth, server="realdebrid")
-            DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
-            data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
-        else:
-            token_auth = RD_authentication()
-            DEFAULT_HEADERS["Authorization"] = "Bearer %s" % token_auth
-            data = httptools.downloadpage(url, post=post_link, headers=list(DEFAULT_HEADERS.items())).json
-    if "download" in data:
-        return RD_get_enlaces(data)
-    else:
-        if "error" in data:
-            msg = data["error"]
-            msg = msg.replace("hoster_unavailable", "Servidor no disponible") \
-                .replace("unavailable_file", "Archivo no disponible") \
-                .replace("hoster_not_free", "Servidor no gratuito") \
-                .replace("bad_token", "Error en el token")
-            return [["NEI REAL-DEBRID: " + msg, ""]]
-        else:
-            return [["NEI REAL-DEBRID: No se ha generado ningún enlace", ""]]
-
-
-def RD_get_enlaces(data):
-
-    itemlist = []
-    if "alternative" in data:
-        for link in data["alternative"]:
-            video_url = link["download"]
-            title = "VIDEO"
-            if "quality" in link:
-                title += " (" + link["quality"] + ") [realdebrid]"
-            itemlist.append([title, debrid2proxyURL(video_url)])
-    else:
-        video_url = data["download"]
-        title = "VIDEO [realdebrid]"
-        itemlist.append([title, debrid2proxyURL(video_url)])
-
-    return itemlist
-
-
-def RD_authentication():
-    logger.info()
-    try:
-        client_id = "YTWNFBIJEEBP6"
-
-        # Se solicita url y código de verificación para conceder permiso a la app
-        url = "http://api.real-debrid.com/oauth/v2/device/code?client_id=%s&new_credentials=yes" % (client_id)
-        data = httptools.downloadpage(url, headers=list(DEFAULT_HEADERS.items())).json
-        verify_url = data["verification_url"]
-        user_code = data["user_code"]
-        device_code = data["device_code"]
-        intervalo = data["interval"]
-
-        dialog_auth = platformtools.dialog_progress(config.get_localized_string(70414),
-                                                    config.get_localized_string(60252) % verify_url,
-                                                    config.get_localized_string(70413) % user_code,
-                                                    config.get_localized_string(60254))
-
-        # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
-        while True:
-            time.sleep(intervalo)
-            try:
-                if dialog_auth.iscanceled():
-                    return ""
-
-                url = "https://api.real-debrid.com/oauth/v2/device/credentials?client_id=%s&code=%s" \
-                      % (client_id, device_code)
-                data = httptools.downloadpage(url, headers=list(DEFAULT_HEADERS.items())).json
-                if "client_secret" in data:
-                    # Código introducido, salimos del bucle
-                    break
-            except:
-                pass
-
-        try:
-            dialog_auth.close()
-        except:
-            pass
-
-        debrid_id = data["client_id"]
-        secret = data["client_secret"]
-
-        # Se solicita el token de acceso y el de actualización para cuando el primero caduque
-        post = urllib.parse.urlencode({"client_id": debrid_id, "client_secret": secret, "code": device_code,
-                                 "grant_type": "http://oauth.net/grant_type/device/1.0"})
-        data = httptools.downloadpage("https://api.real-debrid.com/oauth/v2/token", post=post,
-                                         headers=list(DEFAULT_HEADERS.items())).json
-
-        token = data["access_token"]
-        refresh = data["refresh_token"]
-
-        config.set_setting("id", debrid_id, server="realdebrid")
-        config.set_setting("secret", secret, server="realdebrid")
-        config.set_setting("token", token, server="realdebrid")
-        config.set_setting("refresh", refresh, server="realdebrid")
-
-        return token
-    except:
-        import traceback
-        logger.error(traceback.format_exc())
-        return ""
-
-def AD_get_video_url(page_url, premium=False, user="", password="", video_password="", retry=True):
-    logger.info()
-    
-    api_key = config.get_setting("api_key", server="alldebrid")
-
-    if not api_key:
-        if config.is_xbmc():
-            api_key = AD_authentication()
-            if not api_key:
-                return [["NEI ALL-DEBRID: No se ha podido completar el proceso de autentificación", ""]]
-            elif isinstance(api_key, dict):
-                error = api_key['error']
-                return [['[All-Debrid] %s' % error, ""]]
-        else:
-            return [["NEI ALL-DEBRID: es necesario activar la cuenta manualmente. Accede al menú de ayuda", ""]]
-    
-    page_url = urllib.parse.quote(page_url)
-    url = "%slink/unlock?agent=%s&apikey=%s&link=%s" % (AD_API, AGENT_ID, api_key, page_url)
-    
-    dd = httptools.downloadpage(url).json
-    dd_data = dd.get('data', '')
-
-    error = dd.get('error', '')
-    
-    if error:
-        code = error.get('code', '')
-        if code == 'AUTH_BAD_APIKEY' and retry:
-            config.set_setting("api_key", "", server="alldebrid")
-            return AD_get_video_url(page_url, premium=premium, retry=False)
-        elif code:
-            msg = AD_ERRORS.get(code, code)
-            logger.error(dd)
-            return [['[All-Debrid] %s' % msg, ""]]
-
-    video_urls = AD_get_links(dd_data)
-    
-    if video_urls:
-        return video_urls
-    else:
-        server_error = "Alldebrid: Error desconocido en la api"
-        return server_error
-
-
-def AD_get_links(dd_data):
-    logger.info()
-    if not dd_data:
-        return False
-    video_urls = list()
-
-    link = dd_data.get('link', '')
-    streams = dd_data.get('streams', '')
-    
-    if link:
-        video_urls.append(['VIDEO [Original][All-Debrid]', debrid2proxyURL(link)])
-    
-    if streams:
-        for info in streams:
-            quality = str(info.get('quality', ''))
-            if quality:
-                quality += 'p'
-            ext = info.get('ext', '')
-            link = info.get('link', '')
-            video_urls.append(['%s %s [All-Debrid]' % (ext, quality), debrid2proxyURL(link)])
-
-    return video_urls
-
-
-def AD_authentication():
-    logger.info()
-    api_key = ""
-    try:
-
-        #https://docs.alldebrid.com
-        url = "%spin/get?agent=%s" % (AD_API, AGENT_ID)
-        data = httptools.downloadpage(url, ignore_response_code=True).json
-        json_data = data.get('data','')
-        if not json_data:
-            return False
-
-        pin = json_data["pin"]
-        base_url = json_data["base_url"]
-        #check = json_data["check"]
-        expires = json_data["expires_in"]
-        check_url = json_data["check_url"]
-
-        intervalo = 5
-
-        dialog_auth = platformtools.dialog_progress(config.get_localized_string(70414),
-                                                    config.get_localized_string(60252) % base_url,
-                                                    config.get_localized_string(70413) % pin,
-                                                    config.get_localized_string(60254))
-
-        #Cada 5 segundos se intenta comprobar si el usuario ha introducido el código
-        #Si el tiempo que impone alldebrid (10 mins) expira se detiene el proceso
-        while expires > 0:
-            time.sleep(intervalo)
-            expires -= intervalo
-            try:
-                if dialog_auth.iscanceled():
-                    return False
-
-                
-                data = httptools.downloadpage(check_url, ignore_response_code=True).json
-                check_data = data.get('data','')
-                
-                if not check_data:
-                    code = data['error']['code']
-                    msg = AD_ERRORS.get(code, code)
-                    return {'error': msg}
-                
-                if check_data["activated"]:
-                    api_key = check_data["apikey"]
-                    break
-            except:
-                pass
-
-        try:
-            dialog_auth.close()
-        except:
-            pass
-
-        if expires <= 0:
-            error = "Tiempo de espera expirado. Vuelva a intentarlo"
-            return {'error': error}
-
-        if api_key:
-            config.set_setting("api_key", api_key, server="alldebrid")
-            return api_key
-        else:
-            return False
-    except:
-        import traceback
-        logger.error(traceback.format_exc())
-        return False
