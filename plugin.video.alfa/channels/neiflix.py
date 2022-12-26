@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.64"
+NEIFLIX_VERSION = "2.65"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -750,6 +750,10 @@ def cargarMensajeForo(item):
     xbmcgui.Dialog().textviewer('[B][I]'+item.msg['nick']+'[/I][/B]   ('+fecha_mensaje+')', html.unescape(clean_html_tags(item.msg['body'].replace('<br>', "\n"))))
 
 
+def sinEnlaces(item):
+    xbmcgui.Dialog().ok('NO HAY ENLACES SOPORTADOS', 'NO se han encontrado enlaces de MEGA/MEGACRYPTER/GDRIVE (o están comprimidos en ZIP, RAR, etc.). Puedes escribirle un mensaje al uploader en el foro a ver si se anima a subirlo en un formato compatible para Neiflix.')
+
+
 def foro(item):
     logger.info("channels.neiflix foro")
 
@@ -787,11 +791,13 @@ def foro(item):
 
         if len(itemlist) == 0:
 
-            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES[/B][/COLOR]", action="", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
+            itemlist.append(Item(channel=item.channel,title="[COLOR white][B]NO HAY ENLACES SOPORTADOS DISPONIBLES[/B][/COLOR]", action="sinEnlaces", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
                     
             if item.uploader:
                 itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
+            itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+    
     if not video_links:
 
         matches = re.compile(patron, re.DOTALL|re.IGNORECASE).findall(data)
@@ -1307,18 +1313,26 @@ def find_video_gvideo_links(item, data):
 
     return itemlist
 
+
 def ignore_uploader(item):
+    
+    ret = xbmcgui.Dialog().yesno('IGNORAR TODO EL CONTENIDO DE '+item.uploader, '¿SEGURO?')
 
-    if item.uploader in UPLOADERS_BLACKLIST:
-        UPLOADERS_BLACKLIST.remove(item.uploader)
+    if ret:
 
-    UPLOADERS_BLACKLIST.append(item.uploader)
+        if item.uploader in UPLOADERS_BLACKLIST:
+            UPLOADERS_BLACKLIST.remove(item.uploader)
 
-    config.set_setting("neiflix_blacklist_uploaders", ",".join(UPLOADERS_BLACKLIST), "neiflix")
+        UPLOADERS_BLACKLIST.append(item.uploader)
 
-    xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', item.uploader+ " añadid@ a IGNORADOS",
-                                  os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
-                                               'thumb', 'neiflix.gif'), 5000)
+        config.set_setting("neiflix_blacklist_uploaders", ",".join(UPLOADERS_BLACKLIST), "neiflix")
+
+        xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', item.uploader+ " añadid@ a IGNORADOS",
+                                      os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
+                                                   'thumb', 'neiflix.gif'), 5000)
+        xbmc.executebuiltin('Container.Refresh()')
+
+        return True
 
 
 def find_video_mega_links(item, data):
