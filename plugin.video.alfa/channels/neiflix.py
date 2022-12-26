@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.66"
+NEIFLIX_VERSION = "2.67"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -736,11 +736,11 @@ def leerMensajesHiloForo(item):
     
     for msg in json_response:
         if i>0:
-            itemlist.append(Item(channel=item.channel, contentPlot=item.contentPlot, thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
+            itemlist.append(Item(channel=item.channel, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
 
         i+=1
 
-    itemlist.append(Item(channel=item.channel, url_orig=(item.url_orig if 'url_orig' in item else None), id_topic=item.id_topic, contentPlot=item.contentPlot, url=item.url, thumbnail='https://noestasinvitado.com/logonegro2.png', action='escribirMensajeHiloForo', title='[B]ESCRIBIR UN MENSAJE[/B]'))
+    itemlist.append(Item(channel=item.channel, url_orig=(item.url_orig if 'url_orig' in item else None), id_topic=item.id_topic, fanart='https://noestasinvitado.com/logonegro2.png', contentPlot=item.contentPlot, url=item.url, thumbnail='https://noestasinvitado.com/logonegro2.png', action='escribirMensajeHiloForo', title='[B]ESCRIBIR UN MENSAJE[/B]'))
 
     return itemlist
 
