@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.67"
+NEIFLIX_VERSION = "2.68"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -722,6 +722,16 @@ def escribirMensajeHiloForo(item):
         return True
 
 
+def darGraciasMensajeForo(item):
+    httptools.downloadpage(re.sub(r'/msg.*?$','/',item.url)+ '?action=thankyou;msg='+item.msg['id_msg'], timeout=DEFAULT_HTTP_TIMEOUT)
+
+    xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'HAS DADO LAS GRACIAS A: '+item.msg['nick'], os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
+
+    xbmc.executebuiltin('Container.Refresh()')
+
+    return True
+
+
 def leerMensajesHiloForo(item):
     
     json_response = json.loads(httptools.downloadpage(NEIFLIX_MENSAJES_FORO_URL+str(item.id_topic), timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
@@ -736,7 +746,7 @@ def leerMensajesHiloForo(item):
     
     for msg in json_response:
         if i>0:
-            itemlist.append(Item(channel=item.channel, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
+            itemlist.append(Item(channel=item.channel, url=item.url, context=[{"title":"AGRADECER ESTE MENSAJE", "action": "darGraciasMensajeForo", "channel":"neiflix"}] if NEIFLIX_LOGIN != msg['nick'] else None, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
 
         i+=1
 
