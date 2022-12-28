@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.81"
+NEIFLIX_VERSION = "2.83"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -733,7 +733,7 @@ def darGraciasMensajeForo(item):
 
 
 def getNeiAvatar(userid):
-    if not os.path.exists(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)):
+    if not os.path.exists(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)) or os.stat(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)) == 0:
 
         data = httptools.downloadpage('https://noestasinvitado.com/profile/?u='+str(userid), timeout=DEFAULT_HTTP_TIMEOUT).data
 
@@ -743,7 +743,7 @@ def getNeiAvatar(userid):
             url = m.group(1)
         else:
             url = 'https://noestasinvitado.com/logonegro2.png'
-            
+
         with open(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid), "wb") as file:
             try:
                 file.write(httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data)
