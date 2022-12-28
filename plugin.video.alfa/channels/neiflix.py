@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.83"
+NEIFLIX_VERSION = "2.84"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -744,13 +744,23 @@ def getNeiAvatar(userid):
         else:
             url = 'https://noestasinvitado.com/logonegro2.png'
 
+        file_ok = False
+
         with open(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid), "wb") as file:
             try:
                 file.write(httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data)
+                file_ok = True
             except:
                 pass
-        
-        return KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)
+
+        with open(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid), "rb") as file:
+            try:
+                file.read()
+                file_ok = True
+            except:
+                pass
+
+        return KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid) if file_ok else 'https://noestasinvitado.com/logonegro2.png'
     else:
         return KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)
 
