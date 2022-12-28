@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.70"
+NEIFLIX_VERSION = "2.71"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -732,6 +732,19 @@ def darGraciasMensajeForo(item):
     return True
 
 
+def getNeiAvatar(userid):
+    if not os.path.exists(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)):
+
+        data = httptools.downloadpage('https://noestasinvitado.com/profile/?u='+str(userid), timeout=DEFAULT_HTTP_TIMEOUT).data
+
+        m = re.compile(r'"(http[^"]+type=avatar)"').search(data)
+
+        url = m.group(1)
+
+        urllib.request.urlretrieve(url, KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid))
+
+    return KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)
+
 def leerMensajesHiloForo(item):
     
     json_response = json.loads(httptools.downloadpage(NEIFLIX_MENSAJES_FORO_URL+str(item.id_topic), timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
@@ -746,7 +759,7 @@ def leerMensajesHiloForo(item):
     
     for msg in json_response:
         if i>0:
-            itemlist.append(Item(channel=item.channel, url=item.url, context=[{"title":"DAR GRACIAS A ESTE MENSAJE", "action": "darGraciasMensajeForo", "channel":"neiflix"}] if (NEIFLIX_LOGIN != msg['nick'] and not msg['thanks']) else None, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
+            itemlist.append(Item(channel=item.channel, url=item.url, context=[{"title":"DAR GRACIAS A ESTE MENSAJE", "action": "darGraciasMensajeForo", "channel":"neiflix"}] if (NEIFLIX_LOGIN != msg['nick'] and not msg['thanks']) else None, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail=getNeiAvatar(msg['id_member']), action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
 
         i+=1
 
