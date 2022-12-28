@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.69"
+NEIFLIX_VERSION = "2.70"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -757,7 +757,7 @@ def leerMensajesHiloForo(item):
 
 def cargarMensajeForo(item):
     fecha_mensaje = datetime.fromtimestamp(int(item.msg['time'])).strftime('%d/%m/%y %H:%M')
-    xbmcgui.Dialog().textviewer('[B][I]'+item.msg['nick']+'[/I][/B]   ('+fecha_mensaje+')'+(' (Has dado las gracias por este mensaje)' if msg['thanks'] else ''), html.unescape(clean_html_tags(item.msg['body'].replace('<br>', "\n"))))
+    xbmcgui.Dialog().textviewer('[B][I]'+item.msg['nick']+'[/I][/B]   ('+fecha_mensaje+')'+(' (Has dado las gracias por este mensaje)' if item.msg['thanks'] else ''), html.unescape(clean_html_tags(item.msg['body'].replace('<br>', "\n"))))
 
 
 def sinEnlaces(item):
