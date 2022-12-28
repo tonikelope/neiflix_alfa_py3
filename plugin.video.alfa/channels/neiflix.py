@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.88"
+NEIFLIX_VERSION = "2.89"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -731,32 +731,6 @@ def darGraciasMensajeForo(item):
 
     return True
 
-
-def getNeiAvatar(userid):
-    
-    avatar_file_path = KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)
-
-    if not os.path.exists(avatar_file_path) or os.stat(avatar_file_path).st_size == 0:
-
-        data = httptools.downloadpage('https://noestasinvitado.com/profile/?u='+str(userid), timeout=DEFAULT_HTTP_TIMEOUT).data
-
-        m = re.compile(r'img +class *?= *?"avatar" +src *?= *?"(.*?)"').search(data)
-
-        if m and m.group(1):
-            url = m.group(1)
-        else:
-            url = 'https://noestasinvitado.com/logonegro2.png'
-
-        with open(avatar_file_path, "wb") as file:
-            try:
-                file.write(httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data)
-            except:
-                pass
-
-        return avatar_file_path if os.stat(avatar_file_path).st_size>0 else 'https://noestasinvitado.com/logonegro2.png'
-    else:
-        return avatar_file_path
-
 def leerMensajesHiloForo(item):
     
     json_response = json.loads(httptools.downloadpage(NEIFLIX_MENSAJES_FORO_URL+str(item.id_topic), timeout=DEFAULT_HTTP_TIMEOUT).data.encode().decode('utf-8-sig'))
@@ -771,7 +745,7 @@ def leerMensajesHiloForo(item):
     
     for msg in json_response:
         if i>0:
-            itemlist.append(Item(channel=item.channel, url=item.url, context=[{"title":"AGRADECER MENSAJE", "action": "darGraciasMensajeForo", "channel":"neiflix"}] if (NEIFLIX_LOGIN != msg['nick'] and not msg['thanks']) else None, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail=getNeiAvatar(msg['id_member']), action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
+            itemlist.append(Item(channel=item.channel, url=item.url, context=[{"title":"AGRADECER MENSAJE", "action": "darGraciasMensajeForo", "channel":"neiflix"}] if (NEIFLIX_LOGIN != msg['nick'] and not msg['thanks']) else None, contentPlot=item.contentPlot, fanart='https://noestasinvitado.com/logonegro2.png', thumbnail='https://noestasinvitado.com/logonegro2.png', action='cargarMensajeForo', msg=msg, title='[B][COLOR '+('lightgreen' if NEIFLIX_LOGIN == msg['nick'] else 'darkorange')+'][I]'+msg['nick']+':[/I][/COLOR][/B] '+html.unescape(clean_html_tags(msg['body'].replace('\n', ' ')))))
 
         i+=1
 
