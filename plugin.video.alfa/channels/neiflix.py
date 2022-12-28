@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.84"
+NEIFLIX_VERSION = "2.85"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -733,36 +733,14 @@ def darGraciasMensajeForo(item):
 
 
 def getNeiAvatar(userid):
-    if not os.path.exists(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)) or os.stat(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)) == 0:
+    data = httptools.downloadpage('https://noestasinvitado.com/profile/?u='+str(userid), timeout=DEFAULT_HTTP_TIMEOUT).data
 
-        data = httptools.downloadpage('https://noestasinvitado.com/profile/?u='+str(userid), timeout=DEFAULT_HTTP_TIMEOUT).data
+    m = re.compile(r'img +class *?= *?"avatar" +src *?= *?"(.*?)"').search(data)
 
-        m = re.compile(r'img +class *?= *?"avatar" +src *?= *?"(.*?)"').search(data)
-
-        if m and m.group(1):
-            url = m.group(1)
-        else:
-            url = 'https://noestasinvitado.com/logonegro2.png'
-
-        file_ok = False
-
-        with open(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid), "wb") as file:
-            try:
-                file.write(httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data)
-                file_ok = True
-            except:
-                pass
-
-        with open(KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid), "rb") as file:
-            try:
-                file.read()
-                file_ok = True
-            except:
-                pass
-
-        return KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid) if file_ok else 'https://noestasinvitado.com/logonegro2.png'
+    if m and m.group(1):
+        return m.group(1)
     else:
-        return KODI_TEMP_PATH+'kodi_nei_avatar_'+str(userid)
+        return 'https://noestasinvitado.com/logonegro2.png'
 
 def leerMensajesHiloForo(item):
     
