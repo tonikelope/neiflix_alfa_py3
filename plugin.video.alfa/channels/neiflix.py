@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.89"
+NEIFLIX_VERSION = "2.90"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -64,6 +64,8 @@ NEIFLIX_PATH = xbmcvfs.translatePath('special://home/addons/plugin.video.neiflix
 DEFAULT_HTTP_TIMEOUT = 90 #Para no pillarnos los dedos al generar enlaces Megacrypter
 
 ADVANCED_SETTINGS_TIMEOUT = 120
+
+FORO_ITEMS_RETRY = 3
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36"}
 
@@ -760,7 +762,7 @@ def cargarMensajeForo(item):
 
 
 def sinEnlaces(item):
-    xbmcgui.Dialog().ok('NO HAY ENLACES SOPORTADOS', 'NO se han encontrado enlaces de MEGA/MEGACRYPTER/GDRIVE (o están comprimidos en ZIP, RAR, etc.). Puedes escribirle un mensaje al uploader en el foro a ver si se anima a subirlo en un formato compatible para Neiflix.')
+    xbmcgui.Dialog().ok('NO HAY ENLACES VÁLIDOS', 'NO SE HAN ENCONTRADO ENLACES VÁLIDOS DE MEGA/MEGACRYPTER/GDRIVE (o están comprimidos en ZIP, RAR, etc.)\n\nEscribe un mensaje al uploader en el foro para que lo revise cuando pueda.')
 
 
 def foro(item):
@@ -796,7 +798,11 @@ def foro(item):
 
         item.id_topic = id_topic
 
-        itemlist = find_video_mega_links(item, data) + find_video_gvideo_links(item, data)
+        retry = 0
+
+        while len(itemlist) == 0 and retry < FORO_ITEMS_RETRY:
+            itemlist = find_video_mega_links(item, data) + find_video_gvideo_links(item, data)
+            retry+=1
 
         if len(itemlist) == 0:
 
@@ -1582,11 +1588,11 @@ def leer_criticas_fa(item):
         itemlist = []
 
         if float(fa_data['rate']) >= 7.0:
-            rating_text = "[B][COLOR lightgreen]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/COLOR][/B]"
+            rating_text = "[B][COLOR lightgreen]NOTA MEDIA: [" + str(fa_data['rate']) + "][/COLOR][/B]"
         elif float(fa_data['rate']) < 5.0:
-            rating_text = "[B][COLOR red]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/COLOR][/B]"
+            rating_text = "[B][COLOR red]NOTA MEDIA: [" + str(fa_data['rate']) + "][/COLOR][/B]"
         else:
-            rating_text = "[B]***** NOTA MEDIA: [" + str(fa_data['rate']) + "] *****[/B]"
+            rating_text = "[B]NOTA MEDIA: [" + str(fa_data['rate']) + "][/B]"
 
         itemlist.append(Item(channel=item.channel, contentPlot="[I]Críticas de: "+item.contentTitle+"[/I]", title=rating_text, action="", thumbnail=item.thumbnail))
 
