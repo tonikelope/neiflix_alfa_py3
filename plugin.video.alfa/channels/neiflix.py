@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.90"
+NEIFLIX_VERSION = "2.91"
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -426,8 +426,7 @@ def improve_streaming(item):
 
 def settings_nei(item):
     platformtools.show_channel_settings()
-    xbmc.executebuiltin('Container.Refresh()')
-    return True
+    xbmc.executebuiltin('Container.Refresh')
 
 
 def xxx_off(item):
@@ -444,11 +443,9 @@ def xxx_off(item):
             xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Porno desactivado",
                                           os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media',
                                                        'channels', 'thumb', 'neiflix.gif'), 5000)
-            xbmc.executebuiltin('Container.Refresh()')
-            return True
+            xbmc.executebuiltin('Container.Refresh')
     else:
-        xbmc.executebuiltin('Container.Refresh()')
-        return True
+        xbmc.executebuiltin('Container.Refresh')
 
 
 def xxx_on(item):
@@ -463,13 +460,11 @@ def xxx_on(item):
             if hashlib.md5(password.encode('utf-8')).hexdigest() == file_pass:
                 os.remove(KODI_USERDATA_PATH + 'neiflix_xxx')
                 xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', "Porno reactivado", os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
-                xbmc.executebuiltin('Container.Refresh()')
-                return True
+                xbmc.executebuiltin('Container.Refresh')
             else:
                 xbmcgui.Dialog().ok('NEIFLIX: reactivar contenido adulto', 'Contraseña incorrecta')
     else:
-        xbmc.executebuiltin('Container.Refresh()')
-        return True
+        xbmc.executebuiltin('Container.Refresh')
 
 
 def clean_cache(item):
@@ -719,9 +714,7 @@ def escribirMensajeHiloForo(item):
 
         xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', '¡MENSAJE ENVIADO! (es posible que tengas que refrescar la lista para verlo)', os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
-        xbmc.executebuiltin('Container.Refresh()')
-
-        return True
+        xbmc.executebuiltin('Container.Refresh')
 
 
 def darGraciasMensajeForo(item):
@@ -729,9 +722,8 @@ def darGraciasMensajeForo(item):
 
     xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', 'HAS DADO LAS GRACIAS A: '+item.msg['nick'], os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels', 'thumb', 'neiflix.gif'), 5000)
 
-    xbmc.executebuiltin('Container.Refresh()')
+    xbmc.executebuiltin('Container.Refresh')
 
-    return True
 
 def leerMensajesHiloForo(item):
     
@@ -1345,9 +1337,7 @@ def ignore_uploader(item):
         xbmcgui.Dialog().notification('NEIFLIX (' + NEIFLIX_VERSION + ')', item.uploader+ " añadid@ a IGNORADOS",
                                       os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'media', 'channels',
                                                    'thumb', 'neiflix.gif'), 5000)
-        xbmc.executebuiltin('Container.Refresh()')
-
-        return True
+        xbmc.executebuiltin('Container.Refresh')
 
 
 def find_video_mega_links(item, data):
@@ -1780,6 +1770,7 @@ def extract_quality(title):
             return p['q']
 
     return None
+
 
 def play(item):
     itemlist = []
