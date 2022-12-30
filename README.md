@@ -10,9 +10,9 @@
 It includes a customized MEGA LIBRARY with support for:
 
 - Multi thread chunk download.
-- Use MEGA PRO account.
+- MEGA PRO accounts.
 - Megacrypter links https://github.com/tonikelope/megacrypter
 - Multi-part file video streaming (for very big files).
-- Debriders support.
+- Debriders.
 
 <p align="center"><img src="https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.neiflix/resources/neidebrid.png"></p>
