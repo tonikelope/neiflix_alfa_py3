@@ -15,4 +15,4 @@ It includes a customized MEGA LIBRARY with support for:
 - Multi-part file video streaming (for very big files).
 - Debriders support.
 
-<p align="center"><img src="https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.neiflix/resources/fanart.png"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/tonikelope/neiflix_alfa_py3/master/plugin.video.neiflix/resources/neidebrid.png"></p>
