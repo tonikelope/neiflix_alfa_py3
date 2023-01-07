@@ -21,13 +21,15 @@ import time
 import shutil
 from core.item import Item
 from core import httptools, scrapertools, tmdb
-from platformcode import config, logger, platformtools
+from platformcode import config, logger, platformtools, updater
 from collections import OrderedDict
 from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.91"
+NEIFLIX_VERSION = "2.92"
+
+config.set_setting("unify", "false");
 
 NEIFLIX_LOGIN = config.get_setting("neiflix_user", "neiflix")
 
@@ -255,7 +257,7 @@ def mainlist(item):
             itemlist.append(
                 Item(
                     channel=item.channel,
-                    title="[B]Preferencias[/B]",
+                    title="[B]Preferencias de NEIFLIX[/B]",
                     action="settings_nei", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
 
             itemlist.append(
@@ -273,20 +275,32 @@ def mainlist(item):
             itemlist.append(
                 Item(
                     channel=item.channel,
+                    title="Preferencias de ALFA",
+                    action="settings_alfa", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
+                    title="Comprobar actualización de ALFA",
+                    action="check_alfa_update", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_update.png"))
+
+            itemlist.append(
+                Item(
+                    channel=item.channel,
                     title="Regenerar icono de FAVORITOS",
-                    action="update_favourites", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="update_favourites", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_update.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="Regenerar fichero de ajustes avanzados",
-                    action="improve_streaming", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="improve_streaming", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_update.png"))
 
             itemlist.append(
                 Item(
                     channel=item.channel,
                     title="Regenerar miniaturas (todo KODI)",
-                    action="thumbnail_refresh", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_setting_0.png"))
+                    action="thumbnail_refresh", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_update.png"))
 
 
             if not os.path.exists(KODI_USERDATA_PATH + 'neiflix_xxx'):
@@ -424,9 +438,19 @@ def improve_streaming(item):
         if ret:
             xbmc.executebuiltin('RestartApp')
 
+
 def settings_nei(item):
     platformtools.show_channel_settings()
     xbmc.executebuiltin('Container.Refresh')
+
+
+def settings_alfa(item):
+    config.open_settings()
+    xbmc.executebuiltin('Container.Refresh')
+
+
+def check_alfa_update(item):
+    updater.check_addon_updates(True)
 
 
 def xxx_off(item):
