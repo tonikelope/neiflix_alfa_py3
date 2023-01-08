@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.92"
+NEIFLIX_VERSION = "2.93"
 
 config.set_setting("unify", "false");
 
@@ -582,7 +582,7 @@ def bibliotaku_series(item):
 
             title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-            itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+            itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, id_topic=item.id_topic, parsed_title=parsed_title['title'], parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_series_temporadas", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -626,7 +626,7 @@ def bibliotaku_series_temporadas(item):
 
             infoLabels['season']=i
             
-            itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, action="bibliotaku_series_megacrypter",
+            itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, id_topic=item.id_topic, action="bibliotaku_series_megacrypter",
                                  title='[' + str(i) + '/' + str(len(item.mc_group_id)) + '] ' + item.title, url=item.url,
                                  mc_group_id=mc_id, infoLabels=infoLabels, mode=item.mode))
 
@@ -636,7 +636,7 @@ def bibliotaku_series_temporadas(item):
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
 
             if item.id_topic:
-                itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))   
+                itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, id_topic=item.id_topic, url=item.url, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))   
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -645,7 +645,7 @@ def bibliotaku_series_temporadas(item):
 
 def bibliotaku_series_megacrypter(item):
 
-    itemlist = get_video_mega_links_group(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, url_orig=item.url_orig, id_topic=item.id_topic, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=item.infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -685,7 +685,7 @@ def bibliotaku_pelis(item):
 
         title = "[COLOR darkorange][B]" + parsed_title['title'] + "[/B][/COLOR] " + ("(" + parsed_title['year'] + ")" if parsed_title['year'] else "") + (" [" + quality + "]" if quality else "")+" ##*NOTA*##"
 
-        itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
+        itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, id_topic=item.id_topic, mc_group_id=mc_id, parent_title=item.parent_title, mode=item.mode, thumbnail=thumbnail, section=item.section, action="bibliotaku_pelis_megacrypter", title=title, url=item.url, contentTitle=content_title, contentType=content_type, contentSerieName=content_serie_name, infoLabels=info_labels, uploader="Akantor"))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -709,7 +709,7 @@ def bibliotaku_pelis(item):
 def bibliotaku_pelis_megacrypter(item):
     infoLabels=item.infoLabels
             
-    itemlist = get_video_mega_links_group(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
+    itemlist = get_video_mega_links_group(Item(channel=item.channel, url_orig=item.url_orig, id_topic=item.id_topic, mode=item.mode, action='', title='', url=item.url, mc_group_id=item.mc_group_id, infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -724,7 +724,7 @@ def escribirMensajeHiloForo(item):
 
         url = item.url_orig if item.url_orig else item.url
 
-        asunto = 'RESPUESTA_NEIFLIX' if item.id_topic != BIBLIOTAKU_TOPIC_ID else 'RESPUESTA_NEIFLIX_BIBLIOTAKU_'+item.contentPlot
+        asunto = 'RESPUESTA_NEIFLIX' if item.id_topic != BIBLIOTAKU_TOPIC_ID else 'RESPUESTA_NEIFLIX_BIBLIOTAKU_'+item.contentPlot.replace(' ', '_')
 
         data = httptools.downloadpage(url, timeout=DEFAULT_HTTP_TIMEOUT).data
 
@@ -827,7 +827,7 @@ def foro(item):
             if item.uploader:
                 itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]IGNORAR TODO EL CONTENIDO DE "+item.uploader+"[/B][/COLOR]", uploader=item.uploader, action="ignore_uploader", url="", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_error.png"))
 
-            itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+            itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
     
     if not video_links:
 
@@ -1299,7 +1299,7 @@ def get_video_mega_links_group(item):
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
         
         if item.id_topic:
-            itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+            itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
   
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -1340,7 +1340,7 @@ def find_video_gvideo_links(item, data):
                                  url=matches[0], mode=item.mode))
 
         if item.id_topic:
-            itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))   
+            itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))   
 
     return itemlist
 
@@ -1409,7 +1409,7 @@ def find_video_mega_links(item, data):
                 itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
                 
                 if item.id_topic:
-                    itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+                    itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
         else:
             infoLabels=item.infoLabels
             
@@ -1546,7 +1546,7 @@ def find_video_mega_links(item, data):
             itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]CRÍTICAS DE FILMAFFINITY[/B][/COLOR]", contentPlot="[I]Críticas de: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leer_criticas_fa", year=item.infoLabels['year'], mode=item.mode, contentTitle=(item.contentSerieName if item.mode == "tvshow" else item.contentTitle), thumbnail="https://www.filmaffinity.com/images/logo4.png"))
             
             if item.id_topic:
-                itemlist.append(Item(channel=item.channel, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
+                itemlist.append(Item(channel=item.channel, url_orig=item.url_orig, url=item.url, id_topic=item.id_topic, title="[B][COLOR lightgrey]MENSAJES DEL FORO[/COLOR][/B]", contentPlot="[I]Mensajes sobre: "+(item.contentSerieName if item.mode == "tvshow" else item.contentTitle)+"[/I]", action="leerMensajesHiloForo", thumbnail='https://noestasinvitado.com/logonegro2.png'))
                 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
