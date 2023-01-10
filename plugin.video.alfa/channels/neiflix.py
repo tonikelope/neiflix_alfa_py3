@@ -27,7 +27,7 @@ from datetime import datetime
 
 CHECK_STUFF_INTEGRITY = True
 
-NEIFLIX_VERSION = "2.93"
+NEIFLIX_VERSION = "2.94"
 
 config.set_setting("unify", "false");
 
@@ -50,6 +50,12 @@ KODI_USERDATA_PATH = xbmcvfs.translatePath('special://userdata/')
 BIBLIOTAKU_TOPIC_ID='35243'
 
 BIBLIOTAKU_URL='https://noestasinvitado.com/recopilatorios/la-bibliotaku/'
+
+BIBLIOTAKU_PELIS_URL='https://noestasinvitado.com/msg.php?m=114128'
+
+BIBLIOTAKU_SERIES_URL='https://noestasinvitado.com/msg.php?m=114127'
+
+BIBLIOTAKU_ANIME_URL='https://noestasinvitado.com/msg.php?m=113529'
 
 NEIFLIX_RESOURCES_URL = "https://noestasinvitado.com/neiflix_resources/"
 
@@ -526,9 +532,12 @@ def bibliotaku(item):
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (PELÍCULAS)", section="PELÍCULAS", mode="movie", action="bibliotaku_pelis",
-                                 url="https://noestasinvitado.com/msg.php?m=114128", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
+                                 url=BIBLIOTAKU_PELIS_URL, fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_movie.png"))
     itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (SERIES)", section="SERIES", mode="tvshow", action="bibliotaku_series",
-                         url="https://noestasinvitado.com/msg.php?m=114127", fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
+                         url=BIBLIOTAKU_SERIES_URL, fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
+
+    itemlist.append(Item(channel=item.channel, url_orig=BIBLIOTAKU_URL, id_topic=BIBLIOTAKU_TOPIC_ID, title="Bibliotaku (ANIME)", section="ANIME", mode="tvshow", action="bibliotaku_series",
+                         url=BIBLIOTAKU_ANIME_URL, fanart="special://home/addons/plugin.video.neiflix/resources/fanart.png", thumbnail="special://home/addons/plugin.video.alfa/resources/media/themes/default/thumb_videolibrary_tvshow.png"))
     return itemlist
 
 
